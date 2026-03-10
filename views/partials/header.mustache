@@ -2,10 +2,10 @@
     <div class="wrap">
         <a href="/" class="brand">🧘 Yoga Studio</a>
 
-        <nav>
+        <nav id="main-nav">
             <a href="/courses">Courses</a>
             <a href="/schedule">Schedule</a>
-            <a href="/teachers">Teachers</a>
+            <a href="/instructors">Instructors</a>
             <a href="/about">About</a>
         </nav>
 
@@ -19,5 +19,42 @@
         {{^user}}
             <a href="/login" class="btn-login">Sign in</a>
         {{/user}}
+
+        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="main-nav">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
     </div>
 </header>
+
+<script>
+    (function () {
+        var toggle = document.getElementById('nav-toggle');
+        var nav    = document.getElementById('main-nav');
+
+        toggle.addEventListener('click', function () {
+            var isOpen = nav.classList.toggle('open');
+            toggle.classList.toggle('open', isOpen);
+            toggle.setAttribute('aria-expanded', isOpen);
+        });
+
+        // Close nav when a link is tapped
+        nav.querySelectorAll('a').forEach(function (link) {
+            link.addEventListener('click', function () {
+                nav.classList.remove('open');
+                toggle.classList.remove('open');
+                toggle.setAttribute('aria-expanded', 'false');
+            });
+        });
+
+        // Close nav on outside click
+        document.addEventListener('click', function (e) {
+            if (!toggle.contains(e.target) && !nav.contains(e.target)) {
+                nav.classList.remove('open');
+                toggle.classList.remove('open');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+    })();
+</script>
