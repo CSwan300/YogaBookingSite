@@ -107,17 +107,18 @@ export const coursesListPage = async (req, res, next) => {
       nextLink: p < totalPages ? buildLink(req, p + 1, ps) : null,
     };
 
-    res.render("courses", {
-      title: "Courses",
-      filters: {
-        level,
-        type,
-        dropin,
-        q,
-      },
-      courses: cards,
-      pagination,
-    });
+      const filters = {
+          level, type, dropin, q,
+          isBeginnerSelected:     level === "beginner",
+          isIntermediateSelected: level === "intermediate",
+          isAdvancedSelected:     level === "advanced",
+          isWeeklySelected:       type  === "WEEKLY_BLOCK",
+          isWeekendSelected:      type  === "WEEKEND_WORKSHOP",
+          isDropinYes:            dropin === "yes",
+          isDropinNo:             dropin === "no",
+      };
+
+      res.render("courses", { title: "Courses", filters, courses: cards, pagination });
   } catch (err) {
     next(err);
   }
