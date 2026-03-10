@@ -137,7 +137,24 @@ export const postBookSession = async (req, res, next) => {
         res.status(400).render("error", { title: "Booking failed", message });
     }
 };
+import { UserModel } from "../models/userModel.js";
 
+export const instructorsPage = async (req, res, next) => {
+    try {
+        const users = await UserModel.list();
+        const instructors = users
+            .filter(u => u.role === "instructor")
+            .map(u => ({
+                id:    u._id,
+                name:  u.name,
+                email: u.email,
+            }));
+
+        res.render("instructors", { title: "Our Instructors", instructors });
+    } catch (err) {
+        next(err);
+    }
+};
 /* ── Booking confirmation ───────────────────────────────────── */
 export const bookingConfirmationPage = async (req, res, next) => {
     try {
@@ -160,4 +177,5 @@ export const bookingConfirmationPage = async (req, res, next) => {
     } catch (err) {
         next(err);
     }
+
 };
