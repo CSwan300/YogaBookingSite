@@ -7,6 +7,7 @@ import {
     postBookSession,
     bookingConfirmationPage,
     instructorsPage,
+    aboutPage,
 } from "../controllers/viewsController.js";
 import {
     loginPage,
@@ -32,6 +33,7 @@ router.get("/",                    homePage);
 router.get("/courses",             coursesListPage);
 router.get("/courses/:id",         courseDetailPage);
 router.get("/instructors",         instructorsPage);
+router.get("/about", aboutPage);
 
 // ── Registered users only ─────────────────────────────────────
 router.post("/courses/:id/book",   requireAuth, postBookCourse);

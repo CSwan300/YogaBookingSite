@@ -937,3 +937,118 @@ legend { display: none; }
         border-radius: var(--radius-md);
     }
 }
+/* ── About page ─────────────────────────────────────────────── */
+article {
+    max-width: 1020px;
+    margin: 0 auto;
+    padding: var(--space-2xl) var(--space-lg);
+}
+
+article h1 {
+    margin-bottom: 0.25rem;
+}
+
+article h2 {
+    margin-top: var(--space-2xl);
+    margin-bottom: var(--space-sm);
+}
+
+article > p {
+    margin-bottom: var(--space-md);
+}
+
+article ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+article ul li {
+    font-size: 0.9rem;
+    color: var(--muted);
+}
+
+article ul li a {
+    color: var(--brand-dark);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+article ul li a:hover {
+    color: var(--brand);
+    text-decoration: underline;
+}
+
+/* ── About actions — don't stretch full width ───────────────── */
+article .actions {
+    flex-direction: row;
+    justify-content: flex-start;
+    margin-top: var(--space-xl);
+}
+
+article .actions .btn.primary {
+    width: auto;
+    padding: 0.7rem 1.75rem;
+}
+
+/* ── Team list ──────────────────────────────────────────────── */
+.team-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--space-md);
+    margin-top: var(--space-md) !important;
+}
+
+.team-list li {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    color: var(--ink) !important;
+}
+
+.team-list li strong {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.team-list li span {
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.team-list li p {
+    margin: 0.4rem 0 0;
+    font-size: 0.875rem;
+    color: var(--muted);
+    line-height: 1.55;
+}
+
+/* ── Mobile ─────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+    article {
+        padding: var(--space-xl) var(--space-md);
+    }
+
+    article .actions {
+        flex-direction: column;
+    }
+
+    article .actions .btn.primary {
+        width: 100%;
+        text-align: center;
+    }
+
+    .team-list {
+        grid-template-columns: 1fr;
+    }
+}

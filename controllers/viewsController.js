@@ -156,7 +156,30 @@ export const instructorsPage = async (req, res, next) => {
         next(err);
     }
 };
-
+/* ── About ──────────────────────────────────────────────────── */
+export const aboutPage = (req, res) => {
+    res.render("about", {
+        title: "About Us",
+        studio: {
+            name:        "Yoga Studio",
+            tagline:     "Yoga for Yogas sake",
+            description: "there would be a description here but i cant think off one.",
+            mission:     "to make you half as flexable as you want to be.",
+        },
+        team: {
+            members: [],
+        },
+        contact: {
+            address: "123 Example Street, Glasgow",
+            phone:   "+44 131 000 0000",
+            email:   "theemailgoeshere@gmail.com",
+        },
+        social: {
+            instagram: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            facebook:  "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            twitter:   "https://www.youtube.com/watch?v=dQw4w9WgXcQ",        },
+    });
+};
 /* ── Booking confirmation (registered users only) ───────────── */
 export const bookingConfirmationPage = async (req, res, next) => {
     try {
