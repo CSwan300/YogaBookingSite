@@ -1,8 +1,11 @@
-{"name":"Chen","email":"chen@yoga.local","role":"instructor","_id":"4MFGRkYVdoPXQZKv"}
-{"name":"Ben","email":"ben@yoga.local","role":"instructor","_id":"Iv9c3TkgFvm4OaVG"}
-{"name":"Isla","email":"isla@yoga.local","role":"instructor","_id":"OkwQ7fsRCjtIkiZJ"}
-{"name":"Marcus","email":"marcus@student.local","role":"student","_id":"W9LAFis8VVcMx3FQ"}
-{"name":"Priya","email":"priya@student.local","role":"student","_id":"nTPZBP9ubqWqvqMG"}
-{"name":"Ava","email":"ava@yoga.local","role":"instructor","_id":"reZD92DNEBCK9rxe"}
-{"name":"Fiona","email":"fiona@student.local","role":"student","_id":"wjyVqXdoHg30ZEtj"}
+{"name":"Tom","email":"tom@student.local","role":"student","password":"password123","_id":"2Ew9kj3srjVpDenl"}
+{"name":"Admin","email":"admin@yoga.local","role":"organiser","password":"admin1234","_id":"D8WMskFIYbSRJjwK"}
+{"name":"Lena","email":"lena@student.local","role":"student","password":"password123","_id":"Q3kogA7McB9YdbRQ"}
+{"name":"Isla","email":"isla@yoga.local","role":"instructor","bio":"Isla's gentle approach makes her classes perfect for beginners and those recovering from injury.","_id":"T7KcLsZV6mwxbeEa"}
+{"name":"Fiona","email":"fiona@student.local","role":"student","password":"password123","_id":"VtIqBmTi3vPaxkfU"}
+{"name":"Marcus","email":"marcus@student.local","role":"student","password":"password123","_id":"gzWgBfF3H5r3wNeG"}
+{"name":"Chen","email":"chen@yoga.local","role":"instructor","bio":"Chen is an advanced practitioner with a focus on arm balances, inversions, and strength-based yoga.","_id":"rM5BtnfrO5QQzho4"}
+{"name":"Ben","email":"ben@yoga.local","role":"instructor","bio":"Ben brings a dynamic energy to his Vinyasa classes, blending breath, movement, and mindful transitions.","_id":"vkMik0C0oJY1r8NL"}
+{"name":"Priya","email":"priya@student.local","role":"student","password":"password123","_id":"y73fq2z4wLFAo4ej"}
+{"name":"Ava","email":"ava@yoga.local","role":"instructor","bio":"Ava has been teaching yoga for over 10 years, specialising in restorative and mindfulness-based practices.","_id":"yBscSroJ2ld8nbZD"}
 {"$$indexCreated":{"fieldName":"email","unique":true,"sparse":false}}
