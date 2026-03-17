@@ -13,3 +13,7 @@ Updated instructor page layout and functionality
 fixed login issues
 
 fixed some more api pathing/added gitignore and cleanup 
+
+added auth and login settings 
+
+refactored css again

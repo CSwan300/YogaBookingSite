@@ -1,25 +1,43 @@
 // routes/views.js
 import { Router } from "express";
 import {
-  homePage,
-  courseDetailPage,
-  postBookCourse,
-  postBookSession,
-  bookingConfirmationPage,
+    homePage,
+    courseDetailPage,
+    postBookCourse,
+    postBookSession,
+    bookingConfirmationPage,
+    instructorsPage,
+    aboutPage,
 } from "../controllers/viewsController.js";
-
+import {
+    loginPage,
+    postLogin,
+    logoutHandler,
+    registerPage,
+    postRegister,
+} from "../controllers/authController.js";
 import { coursesListPage } from "../controllers/coursesListController.js";
-import { instructorsPage } from "../controllers/viewsController.js";
-
-
+import { requireAuth } from "../middlewares/auth.js";
 
 const router = Router();
-router.get("/instructors", instructorsPage);
+
+// ── Auth ─────────────────────────────────────────────────────
+router.get("/login",     loginPage);
+router.post("/login",    postLogin);
+router.get("/logout",    logoutHandler);
+router.get("/register",  registerPage);
+router.post("/register", postRegister);
+
+// ── Public ────────────────────────────────────────────────────
 router.get("/",                    homePage);
 router.get("/courses",             coursesListPage);
 router.get("/courses/:id",         courseDetailPage);
-router.post("/courses/:id/book",   postBookCourse);
-router.post("/sessions/:id/book",  postBookSession);
-router.get("/bookings/:bookingId", bookingConfirmationPage);
+router.get("/instructors",         instructorsPage);
+router.get("/about", aboutPage);
+
+// ── Registered users only ─────────────────────────────────────
+router.post("/courses/:id/book",   requireAuth, postBookCourse);
+router.post("/sessions/:id/book",  requireAuth, postBookSession);
+router.get("/bookings/:bookingId", requireAuth, bookingConfirmationPage);
 
 export default router;

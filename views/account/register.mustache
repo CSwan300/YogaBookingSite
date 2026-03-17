@@ -1,0 +1,61 @@
+{{> head}}
+{{> header}}
+
+<body class="page-register">
+
+<main class="auth-wrap">
+    <div class="auth-card">
+        <h1>Create account</h1>
+        <p class="auth-subtitle">Join to start booking yoga courses and sessions</p>
+
+        {{#error}}
+            <div class="alert error" role="alert">{{error}}</div>
+        {{/error}}
+
+        <form method="POST" action="/register">
+            <fieldset>
+                <legend>Your details</legend>
+
+                <div class="field">
+                    <label for="name">Full name</label>
+                    <input id="name" name="name" type="text" required
+                           value="{{name_value}}" autocomplete="name"
+                           placeholder="Jane Smith">
+                </div>
+
+                <div class="field">
+                    <label for="email">Email</label>
+                    <input id="email" name="email" type="email" required
+                           value="{{email_value}}" autocomplete="email"
+                           placeholder="you@example.com">
+                </div>
+
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input id="password" name="password" type="password" required
+                           autocomplete="new-password"
+                           placeholder="Min. 8 characters">
+                </div>
+
+                <div class="field">
+                    <label for="confirm_password">Confirm password</label>
+                    <input id="confirm_password" name="confirm_password" type="password" required
+                           autocomplete="new-password"
+                           placeholder="••••••••">
+                </div>
+            </fieldset>
+
+            <div class="actions">
+                <button class="btn primary" type="submit">Create account</button>
+            </div>
+        </form>
+
+        <div class="auth-divider">or</div>
+
+        <p class="auth-register">
+            Already have an account? <a href="/login">Sign in</a>
+        </p>
+    </div>
+</main>
+
+{{> footer}}

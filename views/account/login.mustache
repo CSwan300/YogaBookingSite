@@ -1,0 +1,71 @@
+{{> head}}
+<link rel="stylesheet" href="/static/css/auth.css">
+{{> header}}
+
+<body class="page-login">
+
+<main class="auth-wrap">
+    <div class="auth-card">
+        <h1>Welcome back</h1>
+        <p class="auth-subtitle">Sign in to your account to manage bookings</p>
+
+        {{#errors}}
+            <div class="alert error" role="alert" aria-live="assertive">
+                <ul>
+                    {{#error_messages}}
+                        <li>{{.}}</li>
+                    {{/error_messages}}
+                </ul>
+            </div>
+        {{/errors}}
+
+        {{#error}}
+            <div class="alert error" role="alert">{{error}}</div>
+        {{/error}}
+
+        <form method="POST" action="/login">
+            {{#csrf_token}}
+                <input type="hidden" name="_csrf" value="{{csrf_token}}">
+            {{/csrf_token}}
+
+            <fieldset>
+                <legend>Your credentials</legend>
+
+                <div class="field">
+                    <label for="email">Email</label>
+                    <input id="email" name="email" type="email" required
+                           value="{{email_value}}" autocomplete="email"
+                           placeholder="you@example.com">
+                </div>
+
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input id="password" name="password" type="password" required
+                           autocomplete="current-password"
+                           placeholder="••••••••">
+                </div>
+
+                <div class="field checkbox">
+                    <input id="remember" name="remember" type="checkbox"
+                           {{#remember_checked}}checked{{/remember_checked}}>
+                    <label for="remember">Keep me signed in</label>
+                </div>
+            </fieldset>
+
+            <div class="actions">
+                <button class="btn primary" type="submit">Sign In</button>
+                {{#forgot_password_url}}
+                    <a href="{{forgot_password_url}}">Forgot password?</a>
+                {{/forgot_password_url}}
+            </div>
+        </form>
+
+        <div class="auth-divider">or</div>
+
+        <p class="auth-register">
+            Don't have an account? <a href="/register">Create one</a>
+        </p>
+    </div>
+</main>
+
+{{> footer}}

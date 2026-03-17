@@ -9,8 +9,13 @@ import {
 import { CourseModel } from "../models/courseModel.js";
 import { SessionModel } from "../models/sessionModel.js";
 import { UserModel } from "../models/userModel.js";
+import { BookingModel } from "../models/bookingModel.js";
 
-const iso = (d) => new Date(d).toISOString();
+// ── Password helper ───────────────────────────────────────────
+// Swap this for bcrypt.hash(password, 10) once bcrypt is installed
+const hashPassword = (password) => password;
+
+const iso      = (d) => new Date(d).toISOString();
 const addHours = (date, h) => new Date(date.getTime() + h * 60 * 60 * 1000);
 const addDays  = (date, d) => new Date(date.getTime() + d * 24 * 60 * 60 * 1000);
 const addWeeks = (date, w) => addDays(date, w * 7);
@@ -34,7 +39,6 @@ async function wipeAll() {
 
 /* ── Helpers ────────────────────────────────────────────────── */
 async function buildSessions(courseId, slots) {
-    // slots: [{ start: Date, durationMins: number, capacity: number }]
     const sessions = [];
     for (const slot of slots) {
         const s = await SessionModel.create({
@@ -52,18 +56,88 @@ async function buildSessions(courseId, slots) {
 
 /* ── Users ──────────────────────────────────────────────────── */
 async function createUsers() {
-    const [fiona, marcus, priya, ava, ben, chen, isla] = await Promise.all([
+    const [
+        // Organiser
+        admin,
         // Students
-        UserModel.create({ name: "Fiona",  email: "fiona@student.local",  role: "student" }),
-        UserModel.create({ name: "Marcus", email: "marcus@student.local", role: "student" }),
-        UserModel.create({ name: "Priya",  email: "priya@student.local",  role: "student" }),
+        fiona, marcus, priya, lena, tom,
         // Instructors
-        UserModel.create({ name: "Ava",  email: "ava@yoga.local",  role: "instructor" }),
-        UserModel.create({ name: "Ben",  email: "ben@yoga.local",  role: "instructor" }),
-        UserModel.create({ name: "Chen", email: "chen@yoga.local", role: "instructor" }),
-        UserModel.create({ name: "Isla", email: "isla@yoga.local", role: "instructor" }),
+        ava, ben, chen, isla,
+    ] = await Promise.all([
+        // ── Organiser ──────────────────────────────────────────
+        // Login: admin@yoga.local / password: admin1234
+        UserModel.create({
+            name:     "Admin",
+            email:    "admin@yoga.local",
+            role:     "organiser",
+            password: hashPassword("admin1234"),
+        }),
+
+        // ── Students ───────────────────────────────────────────
+        // Login: fiona@student.local / password: password123
+        UserModel.create({
+            name:     "Fiona",
+            email:    "fiona@student.local",
+            role:     "student",
+            password: hashPassword("password123"),
+        }),
+        UserModel.create({
+            name:     "Marcus",
+            email:    "marcus@student.local",
+            role:     "student",
+            password: hashPassword("password123"),
+        }),
+        UserModel.create({
+            name:     "Priya",
+            email:    "priya@student.local",
+            role:     "student",
+            password: hashPassword("password123"),
+        }),
+        UserModel.create({
+            name:     "Lena",
+            email:    "lena@student.local",
+            role:     "student",
+            password: hashPassword("password123"),
+        }),
+        UserModel.create({
+            name:     "Tom",
+            email:    "tom@student.local",
+            role:     "student",
+            password: hashPassword("password123"),
+        }),
+
+        // ── Instructors ────────────────────────────────────────
+        UserModel.create({
+            name:  "Ava",
+            email: "ava@yoga.local",
+            role:  "instructor",
+            bio:   "Ava has been teaching yoga for over 10 years, specialising in restorative and mindfulness-based practices.",
+        }),
+        UserModel.create({
+            name:  "Ben",
+            email: "ben@yoga.local",
+            role:  "instructor",
+            bio:   "Ben brings a dynamic energy to his Vinyasa classes, blending breath, movement, and mindful transitions.",
+        }),
+        UserModel.create({
+            name:  "Chen",
+            email: "chen@yoga.local",
+            role:  "instructor",
+            bio:   "Chen is an advanced practitioner with a focus on arm balances, inversions, and strength-based yoga.",
+        }),
+        UserModel.create({
+            name:  "Isla",
+            email: "isla@yoga.local",
+            role:  "instructor",
+            bio:   "Isla's gentle approach makes her classes perfect for beginners and those recovering from injury.",
+        }),
     ]);
-    return { students: [fiona, marcus, priya], instructors: { ava, ben, chen, isla } };
+
+    return {
+        organiser: admin,
+        students:  [fiona, marcus, priya, lena, tom],
+        instructors: { ava, ben, chen, isla },
+    };
 }
 
 /* ── Courses ────────────────────────────────────────────────── */
@@ -80,14 +154,16 @@ async function createWinterMindfulness(instructorId) {
         instructorId,
         sessionIds:   [],
         description:  "Two days of breath, posture alignment, and meditation. Perfect for those new to yoga looking for a gentle introduction.",
+        location:     "Studio A",
+        price:        85,
     });
     const base = new Date("2026-01-10T09:00:00");
     const slots = [
-        { start: base,                      durationMins: 60, capacity: 20 },
-        { start: addHours(base, 2),         durationMins: 60, capacity: 20 },
-        { start: addHours(base, 4),         durationMins: 60, capacity: 20 },
-        { start: addDays(base, 1),          durationMins: 60, capacity: 20 }, // Sun
-        { start: addHours(addDays(base, 1), 2), durationMins: 60, capacity: 20 },
+        { start: base,                              durationMins: 60, capacity: 20, bookedCount: 12 },
+        { start: addHours(base, 2),                 durationMins: 60, capacity: 20, bookedCount: 10 },
+        { start: addHours(base, 4),                 durationMins: 60, capacity: 20, bookedCount: 8  },
+        { start: addDays(base, 1),                  durationMins: 60, capacity: 20, bookedCount: 14 },
+        { start: addHours(addDays(base, 1), 2),     durationMins: 60, capacity: 20, bookedCount: 11 },
     ];
     const sessions = await buildSessions(course._id, slots);
     return { course, sessions };
@@ -105,12 +181,16 @@ async function createVinyasaFlow(instructorId) {
         instructorId,
         sessionIds:   [],
         description:  "Progressive sequences building strength and flexibility. Each week layers new transitions onto a familiar foundation.",
+        location:     "Studio B",
+        price:        180,
+        dropInPrice:  18,
     });
     const first = new Date("2026-02-02T18:30:00");
     const slots = Array.from({ length: 12 }, (_, i) => ({
         start:        addWeeks(first, i),
         durationMins: 75,
         capacity:     18,
+        bookedCount:  i < 4 ? Math.floor(Math.random() * 10) + 5 : 0,
     }));
     const sessions = await buildSessions(course._id, slots);
     return { course, sessions };
@@ -128,13 +208,16 @@ async function createMorningHatha(instructorId) {
         instructorId,
         sessionIds:   [],
         description:  "Gentle Hatha practice to start your Wednesday morning with calm focus. Ideal for complete beginners and those returning after a break.",
+        location:     "Studio A",
+        price:        120,
+        dropInPrice:  16,
     });
-    const first = new Date("2026-03-04T07:30:00"); // Wednesday 7:30am
+    const first = new Date("2026-03-04T07:30:00");
     const slots = Array.from({ length: 8 }, (_, i) => ({
         start:        addWeeks(first, i),
         durationMins: 60,
         capacity:     15,
-        bookedCount:  i < 3 ? 5 : 0, // first 3 already have some bookings
+        bookedCount:  i < 3 ? 5 : 0,
     }));
     const sessions = await buildSessions(course._id, slots);
     return { course, sessions };
@@ -152,19 +235,21 @@ async function createArmBalanceIntensive(instructorId) {
         instructorId,
         sessionIds:   [],
         description:  "A focused weekend dedicated to crow pose, handstands, and flying pigeon. Prior inversion experience required.",
+        location:     "Studio B",
+        price:        110,
     });
     const base = new Date("2026-04-18T10:00:00");
     const slots = [
-        { start: base,                          durationMins: 90, capacity: 12 },
-        { start: addHours(base, 2.5),           durationMins: 90, capacity: 12 },
-        { start: addDays(base, 1),              durationMins: 90, capacity: 12 },
-        { start: addHours(addDays(base, 1), 3), durationMins: 90, capacity: 12 },
+        { start: base,                              durationMins: 90, capacity: 12, bookedCount: 6  },
+        { start: addHours(base, 2.5),               durationMins: 90, capacity: 12, bookedCount: 6  },
+        { start: addDays(base, 1),                  durationMins: 90, capacity: 12, bookedCount: 4  },
+        { start: addHours(addDays(base, 1), 3),     durationMins: 90, capacity: 12, bookedCount: 4  },
     ];
     const sessions = await buildSessions(course._id, slots);
     return { course, sessions };
 }
 
-// 5. Weekly block — intermediate, no drop-in (block booking only)
+// 5. Weekly block — intermediate, no drop-in
 async function createYinRestorative(instructorId) {
     const course = await CourseModel.create({
         title:        "6‑Week Yin & Restorative",
@@ -176,12 +261,15 @@ async function createYinRestorative(instructorId) {
         instructorId,
         sessionIds:   [],
         description:  "Slow, floor-based postures held for 3–5 minutes to release deep connective tissue. Props provided. Block booking only — continuity is key.",
+        location:     "Studio A",
+        price:        96,
     });
-    const first = new Date("2026-05-07T19:00:00"); // Thursday 7pm
+    const first = new Date("2026-05-07T19:00:00");
     const slots = Array.from({ length: 6 }, (_, i) => ({
         start:        addWeeks(first, i),
         durationMins: 90,
         capacity:     14,
+        bookedCount:  i < 2 ? 7 : 0,
     }));
     const sessions = await buildSessions(course._id, slots);
     return { course, sessions };
@@ -199,15 +287,103 @@ async function createSundaySoundBath(instructorId) {
         instructorId,
         sessionIds:   [],
         description:  "A single restorative Sunday afternoon combining gentle movement, guided yoga nidra, and a live Tibetan singing bowl sound bath. All welcome.",
+        location:     "Main Hall",
+        price:        35,
+        dropInPrice:  35,
     });
     const base = new Date("2026-06-07T14:00:00");
     const slots = [
-        { start: base,              durationMins: 30,  capacity: 25 }, // gentle movement
-        { start: addMins(base, 40), durationMins: 45,  capacity: 25 }, // nidra
-        { start: addMins(base, 95), durationMins: 45,  capacity: 25 }, // sound bath
+        { start: base,               durationMins: 30, capacity: 25, bookedCount: 18 },
+        { start: addMins(base, 40),  durationMins: 45, capacity: 25, bookedCount: 18 },
+        { start: addMins(base, 95),  durationMins: 45, capacity: 25, bookedCount: 18 },
     ];
     const sessions = await buildSessions(course._id, slots);
     return { course, sessions };
+}
+
+// 7. NEW — Weekly block, beginner, drop-in OK
+async function createBreathwork(instructorId) {
+    const course = await CourseModel.create({
+        title:        "4‑Week Breathwork & Pranayama",
+        level:        "beginner",
+        type:         "WEEKLY_BLOCK",
+        allowDropIn:  true,
+        startDate:    "2026-07-07",
+        endDate:      "2026-07-28",
+        instructorId,
+        sessionIds:   [],
+        description:  "A four-week exploration of pranayama techniques from Nadi Shodhana to Kapalabhati. Suitable for all levels — no prior experience required.",
+        location:     "Studio A",
+        price:        60,
+        dropInPrice:  17,
+    });
+    const first = new Date("2026-07-07T18:00:00");
+    const slots = Array.from({ length: 4 }, (_, i) => ({
+        start:        addWeeks(first, i),
+        durationMins: 60,
+        capacity:     16,
+    }));
+    const sessions = await buildSessions(course._id, slots);
+    return { course, sessions };
+}
+
+// 8. NEW — Weekend workshop, advanced, no drop-in
+async function createInversionMasterclass(instructorId) {
+    const course = await CourseModel.create({
+        title:        "Inversion Masterclass",
+        level:        "advanced",
+        type:         "WEEKEND_WORKSHOP",
+        allowDropIn:  false,
+        startDate:    "2026-08-22",
+        endDate:      "2026-08-23",
+        instructorId,
+        sessionIds:   [],
+        description:  "Two intensive days covering headstand, shoulderstand, and forearm balance progressions. Wall-assisted entry taught alongside freestanding technique.",
+        location:     "Studio B",
+        price:        130,
+    });
+    const base = new Date("2026-08-22T10:00:00");
+    const slots = [
+        { start: base,                              durationMins: 90, capacity: 10 },
+        { start: addHours(base, 2.5),               durationMins: 90, capacity: 10 },
+        { start: addDays(base, 1),                  durationMins: 90, capacity: 10 },
+        { start: addHours(addDays(base, 1), 2.5),   durationMins: 90, capacity: 10 },
+    ];
+    const sessions = await buildSessions(course._id, slots);
+    return { course, sessions };
+}
+
+/* ── Sample bookings ────────────────────────────────────────── */
+async function createBookings(students, courses) {
+    const [fiona, marcus, priya] = students;
+    const { c1, c2, c3 } = courses;
+
+    await Promise.all([
+        // Fiona booked onto the Vinyasa course
+        BookingModel.create({
+            userId:    fiona._id,
+            courseId:  c2.course._id,
+            type:      "course",
+            status:    "confirmed",
+            createdAt: new Date().toISOString(),
+        }),
+        // Marcus booked a drop-in on Vinyasa session 1
+        BookingModel.create({
+            userId:    marcus._id,
+            sessionId: c2.sessions[0]._id,
+            type:      "session",
+            status:    "confirmed",
+            createdAt: new Date().toISOString(),
+        }),
+        // Priya booked Morning Hatha course
+        BookingModel.create({
+            userId:    priya._id,
+            courseId:  c3.course._id,
+            type:      "course",
+            status:    "confirmed",
+            createdAt: new Date().toISOString(),
+        }),
+    ]);
 }
 
 /* ── Verify ─────────────────────────────────────────────────── */
@@ -237,30 +413,42 @@ async function run() {
     await wipeAll();
 
     console.log("Creating users…");
-    const { students, instructors } = await createUsers();
+    const { organiser, students, instructors } = await createUsers();
 
     console.log("Creating courses…");
-    const [c1, c2, c3, c4, c5, c6] = await Promise.all([
+    const [c1, c2, c3, c4, c5, c6, c7, c8] = await Promise.all([
         createWinterMindfulness(instructors.ava._id),
         createVinyasaFlow(instructors.ben._id),
         createMorningHatha(instructors.isla._id),
         createArmBalanceIntensive(instructors.chen._id),
         createYinRestorative(instructors.ava._id),
         createSundaySoundBath(instructors.isla._id),
+        createBreathwork(instructors.ben._id),
+        createInversionMasterclass(instructors.chen._id),
     ]);
+
+    console.log("Creating sample bookings…");
+    await createBookings(students, { c1, c2, c3 });
 
     await verifyAndReport();
 
     console.log("\n✅ Seed complete.");
-    console.log("Students            :", students.map(s => `${s.name} (${s._id})`).join(", "));
-    console.log("Instructors         :", Object.values(instructors).map(i => `${i.name} (${i._id})`).join(", "));
-    console.log("Courses created     :", 6);
+    console.log("\n— Login credentials —");
+    console.log("Organiser : admin@yoga.local       / admin1234");
+    console.log("Student 1 : fiona@student.local    / password123");
+    console.log("Student 2 : marcus@student.local   / password123");
+    console.log("Student 3 : priya@student.local    / password123");
+    console.log("Student 4 : lena@student.local     / password123");
+    console.log("Student 5 : tom@student.local      / password123");
+    console.log("\n— Courses created —");
     console.log("  1.", c1.course.title, `— ${c1.sessions.length} sessions`);
     console.log("  2.", c2.course.title, `— ${c2.sessions.length} sessions`);
     console.log("  3.", c3.course.title, `— ${c3.sessions.length} sessions`);
     console.log("  4.", c4.course.title, `— ${c4.sessions.length} sessions`);
     console.log("  5.", c5.course.title, `— ${c5.sessions.length} sessions`);
     console.log("  6.", c6.course.title, `— ${c6.sessions.length} sessions`);
+    console.log("  7.", c7.course.title, `— ${c7.sessions.length} sessions`);
+    console.log("  8.", c8.course.title, `— ${c8.sessions.length} sessions`);
 }
 
 run().catch((err) => {

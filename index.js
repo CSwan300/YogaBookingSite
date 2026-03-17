@@ -1,4 +1,4 @@
-
+// index.js
 import express from "express";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
@@ -6,11 +6,11 @@ import mustacheExpress from "mustache-express";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// import authRoutes from './routes/auth.js';
 import courseRoutes from "./routes/courses.js";
 import sessionRoutes from "./routes/sessions.js";
 import bookingRoutes from "./routes/bookings.js";
 import viewRoutes from "./routes/views.js";
+import { attachSessionUser } from "./middlewares/auth.js";
 import { attachDemoUser } from "./middlewares/demoUser.js";
 import { initDb } from "./models/_db.js";
 
@@ -21,7 +21,7 @@ const __dirname = path.dirname(__filename);
 
 export const app = express();
 
-// View engine (Mustache)
+// ── View engine (Mustache) ───────────────────────────────────
 app.engine(
     "mustache",
     mustacheExpress(path.join(__dirname, "views", "partials"), ".mustache")
@@ -29,30 +29,38 @@ app.engine(
 app.set("view engine", "mustache");
 app.set("views", path.join(__dirname, "views"));
 
-// Body parsing
+// ── Body parsing ─────────────────────────────────────────────
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
-app.use(cookieParser());
 
-// Static
+// ── Cookie parser (signed cookies for JWT) ───────────────────
+app.use(cookieParser(process.env.COOKIE_SECRET || "dev-cookie-secret"));
+
+// ── Static files ─────────────────────────────────────────────
 app.use("/static", express.static(path.join(__dirname, "public")));
 
-// Demo user
-app.use(attachDemoUser);
+// ── Attach real JWT user first ───────────────────────────────
+// If no valid token exists, fall back to demo user for req.user
+// so booking logic still works during development.
+// Remove attachDemoUser once real registration is implemented.
+app.use(attachSessionUser);
+app.use((req, res, next) => {
+    if (!req.user) return attachDemoUser(req, res, next);
+    next();
+});
 
-// Health
+// ── Health ───────────────────────────────────────────────────
 app.get("/health", (req, res) => res.json({ ok: true }));
 
-// JSON API routes
-// SSR view routes — must come BEFORE the JSON API routes
+// ── SSR view routes ──────────────────────────────────────────
 app.use("/", viewRoutes);
 
-// JSON API routes — prefix with /api to avoid collision
+// ── JSON API routes ──────────────────────────────────────────
 app.use("/api/courses",  courseRoutes);
 app.use("/api/sessions", sessionRoutes);
 app.use("/api/bookings", bookingRoutes);
 
-// Errors
+// ── Error handlers ───────────────────────────────────────────
 export const not_found = (req, res) =>
     res.status(404).type("text/plain").send("404 Not found.");
 export const server_error = (err, req, res, next) => {
@@ -62,7 +70,7 @@ export const server_error = (err, req, res, next) => {
 app.use(not_found);
 app.use(server_error);
 
-// Only start the server outside tests
+// ── Start server ─────────────────────────────────────────────
 if (process.env.NODE_ENV !== "test") {
     await initDb();
     const PORT = process.env.PORT || 3000;
