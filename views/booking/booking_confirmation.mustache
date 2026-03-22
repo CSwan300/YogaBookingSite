@@ -1,0 +1,33 @@
+{{> head}}
+{{> header}}
+
+<article>
+    <h1>Booking Confirmation</h1>
+
+    {{#isCancelled}}
+        <p class="muted">This booking has been cancelled.</p>
+    {{/isCancelled}}
+    {{^isCancelled}}
+        <p>Your booking has been created successfully.</p>
+    {{/isCancelled}}
+
+    <dl class="kv">
+        <dt>ID</dt><dd>{{booking.id}}</dd>
+        <dt>Type</dt><dd>{{booking.type}}</dd>
+        <dt>Status</dt><dd>{{booking.status}}</dd>
+        <dt>Created</dt><dd>{{booking.createdAt}}</dd>
+    </dl>
+
+    {{^isCancelled}}
+        <form method="post" action="/bookings/{{booking.id}}/cancel">
+            <input type="hidden" name="returnTo" value="{{returnTo}}">
+            <button class="btn danger" type="submit">Cancel Booking</button>
+        </form>
+    {{/isCancelled}}
+
+    <div class="actions">
+        <a href="{{returnTo}}" class="btn">← Back</a>
+    </div>
+</article>
+
+{{> footer}}

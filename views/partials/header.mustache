@@ -11,14 +11,18 @@
 
         {{#user}}
             <div class="user">
-                Signed in as <strong>{{name}}</strong>
-                <a href="/logout" class="btn-logout">Sign out</a>
+                • Signed in as <strong>{{name}}</strong>
+                <a href="/logout" class="btn-logout" id="sign-out-btn">Sign out</a>
             </div>
         {{/user}}
 
         {{^user}}
             <a href="/login" class="btn-login">Sign in</a>
         {{/user}}
+
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+            <span class="theme-icon">☀️</span>
+        </button>
 
         <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="main-nav">
             <span></span>
@@ -30,6 +34,27 @@
 
 <script>
     (function () {
+        // ── Dark mode ──────────────────────────────────────────
+        var themeToggle = document.getElementById('theme-toggle');
+        var themeIcon   = themeToggle.querySelector('.theme-icon');
+
+        function setTheme(dark) {
+            document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+            themeIcon.textContent = dark ? '🌙' : '☀️';
+            localStorage.setItem('theme', dark ? 'dark' : 'light');
+        }
+
+        // Apply saved or system preference immediately
+        var saved  = localStorage.getItem('theme');
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        setTheme(saved ? saved === 'dark' : prefersDark);
+
+        themeToggle.addEventListener('click', function () {
+            var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            setTheme(!isDark);
+        });
+
+        // ── Nav toggle ─────────────────────────────────────────
         var toggle = document.getElementById('nav-toggle');
         var nav    = document.getElementById('main-nav');
 
@@ -48,11 +73,22 @@
         });
 
         document.addEventListener('click', function (e) {
-            if (!toggle.contains(e.target) && !nav.contains(e.target)) {
+            if (!toggle.contains(e.target) && !nav.contains(e.target) && !themeToggle.contains(e.target)) {
                 nav.classList.remove('open');
                 toggle.classList.remove('open');
                 toggle.setAttribute('aria-expanded', 'false');
             }
         });
+
+        // ── Sign out confirmation ──────────────────────────────
+        var signOutBtn = document.getElementById('sign-out-btn');
+        if (signOutBtn) {
+            signOutBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (confirm('Are you sure you want to sign out?')) {
+                    window.location.href = '/logout';
+                }
+            });
+        }
     })();
 </script>

@@ -1,11 +1,17 @@
-{"name":"Tom","email":"tom@student.local","role":"student","password":"password123","_id":"2Ew9kj3srjVpDenl"}
-{"name":"Admin","email":"admin@yoga.local","role":"organiser","password":"admin1234","_id":"D8WMskFIYbSRJjwK"}
-{"name":"Lena","email":"lena@student.local","role":"student","password":"password123","_id":"Q3kogA7McB9YdbRQ"}
-{"name":"Isla","email":"isla@yoga.local","role":"instructor","bio":"Isla's gentle approach makes her classes perfect for beginners and those recovering from injury.","_id":"T7KcLsZV6mwxbeEa"}
-{"name":"Fiona","email":"fiona@student.local","role":"student","password":"password123","_id":"VtIqBmTi3vPaxkfU"}
-{"name":"Marcus","email":"marcus@student.local","role":"student","password":"password123","_id":"gzWgBfF3H5r3wNeG"}
-{"name":"Chen","email":"chen@yoga.local","role":"instructor","bio":"Chen is an advanced practitioner with a focus on arm balances, inversions, and strength-based yoga.","_id":"rM5BtnfrO5QQzho4"}
-{"name":"Ben","email":"ben@yoga.local","role":"instructor","bio":"Ben brings a dynamic energy to his Vinyasa classes, blending breath, movement, and mindful transitions.","_id":"vkMik0C0oJY1r8NL"}
-{"name":"Priya","email":"priya@student.local","role":"student","password":"password123","_id":"y73fq2z4wLFAo4ej"}
-{"name":"Ava","email":"ava@yoga.local","role":"instructor","bio":"Ava has been teaching yoga for over 10 years, specialising in restorative and mindfulness-based practices.","_id":"yBscSroJ2ld8nbZD"}
+{"name":"Marcus","email":"marcus@student.local","role":"student","password":"password123","_id":"629w2ehSTJLPZQom"}
+{"name":"James","email":"james@student.local","role":"student","password":"password123","_id":"AS79bCr2T6WgFqDx"}
+{"name":"Nina","email":"nina@student.local","role":"student","password":"password123","_id":"B0S4UBDiQogixmR3"}
+{"name":"Priya","email":"priya@student.local","role":"student","password":"password123","_id":"CPFXwhVRLU21yEO2"}
+{"name":"Ava","email":"ava@yoga.local","role":"instructor","bio":"Ava has been teaching yoga for over 10 years, specialising in restorative and mindfulness-based practices.","_id":"DcgJvWRm8PmNwxfp"}
+{"name":"Sara","email":"sara@student.local","role":"student","password":"password123","_id":"GMlT5TXwhmKqItQZ"}
+{"name":"Admin","email":"admin@yoga.local","role":"organiser","password":"admin1234","_id":"KZJeJLKnVhORIHcs"}
+{"name":"Grace","email":"grace@student.local","role":"student","password":"password123","_id":"NfUGNS0oLhs45OuU"}
+{"name":"Ben","email":"ben@yoga.local","role":"instructor","bio":"Ben brings a dynamic energy to his Vinyasa classes, blending breath, movement, and mindful transitions.","_id":"QqEx4HRb33R1cqdN"}
+{"name":"Chen","email":"chen@yoga.local","role":"instructor","bio":"Chen is an advanced practitioner with a focus on arm balances, inversions, and strength-based yoga.","_id":"VBNw0KWpOQDyr0OC"}
+{"name":"Isla","email":"isla@yoga.local","role":"instructor","bio":"Isla's gentle approach makes her classes perfect for beginners and those recovering from injury.","_id":"d94z0aUNVINDKYS4"}
+{"name":"Oliver","email":"oliver@student.local","role":"student","password":"password123","_id":"ivE37MGEIdR4Kccu"}
+{"name":"Fiona","email":"fiona@student.local","role":"student","password":"password123","_id":"o2SIYAJEoJusRo3D"}
+{"name":"Raj","email":"raj@yoga.local","role":"instructor","bio":"Raj specialises in Ashtanga and power yoga, bringing a structured and energetic approach to every session.","_id":"oi9BeTeTAmmzSSDy"}
+{"name":"Tom","email":"tom@student.local","role":"student","password":"password123","_id":"s8XKfOHAWMbqFUUy"}
+{"name":"Lena","email":"lena@student.local","role":"student","password":"password123","_id":"xsc1aOtzurrnGo7e"}
 {"$$indexCreated":{"fieldName":"email","unique":true,"sparse":false}}

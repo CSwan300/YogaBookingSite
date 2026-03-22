@@ -11,8 +11,6 @@ import { SessionModel } from "../models/sessionModel.js";
 import { UserModel } from "../models/userModel.js";
 import { BookingModel } from "../models/bookingModel.js";
 
-// ── Password helper ───────────────────────────────────────────
-// Swap this for bcrypt.hash(password, 10) once bcrypt is installed
 const hashPassword = (password) => password;
 
 const iso      = (d) => new Date(d).toISOString();
@@ -57,15 +55,14 @@ async function buildSessions(courseId, slots) {
 /* ── Users ──────────────────────────────────────────────────── */
 async function createUsers() {
     const [
-        // Organiser
         admin,
         // Students
         fiona, marcus, priya, lena, tom,
+        sara, james, nina, oliver, grace,
         // Instructors
-        ava, ben, chen, isla,
+        ava, ben, chen, isla, raj,
     ] = await Promise.all([
         // ── Organiser ──────────────────────────────────────────
-        // Login: admin@yoga.local / password: admin1234
         UserModel.create({
             name:     "Admin",
             email:    "admin@yoga.local",
@@ -73,8 +70,7 @@ async function createUsers() {
             password: hashPassword("admin1234"),
         }),
 
-        // ── Students ───────────────────────────────────────────
-        // Login: fiona@student.local / password: password123
+        // ── Original Students ───────────────────────────────────
         UserModel.create({
             name:     "Fiona",
             email:    "fiona@student.local",
@@ -106,7 +102,39 @@ async function createUsers() {
             password: hashPassword("password123"),
         }),
 
-        // ── Instructors ────────────────────────────────────────
+        // ── New Students ────────────────────────────────────────
+        UserModel.create({
+            name:     "Sara",
+            email:    "sara@student.local",
+            role:     "student",
+            password: hashPassword("password123"),
+        }),
+        UserModel.create({
+            name:     "James",
+            email:    "james@student.local",
+            role:     "student",
+            password: hashPassword("password123"),
+        }),
+        UserModel.create({
+            name:     "Nina",
+            email:    "nina@student.local",
+            role:     "student",
+            password: hashPassword("password123"),
+        }),
+        UserModel.create({
+            name:     "Oliver",
+            email:    "oliver@student.local",
+            role:     "student",
+            password: hashPassword("password123"),
+        }),
+        UserModel.create({
+            name:     "Grace",
+            email:    "grace@student.local",
+            role:     "student",
+            password: hashPassword("password123"),
+        }),
+
+        // ── Original Instructors ────────────────────────────────
         UserModel.create({
             name:  "Ava",
             email: "ava@yoga.local",
@@ -131,12 +159,20 @@ async function createUsers() {
             role:  "instructor",
             bio:   "Isla's gentle approach makes her classes perfect for beginners and those recovering from injury.",
         }),
+
+        // ── New Instructor ──────────────────────────────────────
+        UserModel.create({
+            name:  "Raj",
+            email: "raj@yoga.local",
+            role:  "instructor",
+            bio:   "Raj specialises in Ashtanga and power yoga, bringing a structured and energetic approach to every session.",
+        }),
     ]);
 
     return {
-        organiser: admin,
-        students:  [fiona, marcus, priya, lena, tom],
-        instructors: { ava, ben, chen, isla },
+        organiser:   admin,
+        students:    [fiona, marcus, priya, lena, tom, sara, james, nina, oliver, grace],
+        instructors: { ava, ben, chen, isla, raj },
     };
 }
 
@@ -240,10 +276,10 @@ async function createArmBalanceIntensive(instructorId) {
     });
     const base = new Date("2026-04-18T10:00:00");
     const slots = [
-        { start: base,                              durationMins: 90, capacity: 12, bookedCount: 6  },
-        { start: addHours(base, 2.5),               durationMins: 90, capacity: 12, bookedCount: 6  },
-        { start: addDays(base, 1),                  durationMins: 90, capacity: 12, bookedCount: 4  },
-        { start: addHours(addDays(base, 1), 3),     durationMins: 90, capacity: 12, bookedCount: 4  },
+        { start: base,                              durationMins: 90, capacity: 12, bookedCount: 6 },
+        { start: addHours(base, 2.5),               durationMins: 90, capacity: 12, bookedCount: 6 },
+        { start: addDays(base, 1),                  durationMins: 90, capacity: 12, bookedCount: 4 },
+        { start: addHours(addDays(base, 1), 3),     durationMins: 90, capacity: 12, bookedCount: 4 },
     ];
     const sessions = await buildSessions(course._id, slots);
     return { course, sessions };
@@ -301,7 +337,7 @@ async function createSundaySoundBath(instructorId) {
     return { course, sessions };
 }
 
-// 7. NEW — Weekly block, beginner, drop-in OK
+// 7. Weekly block — beginner, drop-in OK
 async function createBreathwork(instructorId) {
     const course = await CourseModel.create({
         title:        "4‑Week Breathwork & Pranayama",
@@ -327,7 +363,7 @@ async function createBreathwork(instructorId) {
     return { course, sessions };
 }
 
-// 8. NEW — Weekend workshop, advanced, no drop-in
+// 8. Weekend workshop — advanced, no drop-in
 async function createInversionMasterclass(instructorId) {
     const course = await CourseModel.create({
         title:        "Inversion Masterclass",
@@ -353,35 +389,184 @@ async function createInversionMasterclass(instructorId) {
     return { course, sessions };
 }
 
+// 9. NEW — Weekly block, intermediate, drop-in OK
+async function createAshtangaFundamentals(instructorId) {
+    const course = await CourseModel.create({
+        title:        "8‑Week Ashtanga Fundamentals",
+        level:        "intermediate",
+        type:         "WEEKLY_BLOCK",
+        allowDropIn:  true,
+        startDate:    "2026-04-06",
+        endDate:      "2026-05-25",
+        instructorId,
+        sessionIds:   [],
+        description:  "A structured introduction to the Ashtanga primary series. Learn the standing and seated sequences with correct vinyasa count and breath synchronisation.",
+        location:     "Studio B",
+        price:        144,
+        dropInPrice:  20,
+    });
+    const first = new Date("2026-04-06T07:00:00");
+    const slots = Array.from({ length: 8 }, (_, i) => ({
+        start:        addWeeks(first, i),
+        durationMins: 90,
+        capacity:     14,
+        bookedCount:  i < 3 ? 8 : 0,
+    }));
+    const sessions = await buildSessions(course._id, slots);
+    return { course, sessions };
+}
+
+// 10. NEW — Weekend workshop, beginner, drop-in OK
+async function createStressReliefWorkshop(instructorId) {
+    const course = await CourseModel.create({
+        title:        "Stress Relief & Relaxation Workshop",
+        level:        "beginner",
+        type:         "WEEKEND_WORKSHOP",
+        allowDropIn:  true,
+        startDate:    "2026-05-16",
+        endDate:      "2026-05-16",
+        instructorId,
+        sessionIds:   [],
+        description:  "A half-day workshop combining restorative yoga, breathwork, and guided meditation to help you decompress and reset. No experience needed.",
+        location:     "Main Hall",
+        price:        40,
+        dropInPrice:  40,
+    });
+    const base = new Date("2026-05-16T10:00:00");
+    const slots = [
+        { start: base,               durationMins: 45, capacity: 20, bookedCount: 10 },
+        { start: addMins(base, 55),  durationMins: 45, capacity: 20, bookedCount: 10 },
+        { start: addMins(base, 110), durationMins: 30, capacity: 20, bookedCount: 8  },
+    ];
+    const sessions = await buildSessions(course._id, slots);
+    return { course, sessions };
+}
+
+// 11. NEW — Weekly block, advanced, no drop-in
+async function createPowerYogaChallenge(instructorId) {
+    const course = await CourseModel.create({
+        title:        "6‑Week Power Yoga Challenge",
+        level:        "advanced",
+        type:         "WEEKLY_BLOCK",
+        allowDropIn:  false,
+        startDate:    "2026-06-15",
+        endDate:      "2026-07-20",
+        instructorId,
+        sessionIds:   [],
+        description:  "Six weeks of high-intensity power yoga designed to build serious strength, stamina, and mental resilience. Not for the faint-hearted.",
+        location:     "Studio B",
+        price:        108,
+    });
+    const first = new Date("2026-06-15T19:00:00");
+    const slots = Array.from({ length: 6 }, (_, i) => ({
+        start:        addWeeks(first, i),
+        durationMins: 60,
+        capacity:     12,
+        bookedCount:  i < 2 ? 9 : 0,
+    }));
+    const sessions = await buildSessions(course._id, slots);
+    return { course, sessions };
+}
+
+// 12. NEW — Weekly block, beginner, drop-in OK
+async function createChairYoga(instructorId) {
+    const course = await CourseModel.create({
+        title:        "4‑Week Chair Yoga",
+        level:        "beginner",
+        type:         "WEEKLY_BLOCK",
+        allowDropIn:  true,
+        startDate:    "2026-07-14",
+        endDate:      "2026-08-04",
+        instructorId,
+        sessionIds:   [],
+        description:  "Accessible yoga practised entirely from a chair. Ideal for those with limited mobility, seniors, or anyone easing back into movement after injury.",
+        location:     "Studio A",
+        price:        48,
+        dropInPrice:  14,
+    });
+    const first = new Date("2026-07-14T11:00:00");
+    const slots = Array.from({ length: 4 }, (_, i) => ({
+        start:        addWeeks(first, i),
+        durationMins: 45,
+        capacity:     18,
+    }));
+    const sessions = await buildSessions(course._id, slots);
+    return { course, sessions };
+}
+
 /* ── Sample bookings ────────────────────────────────────────── */
 async function createBookings(students, courses) {
-    const [fiona, marcus, priya] = students;
-    const { c1, c2, c3 } = courses;
+    const [fiona, marcus, priya, lena, tom, sara, james, nina, oliver, grace] = students;
+    const { c1, c2, c3, c4, c9, c10 } = courses;
 
     await Promise.all([
-        // Fiona booked onto the Vinyasa course
+        // Fiona — Vinyasa course
         BookingModel.create({
-            userId:    fiona._id,
-            courseId:  c2.course._id,
-            type:      "course",
-            status:    "confirmed",
-            createdAt: new Date().toISOString(),
+            userId:     fiona._id,
+            courseId:   c2.course._id,
+            sessionIds: c2.sessions.map(s => s._id),
+            type:       "course",
+            status:     "confirmed",
+            createdAt:  new Date().toISOString(),
         }),
-        // Marcus booked a drop-in on Vinyasa session 1
+        // Marcus — Vinyasa drop-in session 1
         BookingModel.create({
-            userId:    marcus._id,
-            sessionId: c2.sessions[0]._id,
-            type:      "session",
-            status:    "confirmed",
-            createdAt: new Date().toISOString(),
+            userId:     marcus._id,
+            sessionIds: [c2.sessions[0]._id],
+            type:       "session",
+            status:     "confirmed",
+            createdAt:  new Date().toISOString(),
         }),
-        // Priya booked Morning Hatha course
+        // Priya — Morning Hatha course
         BookingModel.create({
-            userId:    priya._id,
-            courseId:  c3.course._id,
-            type:      "course",
-            status:    "confirmed",
-            createdAt: new Date().toISOString(),
+            userId:     priya._id,
+            courseId:   c3.course._id,
+            sessionIds: c3.sessions.map(s => s._id),
+            type:       "course",
+            status:     "confirmed",
+            createdAt:  new Date().toISOString(),
+        }),
+        // Lena — Arm Balance Intensive
+        BookingModel.create({
+            userId:     lena._id,
+            courseId:   c4.course._id,
+            sessionIds: c4.sessions.map(s => s._id),
+            type:       "course",
+            status:     "confirmed",
+            createdAt:  new Date().toISOString(),
+        }),
+        // Tom — Ashtanga Fundamentals drop-in session 1
+        BookingModel.create({
+            userId:     tom._id,
+            sessionIds: [c9.sessions[0]._id],
+            type:       "session",
+            status:     "confirmed",
+            createdAt:  new Date().toISOString(),
+        }),
+        // Sara — Stress Relief Workshop
+        BookingModel.create({
+            userId:     sara._id,
+            courseId:   c10.course._id,
+            sessionIds: c10.sessions.map(s => s._id),
+            type:       "course",
+            status:     "confirmed",
+            createdAt:  new Date().toISOString(),
+        }),
+        // James — Vinyasa drop-in session 2
+        BookingModel.create({
+            userId:     james._id,
+            sessionIds: [c2.sessions[1]._id],
+            type:       "session",
+            status:     "confirmed",
+            createdAt:  new Date().toISOString(),
+        }),
+        // Nina — Morning Hatha drop-in session 1
+        BookingModel.create({
+            userId:     nina._id,
+            sessionIds: [c3.sessions[0]._id],
+            type:       "session",
+            status:     "confirmed",
+            createdAt:  new Date().toISOString(),
         }),
     ]);
 }
@@ -416,7 +601,7 @@ async function run() {
     const { organiser, students, instructors } = await createUsers();
 
     console.log("Creating courses…");
-    const [c1, c2, c3, c4, c5, c6, c7, c8] = await Promise.all([
+    const [c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12] = await Promise.all([
         createWinterMindfulness(instructors.ava._id),
         createVinyasaFlow(instructors.ben._id),
         createMorningHatha(instructors.isla._id),
@@ -425,10 +610,14 @@ async function run() {
         createSundaySoundBath(instructors.isla._id),
         createBreathwork(instructors.ben._id),
         createInversionMasterclass(instructors.chen._id),
+        createAshtangaFundamentals(instructors.raj._id),
+        createStressReliefWorkshop(instructors.isla._id),
+        createPowerYogaChallenge(instructors.raj._id),
+        createChairYoga(instructors.ava._id),
     ]);
 
     console.log("Creating sample bookings…");
-    await createBookings(students, { c1, c2, c3 });
+    await createBookings(students, { c1, c2, c3, c4, c9, c10 });
 
     await verifyAndReport();
 
@@ -440,15 +629,24 @@ async function run() {
     console.log("Student 3 : priya@student.local    / password123");
     console.log("Student 4 : lena@student.local     / password123");
     console.log("Student 5 : tom@student.local      / password123");
+    console.log("Student 6 : sara@student.local     / password123");
+    console.log("Student 7 : james@student.local    / password123");
+    console.log("Student 8 : nina@student.local     / password123");
+    console.log("Student 9 : oliver@student.local   / password123");
+    console.log("Student 10: grace@student.local    / password123");
     console.log("\n— Courses created —");
-    console.log("  1.", c1.course.title, `— ${c1.sessions.length} sessions`);
-    console.log("  2.", c2.course.title, `— ${c2.sessions.length} sessions`);
-    console.log("  3.", c3.course.title, `— ${c3.sessions.length} sessions`);
-    console.log("  4.", c4.course.title, `— ${c4.sessions.length} sessions`);
-    console.log("  5.", c5.course.title, `— ${c5.sessions.length} sessions`);
-    console.log("  6.", c6.course.title, `— ${c6.sessions.length} sessions`);
-    console.log("  7.", c7.course.title, `— ${c7.sessions.length} sessions`);
-    console.log("  8.", c8.course.title, `— ${c8.sessions.length} sessions`);
+    console.log("  1.",  c1.course.title,  `— ${c1.sessions.length} sessions`);
+    console.log("  2.",  c2.course.title,  `— ${c2.sessions.length} sessions`);
+    console.log("  3.",  c3.course.title,  `— ${c3.sessions.length} sessions`);
+    console.log("  4.",  c4.course.title,  `— ${c4.sessions.length} sessions`);
+    console.log("  5.",  c5.course.title,  `— ${c5.sessions.length} sessions`);
+    console.log("  6.",  c6.course.title,  `— ${c6.sessions.length} sessions`);
+    console.log("  7.",  c7.course.title,  `— ${c7.sessions.length} sessions`);
+    console.log("  8.",  c8.course.title,  `— ${c8.sessions.length} sessions`);
+    console.log("  9.",  c9.course.title,  `— ${c9.sessions.length} sessions`);
+    console.log("  10.", c10.course.title, `— ${c10.sessions.length} sessions`);
+    console.log("  11.", c11.course.title, `— ${c11.sessions.length} sessions`);
+    console.log("  12.", c12.course.title, `— ${c12.sessions.length} sessions`);
 }
 
 run().catch((err) => {
