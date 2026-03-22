@@ -8,20 +8,22 @@
             <p class="muted">Meet the teachers behind the practice.</p>
         </div>
 
-        {{#instructors.length}}
+        {{#instructors}}
+            {{#-first}}
             <div class="cards">
-                {{#instructors}}
-                    <div class="card">
-                        <span class="tag">Instructor</span>
-                        <h3>{{name}}</h3>
-                        <div class="kv">
-                            <dt>Email</dt>
-                            <dd>{{email}}</dd>
-                        </div>
-                    </div>
-                {{/instructors}}
+            {{/-first}}
+            <div class="card">
+                <span class="tag">Instructor</span>
+                <h3>{{name}}</h3>
+                <div class="kv">
+                    <dt>Email</dt>
+                    <dd>{{email}}</dd>
+                </div>
             </div>
-        {{/instructors.length}}
+            {{#-last}}
+            </div>
+            {{/-last}}
+        {{/instructors}}
 
         {{^instructors}}
             <p class="muted">No instructors found.</p>

@@ -16,21 +16,22 @@
         <h2>Meet the Team</h2>
         <a href="/instructors">View all instructors</a>
     {{/team}}
+
     {{#contact}}
         <h2>Get in Touch</h2>
         <ul class="muted">
-            {{#address}}<li>{{address}}</li>{{/address}}
-            {{#phone}}<li><a href="tel:{{phone}}">{{phone}}</a></li>{{/phone}}
-            {{#email}}<li><a href="mailto:{{email}}">{{email}}</a></li>{{/email}}
+            {{#address}}<li>{{.}}</li>{{/address}}
+            {{#phone}}<li><a href="tel:{{.}}">{{.}}</a></li>{{/phone}}
+            {{#email}}<li><a href="mailto:{{.}}">{{.}}</a></li>{{/email}}
         </ul>
     {{/contact}}
 
     {{#social}}
         <h2>Follow Us</h2>
         <ul class="muted">
-            {{#instagram}}<li><a href="{{instagram}}">Instagram</a></li>{{/instagram}}
-            {{#facebook}}<li><a href="{{facebook}}">Facebook</a></li>{{/facebook}}
-            {{#twitter}}<li><a href="{{twitter}}">Twitter / X</a></li>{{/twitter}}
+            {{#instagram}}<li><a href="{{.}}">Instagram</a></li>{{/instagram}}
+            {{#facebook}}<li><a href="{{.}}">Facebook</a></li>{{/facebook}}
+            {{#twitter}}<li><a href="{{.}}">Twitter / X</a></li>{{/twitter}}
         </ul>
     {{/social}}
 
