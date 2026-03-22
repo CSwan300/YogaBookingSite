@@ -11,7 +11,6 @@ import sessionRoutes from "./routes/sessions.js";
 import bookingRoutes from "./routes/bookings.js";
 import viewRoutes from "./routes/views.js";
 import { attachSessionUser } from "./middlewares/auth.js";
-import { attachDemoUser } from "./middlewares/demoUser.js";
 import { initDb } from "./models/_db.js";
 
 dotenv.config();
@@ -27,7 +26,14 @@ app.engine(
     mustacheExpress(path.join(__dirname, "views", "partials"), ".mustache")
 );
 app.set("view engine", "mustache");
-app.set("views", path.join(__dirname, "views"));
+app.set("views", [
+    path.join(__dirname, "views"),
+    path.join(__dirname, "views", "misc"),
+    path.join(__dirname, "views", "course"),
+    path.join(__dirname, "views", "booking"),
+    path.join(__dirname, "views", "account"),
+    path.join(__dirname, "views", "dashboards"),
+]);
 
 // ── Body parsing ─────────────────────────────────────────────
 app.use(express.urlencoded({ extended: false }));
@@ -39,15 +45,8 @@ app.use(cookieParser(process.env.COOKIE_SECRET || "dev-cookie-secret"));
 // ── Static files ─────────────────────────────────────────────
 app.use("/static", express.static(path.join(__dirname, "public")));
 
-// ── Attach real JWT user first ───────────────────────────────
-// If no valid token exists, fall back to demo user for req.user
-// so booking logic still works during development.
-// Remove attachDemoUser once real registration is implemented.
+// ── Attach real JWT user ─────────────────────────────────────
 app.use(attachSessionUser);
-app.use((req, res, next) => {
-    if (!req.user) return attachDemoUser(req, res, next);
-    next();
-});
 
 // ── Health ───────────────────────────────────────────────────
 app.get("/health", (req, res) => res.json({ ok: true }));

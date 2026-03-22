@@ -1,0 +1,149 @@
+{{> head}}
+{{> header}}
+
+<article>
+    <h1>Class Schedule</h1>
+
+    <div class="schedule-controls">
+        {{#user}}
+            <div class="toggle-group">
+                <a href="/schedule" class="btn {{^showMyBookings}}active{{/showMyBookings}}">All Classes</a>
+                <a href="/schedule?my=1" class="btn {{#showMyBookings}}active{{/showMyBookings}}">My Bookings</a>
+            </div>
+        {{/user}}
+        {{^user}}
+            <p class="muted">
+                <a class="btn" href="/login?redirect=/schedule">Sign in to view your booked classes.</a>
+            </p>
+        {{/user}}
+
+        <div class="filter-group">
+            <select id="filter-week" class="filter-select">
+                <option value="">All Weeks</option>
+            </select>
+            <select id="filter-day" class="filter-select">
+                <option value="">All Days</option>
+                <option value="Mon">Mon</option>
+                <option value="Tue">Tue</option>
+                <option value="Wed">Wed</option>
+                <option value="Thu">Thu</option>
+                <option value="Fri">Fri</option>
+                <option value="Sat">Sat</option>
+                <option value="Sun">Sun</option>
+            </select>
+            <button id="filter-reset" class="btn">Clear Filters</button>
+        </div>
+    </div>
+
+    {{#weeks}}
+        <section class="calendar-week" data-week="{{label}}">
+            <h2 class="week-heading">{{label}}</h2>
+            <div class="calendar-grid">
+                {{#days}}
+                    <div class="calendar-day {{#isEmpty}}empty{{/isEmpty}}" data-day="{{dayName}}">
+                        <div class="day-heading">
+                            <span class="day-name">{{dayName}}</span>
+                            <span class="day-date">{{date}}</span>
+                        </div>
+                        {{#sessions}}
+                            <div class="session-card {{#isBooked}}booked{{/isBooked}} {{#isFull}}full{{/isFull}}">
+                                <div class="session-time">{{start}} – {{end}}</div>
+                                <div class="session-title">{{courseTitle}}</div>
+                                <div class="session-meta muted">{{courseLevel}} · {{duration}}</div>
+                                {{#canBook}}
+                                    <div class="session-dropin muted">No booking required</div>
+                                {{/canBook}}
+                                {{^isFull}}
+                                    <div class="session-spots muted">{{spotsLeft}} places left</div>
+                                {{/isFull}}
+                                {{#isFull}}
+                                    <div class="session-spots muted">Full</div>
+                                {{/isFull}}
+                                {{#isBooked}}
+                                    <span class="badge booked">Booked</span>
+                                {{/isBooked}}
+                                <div class="session-actions">
+                                    {{#isBooked}}
+                                        <form method="post" action="/bookings/{{bookingId}}/cancel">
+                                            <input type="hidden" name="returnTo" value="/schedule">
+                                            <button class="btn danger" type="submit">Cancel</button>
+                                        </form>
+                                    {{/isBooked}}
+                                    {{^isBooked}}
+                                        {{#user}}
+                                            <form method="post" action="/sessions/{{id}}/book">
+                                                <button class="btn" type="submit" {{#isFull}}disabled{{/isFull}}>Book</button>
+                                            </form>
+                                        {{/user}}
+                                        {{^user}}
+                                            <a href="/login?redirect=/schedule" class="btn">Book</a>
+                                        {{/user}}
+                                    {{/isBooked}}
+                                </div>
+                            </div>
+                        {{/sessions}}
+                        {{#isEmpty}}
+                            <p class="no-sessions muted">No classes</p>
+                        {{/isEmpty}}
+                    </div>
+                {{/days}}
+            </div>
+        </section>
+    {{/weeks}}
+
+    {{^weeks}}
+        <p class="muted">No classes scheduled.</p>
+    {{/weeks}}
+
+</article>
+<!--script for the filters -->
+<script>
+    (function () {
+        // ── Populate week dropdown from rendered sections ──────
+        var weekSelect = document.getElementById('filter-week');
+        var weekSections = document.querySelectorAll('.calendar-week');
+
+        weekSections.forEach(function (section) {
+            var label = section.dataset.week;
+            var option = document.createElement('option');
+            option.value = label;
+            option.textContent = label;
+            weekSelect.appendChild(option);
+        });
+
+        // ── Filter logic ───────────────────────────────────────
+        function applyFilters() {
+            var selectedWeek = weekSelect.value;
+            var selectedDay  = document.getElementById('filter-day').value;
+
+            weekSections.forEach(function (section) {
+                var weekMatch = !selectedWeek || section.dataset.week === selectedWeek;
+                if (!weekMatch) {
+                    section.hidden = true;
+                    return;
+                }
+                section.hidden = false;
+
+                var days = section.querySelectorAll('.calendar-day');
+                var anyVisible = false;
+
+                days.forEach(function (day) {
+                    var dayMatch = !selectedDay || day.dataset.day === selectedDay;
+                    day.hidden = !dayMatch;
+                    if (dayMatch) anyVisible = true;
+                });
+            });
+        }
+
+        weekSelect.addEventListener('change', applyFilters);
+        document.getElementById('filter-day').addEventListener('change', applyFilters);
+
+        document.getElementById('filter-reset').addEventListener('click', function () {
+            weekSelect.value = '';
+            document.getElementById('filter-day').value = '';
+            applyFilters();
+        });
+    })();
+</script>
+
+{{> footer}}
