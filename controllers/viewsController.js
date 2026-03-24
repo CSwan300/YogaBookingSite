@@ -77,27 +77,69 @@ export const homePage = async (req, res, next) => {
 /* ── List Courses (REQUIRED EXPORT) ─────────────────────────── */
 export const listCourses = async (req, res, next) => {
     try {
-        const courses = await CourseModel.list();
+        const allCourses = await CourseModel.list();
+
+        // 1. Capture Filter Params from URL
+        const { level, type, price, dropin, page: pageQuery } = req.query;
+
+        // 2. Filter the FULL list before paginating
+        let filtered = allCourses.filter(c => {
+            const matchLevel = !level  || c.level.toLowerCase() === level.toLowerCase();
+            const matchType  = !type   || c.type.toLowerCase().includes(type.toLowerCase());
+            const matchPrice = !price  || c.price <= parseFloat(price);
+            const matchDrop  = !dropin || String(c.allowDropIn) === dropin;
+
+            return matchLevel && matchType && matchPrice && matchDrop;
+        });
+
+        // 3. Pagination Logic on the Filtered List
+        const limit = 9;
+        const page = parseInt(pageQuery) || 1;
+        const totalCourses = filtered.length;
+        const totalPages = Math.ceil(totalCourses / limit);
+        const offset = (page - 1) * limit;
+
+        const pagedCourses = filtered.slice(offset, offset + limit);
+
         const cards = await Promise.all(
-            courses.map(async (c) => {
+            pagedCourses.map(async (c) => {
                 const sessions = await SessionModel.listByCourse(c._id);
-                const nextSession = sessions[0];
                 return {
                     id:            c._id,
                     title:         c.title,
                     level:         c.level,
                     type:          fmtType(c.type),
-                    price:         c.price, // Added requirement
+                    price:         c.price,
+                    dropInPrice:   c.dropInPrice || null,
                     allowDropIn:   c.allowDropIn,
                     startDate:     c.startDate ? fmtDateOnly(c.startDate) : "",
                     endDate:       c.endDate   ? fmtDateOnly(c.endDate)   : "",
-                    nextSession:   nextSession  ? fmtDate(nextSession.startDateTime) : "TBA",
-                    sessionsCount: sessions.length,
+                    nextSession:   sessions[0] ? fmtDate(sessions[0].startDateTime) : "TBA",
                     description:   c.description,
                 };
             })
         );
-        res.render("courses", { title: "Upcoming Courses", courses: cards });
+
+        res.render("courses", {
+            title: "Upcoming Courses",
+            courses: cards,
+            // Pass filters back to the view to keep dropdowns selected
+            filters: { level, type, price, dropin },
+            pagination: {
+                current: page,
+                total: totalPages,
+                hasNext: page < totalPages,
+                hasPrev: page > 1,
+                nextPage: page + 1,
+                prevPage: page - 1,
+                // Add filter params to pagination links
+                queryParams: `&level=${level || ''}&type=${type || ''}&price=${price || ''}&dropin=${dropin || ''}`,
+                pages: Array.from({length: totalPages}, (_, i) => ({
+                    number: i + 1,
+                    isCurrent: (i + 1) === page
+                }))
+            }
+        });
     } catch (err) {
         next(err);
     }
@@ -423,16 +465,24 @@ export const schedulePage = async (req, res, next) => {
 /* ── Instructors (public) ───────────────────────────────────── */
 export const instructorsPage = async (req, res, next) => {
     try {
-        const users = await UserModel.list();
-        const instructors = users
+        const allUsers = await UserModel.list();
+
+        // Filter for instructors and map to the required format
+        const instructors = allUsers
             .filter(u => u.role === "instructor")
             .map(u => ({
                 id:    u._id,
                 name:  u.name,
                 email: u.email,
+                bio:   u.bio,
+                // Using a UI Avatar service as a placeholder since there's no image URL in the data
+                image: u.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=random&size=128`
             }));
 
-        res.render("instructors", { title: "Our Instructors", instructors });
+        res.render("instructors", {
+            title: "Our Instructors",
+            instructors
+        });
     } catch (err) {
         next(err);
     }
@@ -443,16 +493,28 @@ export const aboutPage = (req, res) => {
     res.render("about", {
         title: "About Us",
         studio: {
-            name:        "Yoga Studio",
-            tagline:     "Yoga for Yogas sake",
-            description: "there would be a description here but i cant think off one.",
-            mission:     "to make you half as flexable as you want to be.",
+            name: "Yoga Studio",
+            tagline: `Find balance, build strength, 
+breathe deeper`,
+            description: `Nestled in the heart of the city, our yoga studio 
+offers a sanctuary for body, mind, and spirit. 
+
+Blending ancient traditions with modern wellness 
+practices, we guide you on a transformative journey 
+toward flexibility, inner peace, and self-discovery.`,
+            mission: `Our mission is to empower every student to unlock 
+their full potential through mindful movement and 
+conscious breath.
+
+We create a welcoming space where beginners and 
+experienced practitioners alike can grow, connect, 
+and find their center.`,
         },
-        team:    { members: [] },
+        team: true,
         contact: {
-            address: "123 Example Street, Glasgow",
-            phone:   "+44 131 000 0000",
-            email:   "theemailgoeshere@gmail.com",
+            address: ["123 Example Street, Glasgow"],
+            phone: ["+44 131 000 0000"],
+            email: ["hello@yogastudio.com"],
         },
         social: {
             instagram: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
@@ -461,6 +523,7 @@ export const aboutPage = (req, res) => {
         },
     });
 };
+
 
 /* ── Booking confirmation (registered users only) ───────────── */
 export const bookingConfirmationPage = async (req, res, next) => {

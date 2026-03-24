@@ -1,34 +1,42 @@
 {{> head}}
 {{> header}}
-<main>
-    <div class="wrap">
 
-        <div class="page-header">
-            <h1>Our Instructors</h1>
-            <p class="muted">Meet the teachers behind the practice.</p>
-        </div>
+<main class="wrap">
+    <header class="course-page-header">
+        <h1>Our Instructors</h1>
+        <p class="muted">Meet the teachers behind the practice.</p>
+    </header>
 
+    <div class="cards">
         {{#instructors}}
-            {{#-first}}
-            <div class="cards">
-            {{/-first}}
-            <div class="card">
-                <span class="tag">Instructor</span>
-                <h3>{{name}}</h3>
-                <div class="kv">
-                    <dt>Email</dt>
-                    <dd>{{email}}</dd>
+            <article class="card instructor-card">
+                <div class="instructor-image">
+                    <img src="{{image}}" alt="{{name}}">
                 </div>
-            </div>
-            {{#-last}}
-            </div>
-            {{/-last}}
+
+                <div class="instructor-content">
+                    <span class="tag">Instructor</span>
+                    <h3>{{name}}</h3>
+
+                    {{#bio}}
+                        <p class="instructor-bio">{{bio}}</p>
+                    {{/bio}}
+
+                    <div class="course-details">
+                        <div class="kv">
+                            <dt class="muted">Contact</dt>
+                            <dd><a href="mailto:{{email}}">{{email}}</a></dd>
+                        </div>
+                    </div>
+                </div>
+            </article>
         {{/instructors}}
 
         {{^instructors}}
-            <p class="muted">No instructors found.</p>
+            <div class="no-results">
+                <p class="muted">No instructors found at this time.</p>
+            </div>
         {{/instructors}}
-
     </div>
 </main>
 
