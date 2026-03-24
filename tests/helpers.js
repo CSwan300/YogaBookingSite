@@ -1,4 +1,6 @@
 // tests/helpers.js
+// noinspection DuplicatedCode
+
 import {
   initDb,
   usersDb,

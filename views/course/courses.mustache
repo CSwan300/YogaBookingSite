@@ -1,86 +1,42 @@
 {{> head}}
 {{> header}}
 
-<div class="wrap">
-    <h1>Upcoming Courses</h1>
+<main class="wrap">
+    <header style="margin-top: var(--space-2xl); margin-bottom: var(--space-xl);">
+        <h1>Upcoming Courses</h1>
+        <p class="muted">Explore our current blocks and workshops.</p>
+    </header>
 
-    {{! ── Filters ── }}
-    <div class="filters">
-        <form class="filter-form" method="GET" action="/courses">
-            <label>
-                Level
-                <select name="level">
-                    <option value="">All levels</option>
-                    <option value="beginner"     {{#filters.isBeginnerSelected}}selected{{/filters.isBeginnerSelected}}>Beginner</option>
-                    <option value="intermediate" {{#filters.isIntermediateSelected}}selected{{/filters.isIntermediateSelected}}>Intermediate</option>
-                    <option value="advanced"     {{#filters.isAdvancedSelected}}selected{{/filters.isAdvancedSelected}}>Advanced</option>
-                </select>
-            </label>
-
-            <label>
-                Type
-                <select name="type">
-                    <option value="">All types</option>
-                    <option value="WEEKLY_BLOCK"     {{#filters.isWeeklySelected}}selected{{/filters.isWeeklySelected}}>Weekly Block</option>
-                    <option value="WEEKEND_WORKSHOP" {{#filters.isWeekendSelected}}selected{{/filters.isWeekendSelected}}>Weekend Workshop</option>
-                </select>
-            </label>
-
-            <label>
-                Drop-in
-                <select name="dropin">
-                    <option value="">Any</option>
-                    <option value="yes" {{#filters.isDropinYes}}selected{{/filters.isDropinYes}}>Drop-in OK</option>
-                    <option value="no"  {{#filters.isDropinNo}}selected{{/filters.isDropinNo}}>Block only</option>
-                </select>
-            </label>
-
-            <label>
-                Search
-                <input type="text" name="q" placeholder="Title or description…" value="{{filters.q}}">
-            </label>
-
-            <button type="submit" class="btn primary">Search</button>
-            <a href="/courses" class="btn">Clear</a>
-        </form>
-    </div>
-
-    {{! ── Cards ── }}
     <div class="cards">
         {{#courses}}
-            <article class="card">
-                <span class="tag">{{type}}</span>
-                {{#allowDropIn}}<span class="tag">Drop-in OK</span>{{/allowDropIn}}
+            <section class="card">
+                <span class="tag">{{level}}</span>
                 <h3>{{title}}</h3>
-                <p class="muted">{{level}} · {{startDate}} – {{endDate}}</p>
+
+                <p class="muted">
+                    Type: {{type}} {{#allowDropIn}}• Drop-in OK{{/allowDropIn}}
+                </p>
+
                 <p>{{description}}</p>
-                <dl class="kv">
-                    <dt>Next session</dt><dd>{{nextSession}}</dd>
-                    <dt>Sessions</dt>    <dd>{{sessionsCount}}</dd>
-                </dl>
-                <a href="/courses/{{id}}" class="btn primary">View &amp; Book</a>
-            </article>
+
+                <div class="course-details">
+                    <p><strong>Price:</strong> £{{price}}</p>
+                    <p class="muted" style="font-size: 0.85rem;">Dates: {{startDate}} – {{endDate}}</p>
+                    <p class="muted" style="font-size: 0.85rem;">Next session: {{nextSession}}</p>
+                </div>
+
+                <div class="card-footer">
+                    <a href="/courses/{{id}}" class="btn primary">View &amp; Book</a>
+                </div>
+            </section>
         {{/courses}}
 
         {{^courses}}
-            <p class="muted">No courses match your search.</p>
+            <div style="grid-column: 1 / -1; text-align: center; padding: var(--space-2xl);">
+                <p class="muted">No courses available at the moment.</p>
+            </div>
         {{/courses}}
     </div>
-
-    {{! ── Pagination ── }}
-    {{#pagination}}
-        <div class="pagination">
-            {{#hasPrev}}
-                <a href="{{prevLink}}" class="btn">← Prev</a>
-            {{/hasPrev}}
-
-            <span class="muted">Page {{page}} of {{totalPages}} ({{total}} courses)</span>
-
-            {{#hasNext}}
-                <a href="{{nextLink}}" class="btn">Next →</a>
-            {{/hasNext}}
-        </div>
-    {{/pagination}}
-</div>
+</main>
 
 {{> footer}}

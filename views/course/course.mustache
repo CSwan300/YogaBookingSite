@@ -1,7 +1,7 @@
 {{> head}}
 {{> header}}
 
-<article>
+<article class="wrap">
     <h1>{{course.title}}</h1>
     <p class="muted">
         Level: {{course.level}} • Type: {{course.type}} {{#course.allowDropIn}}• Drop-in available{{/course.allowDropIn}}
@@ -9,8 +9,11 @@
     <p>{{course.description}}</p>
     <p class="muted">Dates: {{course.startDate}} – {{course.endDate}}</p>
 
-    <section>
+    <section class="booking-box">
         <h2>Book the full course</h2>
+        {{! --- SHOW FULL PRICE --- }}
+        <p class="price-display">Total Price: <strong>£{{course.price}}</strong></p>
+
         {{#user}}
             <form action="/courses/{{course.id}}/book" method="post">
                 <input type="hidden" name="userId" value="{{user.id}}">
@@ -18,7 +21,7 @@
             </form>
         {{/user}}
         {{^user}}
-            <a href="/login?redirect=/courses/{{course.id}}" class="btn primary">Book full course</a>
+            <a href="/login?redirect=/courses/{{course.id}}" class="btn primary">Login to Book</a>
         {{/user}}
     </section>
 
@@ -26,30 +29,35 @@
         <h2>Sessions</h2>
         <table class="table">
             <thead>
-            <tr><th>Start</th><th>End</th><th>Capacity</th><th>Booked</th><th>Remaining</th><th></th></tr>
+            {{! --- ADDED PRICE COLUMN --- }}
+            <tr><th>Start</th><th>End</th><th>Price</th><th>Capacity</th><th>Remaining</th><th></th></tr>
             </thead>
             <tbody>
             {{#sessions}}
                 <tr>
                     <td>{{start}}</td>
                     <td>{{end}}</td>
+                    {{! --- SHOW DROP-IN PRICE IF ALLOWED --- }}
+                    <td>
+                        {{#allowDropIn}}£{{dropInPrice}}{{/allowDropIn}}
+                        {{^allowDropIn}}—{{/allowDropIn}}
+                    </td>
                     <td>{{capacity}}</td>
-                    <td>{{booked}}</td>
                     <td>{{remaining}}</td>
                     <td>
                         {{#allowDropIn}}
                             {{#user}}
                                 <form action="/sessions/{{id}}/book" method="post">
                                     <input type="hidden" name="userId" value="{{user.id}}">
-                                    <button class="btn" type="submit" {{#isFull}}disabled{{/isFull}}>Book this session</button>
+                                    <button class="btn" type="submit" {{#isFull}}disabled{{/isFull}}>Book Session</button>
                                 </form>
                             {{/user}}
                             {{^user}}
-                                <a href="/login?redirect=/sessions/{{id}}" class="btn">Book this session</a>
+                                <a href="/login?redirect=/sessions/{{id}}" class="btn">Login</a>
                             {{/user}}
                         {{/allowDropIn}}
                         {{^allowDropIn}}
-                            <span class="muted">Drop-ins disabled</span>
+                            <span class="muted">Block Only</span>
                         {{/allowDropIn}}
                     </td>
                 </tr>

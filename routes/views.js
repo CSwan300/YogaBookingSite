@@ -1,7 +1,7 @@
-// routes/views.js
 import { Router } from "express";
 import {
     homePage,
+    listCourses,             // <-- UPDATED: Now imported from viewsController
     courseDetailPage,
     getBookCoursePage,
     postBookCourse,
@@ -19,7 +19,6 @@ import {
     registerPage,
     postRegister,
 } from "../controllers/authController.js";
-import { coursesListPage } from "../controllers/coursesListController.js";
 import { requireAuth } from "../middlewares/auth.js";
 
 const router = Router();
@@ -33,15 +32,17 @@ router.post("/register", postRegister);
 
 // ── Public ────────────────────────────────────────────────────
 router.get("/",            homePage);
-router.get("/courses",     coursesListPage);
+router.get("/courses",     listCourses);    // <-- UPDATED: Uses the refactored listCourses
 router.get("/courses/:id", courseDetailPage);
 router.get("/schedule",    schedulePage);
 router.get("/instructors", instructorsPage);
 router.get("/about",       aboutPage);
 
 // ── Registered users only ─────────────────────────────────────
-router.get("/courses/:id/book",            requireAuth, getBookCoursePage);
-router.post("/courses/:id/book",           requireAuth, postBookCourse);
+router.get("/courses",     listCourses);
+router.get("/courses/:id", courseDetailPage);
+router.get("/courses/:id/book", requireAuth, getBookCoursePage);
+router.post("/courses/:id/book", requireAuth, postBookCourse);
 router.post("/sessions/:id/book",          requireAuth, postBookSession);
 router.post("/bookings/:bookingId/cancel", requireAuth, postCancelBooking);
 router.get("/bookings/:bookingId",         requireAuth, bookingConfirmationPage);

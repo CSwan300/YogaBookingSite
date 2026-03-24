@@ -58,6 +58,7 @@ export const homePage = async (req, res, next) => {
                     title:         c.title,
                     level:         c.level,
                     type:          fmtType(c.type),
+                    price:         c.price, // Added requirement
                     allowDropIn:   c.allowDropIn,
                     startDate:     c.startDate ? fmtDateOnly(c.startDate) : "",
                     endDate:       c.endDate   ? fmtDateOnly(c.endDate)   : "",
@@ -68,6 +69,35 @@ export const homePage = async (req, res, next) => {
             })
         );
         res.render("home", { title: "Yoga Courses", courses: cards });
+    } catch (err) {
+        next(err);
+    }
+};
+
+/* ── List Courses (REQUIRED EXPORT) ─────────────────────────── */
+export const listCourses = async (req, res, next) => {
+    try {
+        const courses = await CourseModel.list();
+        const cards = await Promise.all(
+            courses.map(async (c) => {
+                const sessions = await SessionModel.listByCourse(c._id);
+                const nextSession = sessions[0];
+                return {
+                    id:            c._id,
+                    title:         c.title,
+                    level:         c.level,
+                    type:          fmtType(c.type),
+                    price:         c.price, // Added requirement
+                    allowDropIn:   c.allowDropIn,
+                    startDate:     c.startDate ? fmtDateOnly(c.startDate) : "",
+                    endDate:       c.endDate   ? fmtDateOnly(c.endDate)   : "",
+                    nextSession:   nextSession  ? fmtDate(nextSession.startDateTime) : "TBA",
+                    sessionsCount: sessions.length,
+                    description:   c.description,
+                };
+            })
+        );
+        res.render("courses", { title: "Upcoming Courses", courses: cards });
     } catch (err) {
         next(err);
     }
@@ -111,6 +141,7 @@ export const courseDetailPage = async (req, res, next) => {
                 title:         course.title,
                 level:         course.level,
                 type:          fmtType(course.type),
+                price:         course.price, // Added requirement
                 allowDropIn:   course.allowDropIn,
                 startDate:     course.startDate ? fmtDateOnly(course.startDate) : "",
                 endDate:       course.endDate   ? fmtDateOnly(course.endDate)   : "",
@@ -158,6 +189,7 @@ export const getBookCoursePage = async (req, res, next) => {
                 title:       course.title,
                 level:       course.level,
                 type:        fmtType(course.type),
+                price:       course.price, // Added requirement
                 allowDropIn: course.allowDropIn,
                 startDate:   course.startDate ? fmtDateOnly(course.startDate) : "",
                 endDate:     course.endDate   ? fmtDateOnly(course.endDate)   : "",
@@ -196,6 +228,7 @@ export const postBookCourse = async (req, res, next) => {
                     title:       course.title,
                     level:       course.level,
                     type:        fmtType(course.type),
+                    price:       course.price,
                     allowDropIn: course.allowDropIn,
                     startDate:   course.startDate ? fmtDateOnly(course.startDate) : "",
                     endDate:     course.endDate   ? fmtDateOnly(course.endDate)   : "",

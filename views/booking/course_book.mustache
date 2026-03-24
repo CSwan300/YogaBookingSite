@@ -20,7 +20,6 @@
     {{/errors}}
 
     <form method="post" action="/courses/{{course.id}}/book">
-        <!-- If you add CSRF later: <input type="hidden" name="_csrf" value="{{csrfToken}}"> -->
         <input type="hidden" name="userId" value="{{user.id}}">
 
         <fieldset>

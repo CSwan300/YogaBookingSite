@@ -5,7 +5,6 @@ import { requireAuth, requireOrganiser } from "../middlewares/auth.js";
 
 const router = Router();
 
-// ... existing routes ...
 
 // ── Book a single session (drop-in) ──────────────────────────
 router.post("/:id/book", requireAuth, async (req, res, next) => {

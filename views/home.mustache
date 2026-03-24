@@ -1,25 +1,39 @@
 {{> head}}
 {{> header}}
 
-<h1>Upcoming Courses</h1>
+<main class="wrap">
+    <header class="page-header">
+        <h1>Upcoming Courses</h1>
+    </header>
 
-<div class="cards">
-    {{#courses}}
-        <article class="card">
-            <h2>{{title}}</h2>
-            <p class="muted">
-                Level: {{level}} • Type: {{type}} {{#allowDropIn}}• Drop-in OK{{/allowDropIn}}
-            </p>
-            <p>{{description}}</p>
-            <p class="muted">Dates: {{startDate}} – {{endDate}}</p>
-            <p class="muted">Next session: {{nextSession}} • Sessions: {{sessionsCount}}</p>
-            <a href="/courses/{{id}}" class="btn primary">View &amp; Book</a>
-        </article>
-    {{/courses}}
+    <div class="cards">
+        {{#courses}}
+            <section class="card">
+                <span class="tag">{{level}}</span>
+                <h3>{{title}}</h3>
 
-    {{^courses}}
-        <p class="muted">No courses available yet.</p>
-    {{/courses}}
-</div>
+                <p class="muted">
+                    Type: {{type}} {{#allowDropIn}}• Drop-in OK{{/allowDropIn}}
+                </p>
+
+                <p>{{description}}</p>
+
+                <div class="course-details">
+                    <p><strong>Price:</strong> £{{price}}</p>
+                    <p class="muted">Dates: {{startDate}} – {{endDate}}</p>
+                    <p class="muted">Next session: {{nextSession}}</p>
+                </div>
+
+                <div class="card-footer">
+                    <a href="/courses/{{id}}" class="btn primary">View &amp; Book</a>
+                </div>
+            </section>
+        {{/courses}}
+
+        {{^courses}}
+            <p class="muted">No courses available at the moment.</p>
+        {{/courses}}
+    </div>
+</main>
 
 {{> footer}}

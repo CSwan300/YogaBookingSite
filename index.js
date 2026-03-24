@@ -20,6 +20,10 @@ const __dirname = path.dirname(__filename);
 
 export const app = express();
 
+/* ── Global Template Variables ─────────────────────────────── */
+// This makes {{year}} available in every mustache file automatically
+app.locals.year = new Date().getFullYear();
+
 // ── View engine (Mustache) ───────────────────────────────────
 app.engine(
     "mustache",
