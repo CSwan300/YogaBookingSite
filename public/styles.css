@@ -106,84 +106,169 @@ p { margin-bottom: var(--space-md); }
     padding: 0 var(--space-lg);
 }
 
-/* Article / about */
+/* Article / about - Centered (Updated) */
 article {
+    text-align: center;
     max-width: 800px;
     margin: 0 auto;
     padding: var(--space-2xl) var(--space-lg);
 }
 
-article h1 {
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-}
-
-article .muted {
-    font-size: 1.1rem;
-    margin-bottom: var(--space-xl);
-    font-style: italic;
-    display: block;
-}
-
+article p,
 article h2 {
-    margin-top: var(--space-2xl);
-    margin-bottom: var(--space-sm);
-    border-bottom: 1px solid var(--line);
-    padding-bottom: var(--space-xs);
+    text-align: center;
 }
 
+article p {
+    line-height: 1.7;
+    color: var(--ink);
+    margin: 0 auto var(--space-lg);
+    max-width: 600px;
+}
+
+/* Contact & Social sections - Centered boxes */
+article h2 + ul.muted {
+    list-style: none;
+    padding: var(--space-lg);
+    margin: var(--space-xl) auto;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+    max-width: 400px;
+    text-align: left;
+}
+
+article h2 + ul.muted li {
+    font-size: 1rem;
+    color: var(--ink);
+    margin-bottom: 0.75rem;
+    padding-left: var(--space-md);
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    justify-content: space-between;
+}
+
+article h2 + ul.muted li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    top: 0.1rem;
+    color: var(--brand);
+    font-weight: 600;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+article h2 + ul.muted li a {
+    color: var(--brand-dark);
+    text-decoration: none;
+    font-weight: 500;
+    padding-left: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+article h2 + ul.muted li a:hover {
+    color: var(--brand);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+/* Bold instructor link - Centered */
 article a[href="/instructors"] {
     display: inline-flex;
     align-items: center;
-    margin-top: var(--space-sm);
-    padding: 0.6rem 1.25rem;
+    justify-content: center;
+    margin: var(--space-lg) auto var(--space-sm);
+    padding: 0.75rem 1.5rem;
     background: var(--brand-light);
     color: var(--brand-dark);
     text-decoration: none;
-    font-weight: 600;
-    font-size: 0.85rem;
+    font-weight: 700;
+    font-size: 0.9rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     border-radius: var(--radius-sm);
-    border: 1px solid rgba(122, 158, 135, 0.3);
+    border: 2px solid var(--brand);
     transition: all 0.25s ease;
+    box-shadow: var(--shadow-card);
+    max-width: 280px;
 }
 
 article a[href="/instructors"]:hover {
     background: var(--brand);
     color: #fff;
     transform: translateX(5px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* Actions section - NO BOX, just centered button */
+article .actions {
+    margin: var(--space-2xl, 4rem) auto;
+    text-align: center;
+}
+
+article .actions .btn.primary {
+    display: inline-block;
+    padding: 1rem 2.5rem;
+    background: var(--brand);
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-radius: var(--radius-md);
+    transition: all 0.25s ease;
+    border: none;
+    box-shadow: var(--shadow-card);
+    margin: 0 auto;
+}
+
+article .actions .btn.primary:hover {
+    background: var(--brand-dark);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* Muted text */
+article .muted {
+    color: var(--muted) !important;
+    font-style: italic;
+    max-width: 600px;
+    margin: 0 auto var(--space-xl);
+}
+
+/* Mission section - FORCED CENTER TEXT */
+article h2:has(+ p) + p,
+article h2 + p {
+    background: var(--surface);
+    padding: var(--space-lg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    margin: var(--space-lg) auto var(--space-2xl);
+    max-width: 600px;
+    text-align: center !important; /* FORCED CENTER */
     box-shadow: var(--shadow-card);
 }
 
-article a[href="/instructors"]::after {
-    content: ' →';
-    margin-left: 8px;
-}
+/* Responsive */
+@media (max-width: 768px) {
+    article h2 + ul.muted {
+        margin-left: 0;
+        margin-right: 0;
+        max-width: none;
+        width: 100%;
+    }
 
-article ul {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 var(--space-md);
-    display: flex;
-    flex-direction: column;
-    gap: 0.8rem;
+    article h2 + ul.muted li {
+        padding-left: var(--space-sm);
+        flex-direction: row;
+        justify-content: space-between;
+    }
 }
-
-article ul li {
-    font-size: 1rem;
-    color: var(--ink);
-}
-
-article ul li a {
-    color: var(--brand-dark);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    font-weight: 500;
-    transition: color 0.2s;
-}
-
-article ul li a:hover { color: var(--brand); }
 
 /* Typography */
 h1, h2, h3 {
@@ -343,7 +428,43 @@ nav a.active::after { transform: scaleX(1); }
 .nav-toggle.open span:nth-child(3) {
     transform: translateY(-6.5px) rotate(-45deg);
 }
+.instructor-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Ensures all cards in a row match height */
+    overflow: hidden;
+}
 
+.instructor-image {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: var(--line);
+}
+
+.instructor-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.instructor-content {
+    padding: var(--space-md);
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.instructor-bio {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: var(--space-sm) 0;
+    color: var(--ink);
+    flex-grow: 1; /* Pushes the contact info to the bottom */
+}
+
+.course-page-header {
+    margin-bottom: var(--space-xl);
+}
 /* Theme toggle */
 .theme-toggle {
     display: inline-flex;

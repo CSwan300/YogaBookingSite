@@ -16,3 +16,4 @@
 {"name":"Tom","email":"tom@student.local","role":"student","password":"password123","_id":"s8XKfOHAWMbqFUUy"}
 {"name":"Lena","email":"lena@student.local","role":"student","password":"password123","_id":"xsc1aOtzurrnGo7e"}
 {"$$indexCreated":{"fieldName":"email","unique":true,"sparse":false}}
+{"$$indexCreated":{"fieldName":"email","unique":true}}
