@@ -35,5 +35,15 @@ export const CourseModel = {
                 total
             }
         };
+    },
+
+    // Added for seed script - creates new course
+    async create(courseData) {
+        return coursesDb.insertAsync(courseData);
+    },
+
+    // Added for seed script - updates course with sessionIds
+    async update(id, updateData) {
+        return coursesDb.updateAsync({ _id: id }, { $set: updateData }, {});
     }
 };

@@ -27,13 +27,15 @@ async function wipeAll() {
         sessionsDb.remove({}, { multi: true }),
         bookingsDb.remove({}, { multi: true }),
     ]);
+
     await Promise.all([
-        usersDb.persistence.compactDatafile(),
-        coursesDb.persistence.compactDatafile(),
-        sessionsDb.persistence.compactDatafile(),
-        bookingsDb.persistence.compactDatafile(),
+        usersDb.compactDatafile(),
+        coursesDb.compactDatafile(),
+        sessionsDb.compactDatafile(),
+        bookingsDb.compactDatafile(),
     ]);
 }
+
 
 /* ── Helpers ────────────────────────────────────────────────── */
 async function buildSessions(courseId, slots) {
