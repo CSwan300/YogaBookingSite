@@ -16,3 +16,9 @@
 {"name":"James","email":"james@student.local","role":"student","password":"password123","image":"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=256&h=256&fit=crop","userInitials":"J","createdAt":"2026-03-25T02:21:55.977Z","_id":"nd0hBr0qs2h5u3kV"}
 {"name":"Tom","email":"tom@student.local","role":"student","password":"password123","image":"https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=256&h=256&fit=crop","userInitials":"T","createdAt":"2026-03-25T02:21:55.977Z","_id":"tj2DfR5SqfkmYCLZ"}
 {"$$indexCreated":{"fieldName":"email","unique":true,"sparse":false}}
+{"$$deleted":true,"_id":"CMzMTCvsYv3unldE"}
+{"name":"PEnis","email":"t@g","role":"student","userInitials":"P","image":"https://ui-avatars.com/api/?name=PEnis&background=7C3AED&color=fff&size=128","createdAt":"2026-03-25T12:15:40.209Z","_id":"CMzMTCvsYv3unldE"}
+{"$$deleted":true,"_id":"CMzMTCvsYv3unldE"}
+{"name":"PEnis","email":"t@gm","role":"student","userInitials":"P","image":"https://ui-avatars.com/api/?name=PEnis&background=7C3AED&color=fff&size=128","createdAt":"2026-03-25T12:15:40.209Z","_id":"CMzMTCvsYv3unldE"}
+{"$$deleted":true,"_id":"CMzMTCvsYv3unldE"}
+{"name":"PEnis","email":"t@gm","role":"student","userInitials":"P","image":"https://ui-avatars.com/api/?name=PEnis&background=7C3AED&color=fff&size=128","createdAt":"2026-03-25T12:15:40.209Z","_id":"CMzMTCvsYv3unldE"}

@@ -8,7 +8,7 @@ export const getBookSessionPage = async (req, res, next) => {
                 message: "Course not found",
             });
 
-        // Hard redirect if drop-in is not enabled for this course
+        // Guard: redirect to full-course booking if drop-in isn't allowed
         if (!course.allowDropIn) {
             return res.redirect(`/courses/${req.params.id}/book`);
         }
@@ -16,24 +16,30 @@ export const getBookSessionPage = async (req, res, next) => {
         const sessions = await SessionModel.listByCourse(course._id);
         const now = new Date();
 
+        // Optional pre-selection via ?sessionId= (e.g. linked from schedule page)
+        const preSelectedId = req.query.sessionId || null;
+
         const rows = sessions
             .filter(s => new Date(s.startDateTime) >= now)
             .map(s => {
                 const remaining = Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0));
                 return {
-                    id:             s._id,
-                    start:          fmtDate(s.startDateTime),
+                    id:              s._id,
+                    start:           fmtDate(s.startDateTime),
                     remaining,
-                    isFull:         remaining === 0,
+                    isFull:          remaining === 0,
                     pluralRemaining: remaining !== 1,
-                    // Pre-select the first available session
-                    isSelected:     false,
+                    isSelected:      false, // set below
                 };
             });
 
-        // Mark the first non-full session as pre-selected
-        const firstAvailable = rows.find(s => !s.isFull);
-        if (firstAvailable) firstAvailable.isSelected = true;
+        // Pre-select: honour ?sessionId if valid and available, else first non-full
+        const preSelected = preSelectedId
+            ? rows.find(s => String(s.id) === String(preSelectedId) && !s.isFull)
+            : null;
+        const fallback = rows.find(s => !s.isFull);
+        const toSelect = preSelected || fallback;
+        if (toSelect) toSelect.isSelected = true;
 
         res.render("course_book_session", {
             title: `Drop-in: ${course.title}`,

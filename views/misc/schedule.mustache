@@ -55,10 +55,6 @@
                                 <div class="session-title">{{courseTitle}}</div>
                                 <div class="session-meta muted">{{courseLevel}} · {{duration}}</div>
 
-                                {{#canBook}}
-                                    <div class="session-dropin muted">No booking required</div>
-                                {{/canBook}}
-
                                 {{#isFull}}
                                     <div class="session-spots muted">Full</div>
                                 {{/isFull}}
@@ -84,12 +80,21 @@
 
                                     {{^isBooked}}
                                         {{#user}}
-                                            <form method="post" action="/sessions/{{id}}/book">
-                                                <input type="hidden" name="returnTo" value="/schedule{{#showMyBookings}}?my=1{{/showMyBookings}}">
-                                                <button class="btn" type="submit" {{#isFull}}disabled{{/isFull}}>
-                                                    {{#isFull}}Full{{/isFull}}{{^isFull}}Book{{/isFull}}
-                                                </button>
-                                            </form>
+                                            {{#canBook}}
+                                                {{^isFull}}
+                                                    <a href="/courses/{{courseId}}/book/session?sessionId={{id}}" class="btn">
+                                                    Book
+                                                    </a>
+                                                {{/isFull}}
+                                                {{#isFull}}
+                                                    <button class="btn" disabled>Full</button>
+                                                {{/isFull}}
+                                            {{/canBook}}
+                                            {{^canBook}}
+                                                <a href="/courses/{{courseId}}/book" class="btn">
+                                                    Book Course
+                                                </a>
+                                            {{/canBook}}
                                         {{/user}}
                                         {{^user}}
                                             <a href="/login?redirect=/schedule" class="btn">Book</a>
@@ -118,7 +123,6 @@
         var daySelect = document.getElementById('filter-day');
         var weekSections = document.querySelectorAll('.calendar-week');
 
-        // Populate week filter
         weekSections.forEach(function (section) {
             var label = section.dataset.week;
             var option = document.createElement('option');

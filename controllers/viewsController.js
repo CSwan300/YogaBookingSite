@@ -303,7 +303,15 @@ export const postBookCourse = async (req, res, next) => {
 /* ── Book session ───────────────────────────────────────────── */
 export const postBookSession = async (req, res, next) => {
     try {
-        const booking = await bookSessionForUser(req.user._id, req.params.id);
+        // sessionId comes from the radio button in course_book_session.mustache
+        const sessionId = req.body.sessionId;
+        if (!sessionId)
+            return res.status(400).render("error", {
+                title:   "Booking failed",
+                message: "No session selected. Please choose a session and try again.",
+            });
+
+        const booking = await bookSessionForUser(req.user._id, sessionId);
         res.redirect(`/bookings/${booking._id}?status=${booking.status}`);
     } catch (err) {
         const message =
@@ -313,6 +321,7 @@ export const postBookSession = async (req, res, next) => {
         res.status(400).render("error", { title: "Booking failed", message });
     }
 };
+
 /* ── Cancel Single Session ────────────────────────────────────── */
 export const postCancelSession = async (req, res, next) => {
     try {

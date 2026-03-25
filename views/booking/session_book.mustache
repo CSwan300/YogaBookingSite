@@ -18,7 +18,12 @@
         </div>
     {{/errors}}
 
-    <form method="post" action="/sessions/{{selectedSessionId}}/book">
+    {{!
+        POSTs to /sessions/book (body-based) rather than /sessions/:id/book.
+        The selected radio value (name="sessionId") carries the chosen session ID.
+        postBookSession must read req.body.sessionId — update the route accordingly.
+    }}
+    <form method="post" action="/sessions/book">
 
         <fieldset>
             <legend>Your details</legend>
@@ -52,13 +57,13 @@
             {{#sessions}}
                 <div class="field radio-session{{#isFull}} radio-session--full{{/isFull}}">
                     <input
-                        id="session-{{id}}"
-                        name="sessionId"
-                        type="radio"
-                        value="{{id}}"
-                        form="session-select-form"
+                            id="session-{{id}}"
+                            name="sessionId"
+                            type="radio"
+                            value="{{id}}"
                         {{#isFull}}disabled{{/isFull}}
                         {{#isSelected}}checked{{/isSelected}}
+                            required
                     >
                     <label for="session-{{id}}">
                         <span class="session-label-date">{{start}}</span>

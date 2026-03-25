@@ -15,7 +15,6 @@ import {
     profilePage,
     getEditProfilePage,
     postEditProfile,
-    postCancelSession,
 } from "../controllers/viewsController.js";
 import {
     loginPage,
@@ -52,10 +51,10 @@ router.post("/profile/edit", requireAuth, postEditProfile);
 // Booking — course (full block)
 router.get("/courses/:id/book",         requireAuth, getBookCoursePage);
 router.post("/courses/:id/book",        requireAuth, postBookCourse);
-router.post('/bookings/:bookingId/sessions/:sessionId/cancel', requireAuth, postCancelSession);
-// Booking — single drop-in session  ← new
+
+// Booking — single drop-in session
 router.get("/courses/:id/book/session", requireAuth, getBookSessionPage);
-router.post("/sessions/:id/book",       requireAuth, postBookSession);
+router.post("/sessions/book",           requireAuth, postBookSession);   // sessionId in req.body
 
 // Booking Management
 router.get("/bookings/:bookingId",         requireAuth, bookingConfirmationPage);
