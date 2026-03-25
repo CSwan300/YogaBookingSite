@@ -18,4 +18,18 @@ export const BookingModel = {
         await bookingsDb.update({ _id: id }, { $set: { status: "CANCELLED" } });
         return this.findById(id);
     },
+    async removeSession(bookingId, sessionId) {
+        // Use $pull to remove the specific sessionId from the array
+        await bookingsDb.update(
+            { _id: bookingId },
+            { $pull: { sessionIds: sessionId } }
+        );
+
+        // Check if there are any sessions left; if not, cancel the whole booking
+        const updated = await this.findById(bookingId);
+        if (!updated.sessionIds || updated.sessionIds.length === 0) {
+            await this.cancel(bookingId);
+        }
+        return this.findById(bookingId);
+    }
 };

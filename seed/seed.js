@@ -78,30 +78,35 @@ async function createUsers() {
             email:    "fiona@student.local",
             role:     "student",
             password: hashPassword("password123"),
+            image:    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=256&h=256&fit=crop"
         }),
         UserModel.create({
             name:     "Marcus",
             email:    "marcus@student.local",
             role:     "student",
             password: hashPassword("password123"),
+            image:    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=256&h=256&fit=crop"
         }),
         UserModel.create({
             name:     "Priya",
             email:    "priya@student.local",
             role:     "student",
             password: hashPassword("password123"),
+            image:    "https://images.unsplash.com/photo-1531123897727-8f129e16fd3c?w=256&h=256&fit=crop"
         }),
         UserModel.create({
             name:     "Lena",
             email:    "lena@student.local",
             role:     "student",
             password: hashPassword("password123"),
+            image:    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=256&h=256&fit=crop"
         }),
         UserModel.create({
             name:     "Tom",
             email:    "tom@student.local",
             role:     "student",
             password: hashPassword("password123"),
+            image:    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=256&h=256&fit=crop"
         }),
 
         // ── New Students ────────────────────────────────────────
@@ -110,55 +115,64 @@ async function createUsers() {
             email:    "sara@student.local",
             role:     "student",
             password: hashPassword("password123"),
+            image:    "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=256&h=256&fit=crop"
         }),
         UserModel.create({
             name:     "James",
             email:    "james@student.local",
             role:     "student",
             password: hashPassword("password123"),
+            image:    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=256&h=256&fit=crop"
         }),
         UserModel.create({
             name:     "Nina",
             email:    "nina@student.local",
             role:     "student",
             password: hashPassword("password123"),
+            image:    "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=256&h=256&fit=crop"
         }),
         UserModel.create({
             name:     "Oliver",
             email:    "oliver@student.local",
             role:     "student",
             password: hashPassword("password123"),
+            image:    "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=256&h=256&fit=crop"
         }),
         UserModel.create({
             name:     "Grace",
             email:    "grace@student.local",
             role:     "student",
             password: hashPassword("password123"),
+            image:    "https://images.unsplash.com/photo-1554151228-14d9def656e4?w=256&h=256&fit=crop"
         }),
 
-        // ── Original Instructors ────────────────────────────────
+        // ── Original Instructors ──────────────────────────
         UserModel.create({
             name:  "Ava",
             email: "ava@yoga.local",
             role:  "instructor",
+            image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=256&h=256&fit=crop",
             bio:   "Ava has been teaching yoga for over 10 years, specialising in restorative and mindfulness-based practices.",
         }),
         UserModel.create({
             name:  "Ben",
             email: "ben@yoga.local",
             role:  "instructor",
+            image: "https://images.unsplash.com/photo-1552196564-972b3afe73d3?w=256&h=256&fit=crop",
             bio:   "Ben brings a dynamic energy to his Vinyasa classes, blending breath, movement, and mindful transitions.",
         }),
         UserModel.create({
             name:  "Chen",
             email: "chen@yoga.local",
             role:  "instructor",
+            image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=256&h=256&fit=crop",
             bio:   "Chen is an advanced practitioner with a focus on arm balances, inversions, and strength-based yoga.",
         }),
         UserModel.create({
             name:  "Isla",
             email: "isla@yoga.local",
             role:  "instructor",
+            image: "https://images.unsplash.com/photo-1588282322673-c31965a75c3e?w=256&h=256&fit=crop",
             bio:   "Isla's gentle approach makes her classes perfect for beginners and those recovering from injury.",
         }),
 
@@ -167,8 +181,9 @@ async function createUsers() {
             name:  "Raj",
             email: "raj@yoga.local",
             role:  "instructor",
+            image: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=256&h=256&fit=crop",
             bio:   "Raj specialises in Ashtanga and power yoga, bringing a structured and energetic approach to every session.",
-        }),
+        })
     ]);
 
     return {
@@ -177,7 +192,6 @@ async function createUsers() {
         instructors: { ava, ben, chen, isla, raj },
     };
 }
-
 /* ── Courses ────────────────────────────────────────────────── */
 
 // 1. Weekend workshop — beginner, no drop-in

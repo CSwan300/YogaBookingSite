@@ -4,6 +4,7 @@ import {
     listCourses,
     courseDetailPage,
     getBookCoursePage,
+    getBookSessionPage,       // ← new
     postBookCourse,
     postBookSession,
     postCancelBooking,
@@ -14,6 +15,7 @@ import {
     profilePage,
     getEditProfilePage,
     postEditProfile,
+    postCancelSession,
 } from "../controllers/viewsController.js";
 import {
     loginPage,
@@ -47,10 +49,13 @@ router.get("/profile",       requireAuth, profilePage);
 router.get("/profile/edit",  requireAuth, getEditProfilePage);
 router.post("/profile/edit", requireAuth, postEditProfile);
 
-// Booking Actions
-router.get("/courses/:id/book",  requireAuth, getBookCoursePage);
-router.post("/courses/:id/book", requireAuth, postBookCourse);
-router.post("/sessions/:id/book", requireAuth, postBookSession);
+// Booking — course (full block)
+router.get("/courses/:id/book",         requireAuth, getBookCoursePage);
+router.post("/courses/:id/book",        requireAuth, postBookCourse);
+router.post('/bookings/:bookingId/sessions/:sessionId/cancel', requireAuth, postCancelSession);
+// Booking — single drop-in session  ← new
+router.get("/courses/:id/book/session", requireAuth, getBookSessionPage);
+router.post("/sessions/:id/book",       requireAuth, postBookSession);
 
 // Booking Management
 router.get("/bookings/:bookingId",         requireAuth, bookingConfirmationPage);

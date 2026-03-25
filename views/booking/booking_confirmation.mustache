@@ -1,33 +1,88 @@
 {{> head}}
 {{> header}}
 
-<article>
-    <h1>Booking Confirmation</h1>
+<main class="container">
+    <article class="booking-card">
+        <h1>Booking Confirmation</h1>
 
-    {{#isCancelled}}
-        <p class="muted">This booking has been cancelled.</p>
-    {{/isCancelled}}
-    {{^isCancelled}}
-        <p>Your booking has been created successfully.</p>
-    {{/isCancelled}}
+        {{#isCancelled}}
+            <div class="alert alert-muted">
+                <p><strong>Status:</strong> This entire booking block has been cancelled.</p>
+            </div>
+        {{/isCancelled}}
 
-    <dl class="kv">
-        <dt>ID</dt><dd>{{booking.id}}</dd>
-        <dt>Type</dt><dd>{{booking.type}}</dd>
-        <dt>Status</dt><dd>{{booking.status}}</dd>
-        <dt>Created</dt><dd>{{booking.createdAt}}</dd>
-    </dl>
+        {{^isCancelled}}
+            {{#isUpdated}}
+                <div class="alert alert-success">
+                    <p>Session successfully removed from your booking.</p>
+                </div>
+            {{/isUpdated}}
 
-    {{^isCancelled}}
-        <form method="post" action="/bookings/{{booking.id}}/cancel">
-            <input type="hidden" name="returnTo" value="{{returnTo}}">
-            <button class="btn danger" type="submit">Cancel Booking</button>
-        </form>
-    {{/isCancelled}}
+            <p>Your booking details are shown below.</p>
+        {{/isCancelled}}
 
-    <div class="actions">
-        <a href="{{returnTo}}" class="btn">← Back</a>
-    </div>
-</article>
+        <section class="booking-info">
+            <dl class="kv">
+                <dt>Booking ID</dt>
+                <dd>{{booking.id}}</dd>
+
+                <dt>Type</dt>
+                <dd>{{booking.type}}</dd>
+
+                <dt>Booked On</dt>
+                <dd>{{booking.createdAt}}</dd>
+
+                <dt>Current Status</dt>
+                <dd><span class="status-pill {{booking.status}}">{{booking.status}}</span></dd>
+            </dl>
+        </section>
+
+        <hr>
+
+        {{^isCancelled}}
+            <section class="sessions-management">
+                <h2>Your Scheduled Sessions</h2>
+                <p class="help-text">You can cancel individual sessions below if you cannot attend specific dates.</p>
+
+                <ul class="session-list">
+                    {{#sessions}}
+                        <li class="session-item">
+                            <div class="session-meta">
+                                <span class="session-date"><strong>{{start}}</strong></span>
+                                <span class="session-time"> to {{end}}</span>
+                            </div>
+
+                            <form action="/bookings/{{booking.id}}/sessions/{{id}}/cancel" method="POST" class="session-cancel-form">
+                                <input type="hidden" name="returnTo" value="/bookings/{{booking.id}}">
+                                <button type="submit" class="btn danger small" onclick="return confirm('Are you sure you want to cancel ONLY this session?')">
+                                    Cancel Session
+                                </button>
+                            </form>
+                        </li>
+                    {{/sessions}}
+                    {{^sessions}}
+                        <li>No active sessions found for this booking.</li>
+                    {{/sessions}}
+                </ul>
+            </section>
+
+            <div class="danger-zone">
+                <h3>Cancel Entire Booking</h3>
+                <p>This will cancel all remaining sessions listed above and release your spots.</p>
+
+                <form action="/bookings/{{booking.id}}/cancel" method="POST">
+                    <input type="hidden" name="returnTo" value="/profile">
+                    <button type="submit" class="btn danger" onclick="return confirm('WARNING: This will cancel every session in this block. Proceed?')">
+                        Cancel Entire Block
+                    </button>
+                </form>
+            </div>
+        {{/isCancelled}}
+
+        <div class="actions">
+            <a href="{{returnTo}}" class="btn">← Back</a>
+        </div>
+    </article>
+</main>
 
 {{> footer}}

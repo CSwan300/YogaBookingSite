@@ -29,12 +29,10 @@
                             onerror swaps in the initials circle if the URL ever fails.
                         -->
                         <img
-                            src="{{image}}"
-                            alt="{{userInitials}}"
-                            class="header-avatar-img"
-                            onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
-                        >
-                        <span class="avatar-initials-circle" style="display:none;">{{userInitials}}</span>
+                                src="{{image}}"
+                                alt="{{userInitials}}"
+                                class="header-avatar-img"
+                                onerror="this.onerror=null; this.src='https://ui-avatars.com/api/{{userInitials}}';"                        >
                     </a>
 
                 </div>
