@@ -31,11 +31,13 @@ export const attachSessionUser = async (req, res, next) => {
 
         req.user = user;
         res.locals.user = {
-            id:          user._id,
-            name:        user.name,
-            role:        user.role,
-            isStudent:   user.role === "student",
-            isOrganiser: user.role === "organiser",
+            id:           user._id,
+            name:         user.name,
+            role:         user.role,
+            image:        user.image        || null,
+            userInitials: user.userInitials || '',
+            isStudent:    user.role === "student",
+            isOrganiser:  user.role === "organiser",
         };
         next();
     } catch (err) {

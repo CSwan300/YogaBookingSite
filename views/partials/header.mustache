@@ -2,6 +2,12 @@
     <div class="wrap">
         <a href="/" class="brand">🧘 Yoga Studio</a>
 
+        <button id="nav-toggle" class="nav-toggle" aria-label="Open menu" aria-expanded="false">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
         <nav id="main-nav">
             <a href="/courses">Courses</a>
             <a href="/schedule">Schedule</a>
@@ -9,26 +15,37 @@
             <a href="/about">About</a>
         </nav>
 
-        {{#user}}
-            <div class="user">
-                • Signed in as <strong>{{name}}</strong>
-                <a href="/logout" class="btn-logout" id="sign-out-btn">Sign out</a>
-            </div>
-        {{/user}}
+        <div class="header-actions">
+            <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
+                <span class="theme-icon">☀️</span>
+            </button>
 
-        {{^user}}
-            <a href="/login" class="btn-login">Sign in</a>
-        {{/user}}
+            {{#user}}
+                <div class="user-logged-in">
+                    <a href="/profile" title="View Profile" class="header-avatar-link">
+                        <!--
+                            Always render an <img> — the model always sets image
+                            (either uploaded or generated from ui-avatars.com).
+                            onerror swaps in the initials circle if the URL ever fails.
+                        -->
+                        <img
+                            src="{{image}}"
+                            alt="{{userInitials}}"
+                            class="header-avatar-img"
+                            onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+                        >
+                        <span class="avatar-initials-circle" style="display:none;">{{userInitials}}</span>
+                    </a>
 
-        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
-            <span class="theme-icon">☀️</span>
-        </button>
+                </div>
+            {{/user}}
 
-        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="main-nav">
-            <span></span>
-            <span></span>
-            <span></span>
-        </button>
+            {{^user}}
+                <div class="auth-links">
+                    <a href="/login" class="btn-login">Sign in</a>
+                </div>
+            {{/user}}
+        </div>
     </div>
 </header>
 
@@ -45,7 +62,7 @@
         }
 
         // Apply saved or system preference immediately
-        var saved  = localStorage.getItem('theme');
+        var saved       = localStorage.getItem('theme');
         var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         setTheme(saved ? saved === 'dark' : prefersDark);
 
@@ -73,7 +90,11 @@
         });
 
         document.addEventListener('click', function (e) {
-            if (!toggle.contains(e.target) && !nav.contains(e.target) && !themeToggle.contains(e.target)) {
+            if (
+                !toggle.contains(e.target) &&
+                !nav.contains(e.target) &&
+                !themeToggle.contains(e.target)
+            ) {
                 nav.classList.remove('open');
                 toggle.classList.remove('open');
                 toggle.setAttribute('aria-expanded', 'false');

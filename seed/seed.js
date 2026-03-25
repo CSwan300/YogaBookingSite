@@ -501,6 +501,7 @@ async function createBookings(students, courses) {
 
     await Promise.all([
         // Fiona — Vinyasa course
+        // Profile: [FG] + Auto-Avatar via Fiona's User ID
         BookingModel.create({
             userId:     fiona._id,
             courseId:   c2.course._id,
@@ -510,6 +511,7 @@ async function createBookings(students, courses) {
             createdAt:  new Date().toISOString(),
         }),
         // Marcus — Vinyasa drop-in session 1
+        // Profile: [M] + Auto-Avatar via Marcus's User ID
         BookingModel.create({
             userId:     marcus._id,
             sessionIds: [c2.sessions[0]._id],

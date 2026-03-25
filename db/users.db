@@ -1,4 +1,5 @@
 {"name":"test","email":"test@gmail.com","role":"student","_id":"0rgjdqIvphzPgmKm"}
+{"name":"testtett","email":"jajwsj@gmai","role":"student","userInitials":"T","image":"https://ui-avatars.com/api/?name=testtett&background=D97706&color=fff&size=128","createdAt":"2026-03-25T01:13:50.168Z","_id":"2G5hR25P7jsyg6FM"}
 {"name":"Marcus","email":"marcus@student.local","role":"student","password":"password123","_id":"629w2ehSTJLPZQom"}
 {"name":"James","email":"james@student.local","role":"student","password":"password123","_id":"AS79bCr2T6WgFqDx"}
 {"name":"Nina","email":"nina@student.local","role":"student","password":"password123","_id":"B0S4UBDiQogixmR3"}
@@ -10,6 +11,8 @@
 {"name":"Ben","email":"ben@yoga.local","role":"instructor","bio":"Ben brings a dynamic energy to his Vinyasa classes, blending breath, movement, and mindful transitions.","_id":"QqEx4HRb33R1cqdN"}
 {"name":"Chen","email":"chen@yoga.local","role":"instructor","bio":"Chen is an advanced practitioner with a focus on arm balances, inversions, and strength-based yoga.","_id":"VBNw0KWpOQDyr0OC"}
 {"name":"testtettst","email":"t@gmail.com","role":"student","_id":"ZKFCetwqyQ1eCj24"}
+{"name":"tetststa","email":"teatdtatd@gmail.com","role":"student","userInitials":"T","image":"https://ui-avatars.com/api/?name=tetststa&background=D97706&color=fff&size=128","createdAt":"2026-03-25T01:09:38.269Z","_id":"ZN7bExTFWpgHRRf6"}
+{"name":"HSAHAHSAH HSAHSHASHAS","email":"tt@gmail.com","role":"student","userInitials":"HH","image":"https://ui-avatars.com/api/?name=HSAHAHSAH%20HSAHSHASHAS&background=DB2777&color=fff&size=128","createdAt":"2026-03-25T01:26:47.300Z","_id":"cO0qXlHxLebjjYpx"}
 {"name":"Isla","email":"isla@yoga.local","role":"instructor","bio":"Isla's gentle approach makes her classes perfect for beginners and those recovering from injury.","_id":"d94z0aUNVINDKYS4"}
 {"name":"Oliver","email":"oliver@student.local","role":"student","password":"password123","_id":"ivE37MGEIdR4Kccu"}
 {"name":"Fiona","email":"fiona@student.local","role":"student","password":"password123","_id":"o2SIYAJEoJusRo3D"}
@@ -17,4 +20,3 @@
 {"name":"Tom","email":"tom@student.local","role":"student","password":"password123","_id":"s8XKfOHAWMbqFUUy"}
 {"name":"Lena","email":"lena@student.local","role":"student","password":"password123","_id":"xsc1aOtzurrnGo7e"}
 {"$$indexCreated":{"fieldName":"email","unique":true,"sparse":false}}
-{"$$indexCreated":{"fieldName":"email","unique":true}}
