@@ -1,8 +1,6 @@
 import { UserModel } from '../models/userModel.js';
 
 // ─── GET /profile ────────────────────────────────────────────────────────────
-// Show the current user's profile page.
-
 export async function getProfile(req, res) {
     const user = await UserModel.findById(req.user._id);
     if (!user) return res.redirect('/login');
@@ -14,8 +12,6 @@ export async function getProfile(req, res) {
 }
 
 // ─── GET /profile/edit ───────────────────────────────────────────────────────
-// Show the edit profile form, pre-filled with current values.
-
 export async function getEditProfile(req, res) {
     const user = await UserModel.findById(req.user._id);
     if (!user) return res.redirect('/login');
@@ -28,8 +24,6 @@ export async function getEditProfile(req, res) {
 }
 
 // ─── POST /profile/edit ──────────────────────────────────────────────────────
-// Validate and apply profile updates.
-
 export async function postEditProfile(req, res) {
     const user = await UserModel.findById(req.user._id);
     if (!user) return res.redirect('/login');
@@ -40,7 +34,6 @@ export async function postEditProfile(req, res) {
     if (errors.length) {
         return res.render('profile-edit', {
             ...formatUser(user),
-            // Keep whatever the user typed so the form doesn't reset
             name,
             email,
             pageTitle: 'Edit Profile',
@@ -62,6 +55,7 @@ export async function postEditProfile(req, res) {
         }
     }
 
+    // This now performs a delete-then-insert internally to prevent duplicates
     await UserModel.update(user._id, { name, email });
 
     res.redirect('/profile');
@@ -71,24 +65,18 @@ export async function postEditProfile(req, res) {
 
 function validate({ name, email }) {
     const errors = [];
-
     if (!name || name.trim().length < 2) {
         errors.push({ msg: 'Name must be at least 2 characters.' });
     }
-
     if (name && name.trim().length > 80) {
         errors.push({ msg: 'Name must be 80 characters or fewer.' });
     }
-
     if (!email || !email.includes('@')) {
         errors.push({ msg: 'Please enter a valid email address.' });
     }
-
     return errors;
 }
 
-// Formats a raw DB user object into template-friendly shape,
-// including a formatted createdAt date.
 function formatUser(user) {
     return {
         ...user,

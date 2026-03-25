@@ -1,0 +1,97 @@
+{{> head}}
+{{> header}}
+
+<article>
+    <h1>Drop-in: {{course.title}}</h1>
+    <p class="muted">
+        Level: {{course.level}} &bull; {{course.type}} &bull; Drop-in available
+    </p>
+    <p>{{course.description}}</p>
+
+    {{#errors}}
+        <div class="alert error" role="alert" aria-live="assertive">
+            <ul>
+                {{#list}}
+                    <li>{{.}}</li>
+                {{/list}}
+            </ul>
+        </div>
+    {{/errors}}
+
+    {{!
+        POSTs to /sessions/book (body-based) rather than /sessions/:id/book.
+        The selected radio value (name="sessionId") carries the chosen session ID.
+        postBookSession must read req.body.sessionId — update the route accordingly.
+    }}
+    <form method="post" action="/sessions/book">
+
+        <fieldset>
+            <legend>Your details</legend>
+
+            <div class="field">
+                <label for="name">Full name</label>
+                <input id="name" name="name" type="text" required value="{{user.name}}">
+            </div>
+
+            <div class="field">
+                <label for="email">Email</label>
+                <input id="email" name="email" type="email" required value="{{user.email}}">
+            </div>
+
+            <div class="field">
+                <label for="notes">Notes (injuries, preferences)</label>
+                <textarea id="notes" name="notes" rows="4" placeholder="Optional">{{notes}}</textarea>
+            </div>
+
+            <div class="field checkbox">
+                <input id="consent" name="consent" type="checkbox" required>
+                <label for="consent">I agree to the studio's booking terms &amp; health disclaimer.</label>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Choose a session</legend>
+
+            <p class="muted">Select one session to attend as a drop-in.</p>
+
+            {{#sessions}}
+                <div class="field radio-session{{#isFull}} radio-session--full{{/isFull}}">
+                    <input
+                            id="session-{{id}}"
+                            name="sessionId"
+                            type="radio"
+                            value="{{id}}"
+                        {{#isFull}}disabled{{/isFull}}
+                        {{#isSelected}}checked{{/isSelected}}
+                            required
+                    >
+                    <label for="session-{{id}}">
+                        <span class="session-label-date">{{start}}</span>
+                        {{#isFull}}
+                            <span class="badge full">Full</span>
+                        {{/isFull}}
+                        {{^isFull}}
+                            <span class="badge">{{remaining}} place{{#pluralRemaining}}s{{/pluralRemaining}} left</span>
+                        {{/isFull}}
+                    </label>
+                </div>
+            {{/sessions}}
+
+            {{^sessions}}
+                <p class="muted">No upcoming sessions are available for drop-in booking.</p>
+            {{/sessions}}
+        </fieldset>
+
+        <div class="actions">
+            <button class="btn primary" type="submit"{{^sessions}} disabled{{/sessions}}>
+                Confirm Drop-in Booking
+            </button>
+            <a href="/courses/{{course.id}}/book" class="btn">Book full course instead</a>
+            <a href="/courses/{{course.id}}">Back to course</a>
+        </div>
+    </form>
+</article>
+
+
+
+{{> footer}}

@@ -1,33 +1,71 @@
 {{> head}}
 {{> header}}
+<main class="container">
+    <article class="booking-card">
+        <h1>Booking Confirmation</h1>
+        {{#isCancelled}}
+            <div class="alert alert-muted">
+                <p><strong>Status:</strong> This entire booking block has been cancelled.</p>
+            </div>
+        {{/isCancelled}}
+        {{^isCancelled}}
+            {{#isUpdated}}
+                <div class="alert alert-success">
+                    <p>Session successfully removed from your booking.</p>
+                </div>
+            {{/isUpdated}}
+            <p>Your booking details are shown below.</p>
+        {{/isCancelled}}
 
-<article>
-    <h1>Booking Confirmation</h1>
+        <section class="booking-info">
+            <dl class="kv">
+                <dt>Booking ID</dt>
+                <dd>{{booking.id}}</dd>
+                <dt>Type</dt>
+                <dd>{{booking.type}}</dd>
+                <dt>Booked On</dt>
+                <dd>{{booking.createdAt}}</dd>
+                <dt>Current Status</dt>
+                <dd><span class="status-pill {{booking.status}}">{{booking.status}}</span></dd>
+            </dl>
+        </section>
 
-    {{#isCancelled}}
-        <p class="muted">This booking has been cancelled.</p>
-    {{/isCancelled}}
-    {{^isCancelled}}
-        <p>Your booking has been created successfully.</p>
-    {{/isCancelled}}
+        <hr>
 
-    <dl class="kv">
-        <dt>ID</dt><dd>{{booking.id}}</dd>
-        <dt>Type</dt><dd>{{booking.type}}</dd>
-        <dt>Status</dt><dd>{{booking.status}}</dd>
-        <dt>Created</dt><dd>{{booking.createdAt}}</dd>
-    </dl>
+        {{^isCancelled}}
+            <section class="sessions-management">
+                <h2>Your Scheduled Sessions</h2>
+                <p class="help-text">View your upcoming sessions below. To cancel a session or your entire booking, use the manage button.</p>
+                <ul class="session-list">
+                    {{#sessions}}
+                        <li class="session-item">
+                            <div class="session-meta">
+                                <span class="session-date"><strong>{{start}}</strong></span>
+                                <span class="session-time"> to {{end}}</span>
+                            </div>
+                            <a href="/bookings/{{bookingId}}/cancel-confirm?session={{id}}" class="btn danger small">
+                            Cancel This Session
+                            </a>
+                        </li>
+                    {{/sessions}}
+                    {{^sessions}}
+                        <li>No active sessions found for this booking.</li>
+                    {{/sessions}}
+                </ul>
+            </section>
 
-    {{^isCancelled}}
-        <form method="post" action="/bookings/{{booking.id}}/cancel">
-            <input type="hidden" name="returnTo" value="{{returnTo}}">
-            <button class="btn danger" type="submit">Cancel Booking</button>
-        </form>
-    {{/isCancelled}}
+            <div class="danger-zone">
+                <h3>Cancel Entire Booking</h3>
+                <p>This will cancel all remaining sessions listed above and release your spots.</p>
+                <a href="/bookings/{{booking.id}}/cancel-confirm" class="btn danger">
+                    Cancel Entire Booking
+                </a>
+            </div>
+        {{/isCancelled}}
 
-    <div class="actions">
-        <a href="{{returnTo}}" class="btn">← Back</a>
-    </div>
-</article>
-
+        <div class="actions">
+            <a href="/" class="btn">← Home</a>
+        </div>
+    </article>
+</main>
 {{> footer}}

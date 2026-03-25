@@ -46,12 +46,14 @@ export const UserModel = {
         return usersDb.find({});
     },
 
+    async delete(id) {
+        return usersDb.remove({ _id: id });
+    },
+
     async update(id, data) {
         const existing = await usersDb.findOne({ _id: id });
         if (!existing) throw new Error('User not found');
 
-        // Regenerate avatar fields whenever name changes,
-        // but only if the user doesn't have a manually uploaded image.
         const nameChanged = data.name && data.name !== existing.name;
         const hasCustomImage = data.image !== undefined
             ? Boolean(data.image)
@@ -61,24 +63,26 @@ export const UserModel = {
         if (nameChanged && !hasCustomImage) {
             avatarFields = deriveAvatarFields(data.name);
         } else if (nameChanged && hasCustomImage) {
-            // Name changed but keep their custom photo — just redo initials
             const { userInitials } = deriveAvatarFields(data.name, existing.image);
             avatarFields = { userInitials };
         }
 
-        // If a new custom image is being set, flag it
         if (data.image) {
             avatarFields._hasCustomImage = true;
         }
 
-        const updatePayload = { ...data, ...avatarFields };
+        // Merge all fields into a single updated object
+        const updatedUser = {
+            ...existing,
+            ...data,
+            ...avatarFields
+        };
 
-        await usersDb.update(
-            { _id: id },
-            { $set: updatePayload },
-            { multi: false }
-        );
+        // FORCE REPLACEMENT: Remove the old entry and insert the updated one
+        // This solves the issue where update() creates a second entry
+        await usersDb.remove({ _id: id });
+        await usersDb.insert(updatedUser);
 
-        return usersDb.findOne({ _id: id });
+        return updatedUser;
     },
 };

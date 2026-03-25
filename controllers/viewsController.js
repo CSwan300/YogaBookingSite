@@ -153,15 +153,18 @@ export const courseDetailPage = async (req, res, next) => {
 
         const rows = sessions.map((s) => ({
             id:          s._id,
+            courseId:    String(course._id),   // ← move it here
             start:       fmtDate(s.startDateTime),
             end:         fmtDate(s.endDateTime),
             duration:    duration(s.startDateTime, s.endDateTime),
             capacity:    s.capacity,
             booked:      s.bookedCount ?? 0,
             spotsLeft:   Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0)),
+            remaining:   Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0)),
             isFull:      (s.bookedCount ?? 0) >= (s.capacity ?? 0),
             upcoming:    new Date(s.startDateTime) >= now,
             allowDropIn: course.allowDropIn,
+            dropInPrice: course.dropInPrice ?? null,
             user: req.user ? {
                 id:    req.user._id,
                 name:  req.user.name,
@@ -182,6 +185,8 @@ export const courseDetailPage = async (req, res, next) => {
                 endDate:       course.endDate   ? fmtDateOnly(course.endDate)   : "",
                 description:   course.description,
                 sessionsCount: sessions.length,
+                courseId:    String(course._id),
+
             },
             sessions: rows,
             user: req.user ? {
@@ -194,7 +199,62 @@ export const courseDetailPage = async (req, res, next) => {
         next(err);
     }
 };
+export const myBookingsPage = async (req, res, next) => {
+    try {
+        const rawBookings = await BookingModel.listByUser(req.user._id);
+        const activeBookings = rawBookings.filter(b => b.status !== "CANCELLED");
 
+        const bookings = await Promise.all(
+            activeBookings.map(async (b) => {
+                const sessionData = await Promise.all(
+                    (b.sessionIds || []).map(sid => SessionModel.findById(sid))
+                );
+
+                const validSessions = sessionData.filter(s => s !== null);
+
+                const now = new Date();
+                const upcoming = validSessions
+                    .filter(s => new Date(s.startDateTime) >= now)
+                    .sort((a, b) => new Date(a.startDateTime) - new Date(b.startDateTime));
+
+                const nextSession = upcoming[0]
+                    ? fmtDate(upcoming[0].startDateTime)
+                    : "No upcoming sessions";
+
+                const firstSession = validSessions[0];
+                let courseTitle = "Unknown Course";
+                if (firstSession?.courseId) {
+                    const course = await CourseModel.findById(firstSession.courseId);
+                    if (course) courseTitle = course.title;
+                }
+
+                return {
+                    id:           String(b._id),
+                    type:         fmtType(b.type),
+                    status:       b.status,
+                    createdAt:    b.createdAt ? fmtDateOnly(b.createdAt) : "",
+                    sessionCount: validSessions.length,
+                    nextSession,
+                    courseTitle,
+                };
+            })
+        );
+
+        res.render("my_bookings", {
+            title:       "My Bookings",
+            bookings,
+            hasBookings: bookings.length > 0,
+            user: {
+                id:           String(req.user._id),
+                name:         req.user.name,
+                userInitials: req.user.userInitials,
+                image:        req.user.image,
+            },
+        });
+    } catch (err) {
+        next(err);
+    }
+};
 /* ── Book course page ───────────────────────────────────────── */
 export const getBookCoursePage = async (req, res, next) => {
     try {
@@ -256,6 +316,14 @@ export const postBookCourse = async (req, res, next) => {
             const sessions = await SessionModel.listByCourse(course._id);
             const now = new Date();
 
+            const upcomingSessions = sessions
+                .filter(s => new Date(s.startDateTime) >= now)
+                .map(s => ({
+                    id:        s._id,
+                    start:     fmtDate(s.startDateTime),
+                    remaining: Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0)),
+                }));
+
             return res.status(400).render("course_book", {
                 title: `Book: ${course.title}`,
                 course: {
@@ -269,14 +337,8 @@ export const postBookCourse = async (req, res, next) => {
                     endDate:     course.endDate   ? fmtDateOnly(course.endDate)   : "",
                     description: course.description,
                 },
-                sessions: sessions
-                    .filter(s => new Date(s.startDateTime) >= now)
-                    .map(s => ({
-                        id:        s._id,
-                        start:     fmtDate(s.startDateTime),
-                        remaining: Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0)),
-                    })),
-                sessionsCount: sessions.length,
+                sessions:      upcomingSessions,
+                sessionsCount: upcomingSessions.length,
                 user: {
                     id:    req.user._id,
                     name:  req.user.name,
@@ -300,7 +362,14 @@ export const postBookCourse = async (req, res, next) => {
 /* ── Book session ───────────────────────────────────────────── */
 export const postBookSession = async (req, res, next) => {
     try {
-        const booking = await bookSessionForUser(req.user._id, req.params.id);
+        const sessionId = req.body.sessionId;
+        if (!sessionId)
+            return res.status(400).render("error", {
+                title:   "Booking failed",
+                message: "No session selected. Please choose a session and try again.",
+            });
+
+        const booking = await bookSessionForUser(req.user._id, sessionId);
         res.redirect(`/bookings/${booking._id}?status=${booking.status}`);
     } catch (err) {
         const message =
@@ -308,6 +377,84 @@ export const postBookSession = async (req, res, next) => {
                 ? "Drop-ins are not allowed for this course."
                 : err.message;
         res.status(400).render("error", { title: "Booking failed", message });
+    }
+};
+
+/* ── Cancel booking page (GET) ──────────────────────────────── */
+// Handles two scenarios via query param:
+//   /bookings/:bookingId/cancel-confirm              → cancel entire booking
+//   /bookings/:bookingId/cancel-confirm?session=:sid → cancel single session
+export const getCancelBookingPage = async (req, res, next) => {
+    try {
+        const { bookingId } = req.params;
+        const targetSessionId = req.query.session || null;
+
+        const booking = await BookingModel.findById(bookingId);
+        if (!booking)
+            return res.status(404).render("error", {
+                title:   "Not found",
+                message: "Booking not found",
+            });
+
+        if (booking.userId.toString() !== req.user._id.toString())
+            return res.status(403).render("error", {
+                title:   "Access denied",
+                message: "You can only manage your own bookings.",
+            });
+
+        if (booking.status === "CANCELLED")
+            return res.redirect(`/bookings/${bookingId}`);
+
+        // Fetch full session details for every session in the booking
+        const sessionData = await Promise.all(
+            (booking.sessionIds || []).map(sid => SessionModel.findById(sid))
+        );
+
+        const sessions = sessionData
+            .filter(s => s !== null)
+            .map(s => ({
+                id:       String(s._id),
+                start:    fmtDate(s.startDateTime),
+                end:      fmtTimeOnly(s.endDateTime),
+                // Mark only the targeted session so the template can highlight it
+                isTarget: targetSessionId ? String(s._id) === targetSessionId : true,
+            }));
+
+        res.render("cancel_booking", {
+            title: targetSessionId ? "Cancel Session" : "Cancel Booking",
+            booking: {
+                id:        booking._id,
+                type:      booking.type,
+                status:    booking.status,
+                createdAt: booking.createdAt ? fmtDate(booking.createdAt) : "",
+            },
+            sessions,
+            isSingleSession: !!targetSessionId,
+            targetSessionId,
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+/* ── Cancel Single Session (POST) ───────────────────────────── */
+export const postCancelSession = async (req, res, next) => {
+    try {
+        const { bookingId, sessionId } = req.params;
+        const booking = await BookingModel.findById(bookingId);
+
+        if (!booking)
+            return res.status(404).render("error", { message: "Booking not found" });
+
+        if (booking.userId.toString() !== req.user._id.toString())
+            return res.status(403).render("error", { message: "Unauthorized" });
+
+        await SessionModel.incrementBookedCount(sessionId, -1);
+        await BookingModel.removeSession(bookingId, sessionId);
+
+        res.redirect(`/bookings/${bookingId}?status=UPDATED`);
+    } catch (err) {
+        next(err);
     }
 };
 
@@ -375,7 +522,6 @@ export const postEditProfile = async (req, res, next) => {
             });
         }
 
-        // Check email uniqueness if it changed
         if (email.trim().toLowerCase() !== user.email) {
             const existing = await UserModel.findByEmail(email.trim().toLowerCase());
             if (existing && String(existing._id) !== String(user._id)) {
@@ -401,7 +547,7 @@ export const postEditProfile = async (req, res, next) => {
     }
 };
 
-/* ── Cancel booking ─────────────────────────────────────────── */
+/* ── Cancel booking (POST) ──────────────────────────────────── */
 export const postCancelBooking = async (req, res, next) => {
     try {
         const booking = await BookingModel.findById(req.params.bookingId);
@@ -440,35 +586,41 @@ export const schedulePage = async (req, res, next) => {
     try {
         const showMyBookings = req.query.my === "1";
 
-        const courses   = await CourseModel.list();
-        const courseMap = Object.fromEntries(courses.map(c => [c._id, c]));
+        const courses = await CourseModel.list();
+        const courseMap = Object.fromEntries(courses.map(c => [String(c._id), c]));
 
-        const allSessions = (
+        const rawSessions = (
             await Promise.all(courses.map(c => SessionModel.listByCourse(c._id)))
         ).flat();
 
-        let bookedSessionIds   = new Set();
+        const allSessions = Array.from(new Map(rawSessions.map(s => [String(s._id), s])).values());
+
+        let bookedSessionIds = new Set();
         let bookingBySessionId = {};
+
         if (req.user) {
             const bookings = await BookingModel.listByUser(req.user._id);
             for (const b of bookings) {
                 if (b.status === "CANCELLED") continue;
-                for (const sid of (b.sessionIds ?? [])) {
-                    bookedSessionIds.add(sid);
-                    bookingBySessionId[sid] = b._id;
+                if (b.sessionIds && Array.isArray(b.sessionIds)) {
+                    for (const sid of b.sessionIds) {
+                        const sessionIdStr = String(sid);
+                        bookedSessionIds.add(sessionIdStr);
+                        bookingBySessionId[sessionIdStr] = String(b._id);
+                    }
                 }
             }
         }
 
         const sessions = showMyBookings
-            ? allSessions.filter(s => bookedSessionIds.has(s._id))
+            ? allSessions.filter(s => bookedSessionIds.has(String(s._id)))
             : allSessions;
 
         const weekMap = new Map();
 
         for (const s of sessions) {
-            const start  = new Date(s.startDateTime);
-            const course = courseMap[s.courseId];
+            const start = new Date(s.startDateTime);
+            const course = courseMap[String(s.courseId)];
             if (!course) continue;
 
             const monday = new Date(start);
@@ -476,31 +628,33 @@ export const schedulePage = async (req, res, next) => {
             monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
             const weekKey = monday.toISOString();
 
-            if (!weekMap.has(weekKey)) weekMap.set(weekKey, { monday, days: new Map() });
+            if (!weekMap.has(weekKey)) {
+                weekMap.set(weekKey, { monday, days: new Map() });
+            }
 
             const dayKey = start.toDateString();
-            const week   = weekMap.get(weekKey);
-            if (!week.days.has(dayKey)) week.days.set(dayKey, { date: start, sessions: [] });
+            const week = weekMap.get(weekKey);
+            if (!week.days.has(dayKey)) {
+                week.days.set(dayKey, { date: start, sessions: [] });
+            }
 
-            const isBooked = bookedSessionIds.has(s._id);
+            const sIdStr = String(s._id);
+            const isBooked = bookedSessionIds.has(sIdStr);
+
             week.days.get(dayKey).sessions.push({
-                id:          s._id,
+                id:          sIdStr,
                 start:       fmtTimeOnly(s.startDateTime),
                 end:         fmtTimeOnly(s.endDateTime),
                 duration:    duration(s.startDateTime, s.endDateTime),
                 courseTitle: course.title,
                 courseLevel: course.level,
-                courseId:    course._id,
+                courseId:    String(course._id),
                 canBook:     course.allowDropIn,
                 spotsLeft:   Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0)),
                 isFull:      (s.bookedCount ?? 0) >= (s.capacity ?? 0),
                 isBooked,
-                bookingId:   isBooked ? bookingBySessionId[s._id] : null,
-                user: req.user ? {
-                    id:    req.user._id,
-                    name:  req.user.name,
-                    email: req.user.email,
-                } : null,
+                bookingId:   isBooked ? bookingBySessionId[sIdStr] : null,
+                showMyBookings,
             });
         }
 
@@ -511,7 +665,7 @@ export const schedulePage = async (req, res, next) => {
                 for (let i = 0; i < 7; i++) {
                     const d = new Date(week.monday);
                     d.setDate(d.getDate() + i);
-                    const key         = d.toDateString();
+                    const key = d.toDateString();
                     const daySessions = week.days.has(key)
                         ? week.days.get(key).sessions.sort((a, b) => a.start.localeCompare(b.start))
                         : [];
@@ -524,20 +678,21 @@ export const schedulePage = async (req, res, next) => {
                 }
 
                 const weekStart = week.monday.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-                const weekEnd   = new Date(week.monday.getTime() + 6 * 86400000)
+                const weekEnd = new Date(week.monday.getTime() + 6 * 86400000)
                     .toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
                 return { label: `${weekStart} – ${weekEnd}`, days };
             });
 
         res.render("schedule", {
-            title:          "Schedule",
+            title: "Schedule",
             weeks,
             showMyBookings,
             user: req.user ? {
-                id:    req.user._id,
-                name:  req.user.name,
-                email: req.user.email,
+                id:           String(req.user._id),
+                name:         req.user.name,
+                userInitials: req.user.userInitials,
+                image:        req.user.image,
             } : null,
         });
     } catch (err) {
@@ -590,6 +745,58 @@ export const aboutPage = (req, res) => {
     });
 };
 
+/* ── Book session page (Drop-in) ────────────────────────────── */
+export const getBookSessionPage = async (req, res, next) => {
+    try {
+        const course = await CourseModel.findById(req.params.id);
+        if (!course) {
+            return res.status(404).render("error", {
+                title:   "Not found",
+                message: "Course not found",
+            });
+        }
+
+        if (!course.allowDropIn) {
+            return res.status(400).render("error", {
+                title:   "Not allowed",
+                message: "Drop-ins are not enabled for this course.",
+            });
+        }
+
+        const sessions = await SessionModel.listByCourse(course._id);
+
+        const rows = sessions.map(s => {
+            const remaining = Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0));
+            return {
+                id:              String(s._id),
+                start:           fmtDate(s.startDateTime),
+                remaining,
+                isFull:          remaining === 0,
+                pluralRemaining: remaining !== 1,
+            };
+        });
+
+        res.render("session_book", {
+            title: `Drop-in: ${course.title}`,
+            course: {
+                id:          course._id,
+                title:       course.title,
+                level:       course.level,
+                type:        fmtType(course.type),
+                description: course.description,
+            },
+            sessions: rows,
+            user: {
+                id:    req.user._id,
+                name:  req.user.name,
+                email: req.user.email,
+            },
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 /* ── Booking confirmation ────────────────────────────────────── */
 export const bookingConfirmationPage = async (req, res, next) => {
     try {
@@ -600,20 +807,36 @@ export const bookingConfirmationPage = async (req, res, next) => {
                 message: "Booking not found",
             });
 
+        const sessionData = await Promise.all(
+            (booking.sessionIds || []).map(sid => SessionModel.findById(sid))
+        );
+
+        // Pass bookingId on each session so the template can build cancel-confirm links
+        const sessions = sessionData
+            .filter(s => s !== null)
+            .map(s => ({
+                id:        String(s._id),
+                bookingId: String(booking._id),
+                start:     fmtDate(s.startDateTime),
+                end:       fmtTimeOnly(s.endDateTime),
+            }));
+
         const status   = req.query.status || booking.status;
         const returnTo = req.query.returnTo
             ? decodeURIComponent(req.query.returnTo)
-            : req.headers.referer || "/";
+            : "/profile";
 
         res.render("booking_confirmation", {
             title: "Booking confirmation",
             booking: {
-                id:        booking._id,
+                id:        String(booking._id),
                 type:      booking.type,
                 status,
                 createdAt: booking.createdAt ? fmtDate(booking.createdAt) : "",
             },
+            sessions,
             isCancelled: status === "CANCELLED",
+            isUpdated:   status === "UPDATED",
             returnTo,
         });
     } catch (err) {
