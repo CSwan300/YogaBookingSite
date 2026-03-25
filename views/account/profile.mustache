@@ -1,0 +1,34 @@
+{{> head}}
+{{> header}}
+
+<div class="profile-wrap">
+    <div class="profile-card">
+        <div class="avatar-container">
+            {{#image}}
+                <img src="{{image}}" alt="{{name}}" class="avatar-img">
+            {{/image}}
+            {{^image}}
+                <div class="avatar-fallback">{{userInitials}}</div>
+            {{/image}}
+        </div>
+
+        <h1 class="user-name">{{name}}</h1>
+        <p class="user-email">{{email}}</p>
+
+        <div class="info-section">
+            <div class="info-row">
+                <span class="label">Initials</span>
+                <span class="value initials-tag">{{userInitials}}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Joined</span>
+                <span class="value">{{createdAt}}</span>
+            </div>
+        </div>
+
+        <a href="/profile/edit" class="btn-edit">Edit Profile</a>
+        <a href="/logout" class="btn-signout">Sign out</a>
+    </div>
+</div>
+
+{{> footer}}

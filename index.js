@@ -1,6 +1,7 @@
 // index.js
 import express from "express";
 import cookieParser from "cookie-parser";
+import session from "express-session";
 import dotenv from "dotenv";
 import mustacheExpress from "mustache-express";
 import path from "path";
@@ -10,6 +11,7 @@ import courseRoutes from "./routes/courses.js";
 import sessionRoutes from "./routes/sessions.js";
 import bookingRoutes from "./routes/bookings.js";
 import viewRoutes from "./routes/views.js";
+import profileRoutes from "./routes/profile.js";
 import { attachSessionUser } from "./middlewares/auth.js";
 import { initDb } from "./models/_db.js";
 
@@ -21,7 +23,6 @@ const __dirname = path.dirname(__filename);
 export const app = express();
 
 /* ── Global Template Variables ─────────────────────────────── */
-// This makes {{year}} available in every mustache file automatically
 app.locals.year = new Date().getFullYear();
 
 // ── View engine (Mustache) ───────────────────────────────────
@@ -46,6 +47,22 @@ app.use(express.json());
 // ── Cookie parser (signed cookies for JWT) ───────────────────
 app.use(cookieParser(process.env.COOKIE_SECRET || "dev-cookie-secret"));
 
+// ── Session (used for flash messages) ───────────────────────
+// NOTE: For production swap MemoryStore for a persistent store,
+// e.g. connect-mongo or connect-redis, to survive restarts.
+app.use(
+    session({
+        secret: process.env.SESSION_SECRET || "dev-session-secret",
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        },
+    })
+);
+
 // ── Static files ─────────────────────────────────────────────
 app.use("/static", express.static(path.join(__dirname, "public")));
 
@@ -57,6 +74,7 @@ app.get("/health", (req, res) => res.json({ ok: true }));
 
 // ── SSR view routes ──────────────────────────────────────────
 app.use("/", viewRoutes);
+app.use("/", profileRoutes);
 
 // ── JSON API routes ──────────────────────────────────────────
 app.use("/api/courses",  courseRoutes);

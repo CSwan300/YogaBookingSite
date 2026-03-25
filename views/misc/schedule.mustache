@@ -3,37 +3,43 @@
 
 <article>
     <h1>Class Schedule</h1>
-
     <div class="schedule-controls">
-        {{#user}}
-            <div class="toggle-group">
-                <a href="/schedule" class="btn {{^showMyBookings}}active{{/showMyBookings}}">All Classes</a>
-                <a href="/schedule?my=1" class="btn {{#showMyBookings}}active{{/showMyBookings}}">My Bookings</a>
-            </div>
-        {{/user}}
-        {{^user}}
-            <p class="muted">
-                <a class="btn" href="/login?redirect=/schedule">Sign in to view your booked classes.</a>
-            </p>
-        {{/user}}
 
-        <div class="filter-group">
-            <select id="filter-week" class="filter-select">
-                <option value="">All Weeks</option>
-            </select>
-            <select id="filter-day" class="filter-select">
-                <option value="">All Days</option>
-                <option value="Mon">Mon</option>
-                <option value="Tue">Tue</option>
-                <option value="Wed">Wed</option>
-                <option value="Thu">Thu</option>
-                <option value="Fri">Fri</option>
-                <option value="Sat">Sat</option>
-                <option value="Sun">Sun</option>
-            </select>
-            <button id="filter-reset" class="btn">Clear Filters</button>
+        <div class="schedule-controls-left">
+            {{#user}}
+                <div class="toggle-group">
+                    <a href="/schedule" class="btn {{^showMyBookings}}active{{/showMyBookings}}">All Classes</a>
+                    <a href="/schedule?my=1" class="btn {{#showMyBookings}}active{{/showMyBookings}}">My Bookings</a>
+                </div>
+            {{/user}}
+            {{^user}}
+                <p class="muted">
+                    <a class="btn" href="/login?redirect=/schedule">Sign in to view your booked classes.</a>
+                </p>
+            {{/user}}
         </div>
+
+        <div class="schedule-controls-right">
+            <div class="filter-group">
+                <select id="filter-week" class="filter-select">
+                    <option value="">All Weeks</option>
+                </select>
+                <select id="filter-day" class="filter-select">
+                    <option value="">All Days</option>
+                    <option value="Mon">Mon</option>
+                    <option value="Tue">Tue</option>
+                    <option value="Wed">Wed</option>
+                    <option value="Thu">Thu</option>
+                    <option value="Fri">Fri</option>
+                    <option value="Sat">Sat</option>
+                    <option value="Sun">Sun</option>
+                </select>
+                <button id="filter-reset" class="btn">Clear Filters</button>
+            </div>
+        </div>
+
     </div>
+
 
     {{#weeks}}
         <section class="calendar-week" data-week="{{label}}">
@@ -107,8 +113,10 @@
 <script>
     (function () {
         var weekSelect = document.getElementById('filter-week');
+        var daySelect = document.getElementById('filter-day');
         var weekSections = document.querySelectorAll('.calendar-week');
 
+        // Populate week filter
         weekSections.forEach(function (section) {
             var label = section.dataset.week;
             var option = document.createElement('option');
@@ -119,29 +127,37 @@
 
         function applyFilters() {
             var selectedWeek = weekSelect.value;
-            var selectedDay  = document.getElementById('filter-day').value;
+            var selectedDay = daySelect.value;
 
             weekSections.forEach(function (section) {
                 var weekMatch = !selectedWeek || section.dataset.week === selectedWeek;
-                section.hidden = !weekMatch;
+
+                // Show/hide entire week section
+                section.style.display = weekMatch ? '' : 'none';
 
                 if (weekMatch) {
+                    // Filter days within visible weeks
                     var days = section.querySelectorAll('.calendar-day');
                     days.forEach(function (day) {
                         var dayMatch = !selectedDay || day.dataset.day === selectedDay;
-                        day.hidden = !dayMatch;
+                        day.style.display = dayMatch ? '' : 'none';
                     });
                 }
             });
         }
 
+        // Event listeners
         weekSelect.addEventListener('change', applyFilters);
-        document.getElementById('filter-day').addEventListener('change', applyFilters);
+        daySelect.addEventListener('change', applyFilters);
+
         document.getElementById('filter-reset').addEventListener('click', function () {
             weekSelect.value = '';
-            document.getElementById('filter-day').value = '';
+            daySelect.value = '';
             applyFilters();
         });
+
+        // Initial filter application
+        applyFilters();
     })();
 </script>
 

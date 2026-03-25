@@ -58,7 +58,7 @@ export const homePage = async (req, res, next) => {
                     title:         c.title,
                     level:         c.level,
                     type:          fmtType(c.type),
-                    price:         c.price, // Added requirement
+                    price:         c.price,
                     allowDropIn:   c.allowDropIn,
                     startDate:     c.startDate ? fmtDateOnly(c.startDate) : "",
                     endDate:       c.endDate   ? fmtDateOnly(c.endDate)   : "",
@@ -74,31 +74,26 @@ export const homePage = async (req, res, next) => {
     }
 };
 
-/* ── List Courses (REQUIRED EXPORT) ─────────────────────────── */
+/* ── List Courses ────────────────────────────────────────────── */
 export const listCourses = async (req, res, next) => {
     try {
         const allCourses = await CourseModel.list();
 
-        // 1. Capture Filter Params from URL
         const { level, type, price, dropin, page: pageQuery } = req.query;
 
-        // 2. Filter the FULL list before paginating
         let filtered = allCourses.filter(c => {
             const matchLevel = !level  || c.level.toLowerCase() === level.toLowerCase();
             const matchType  = !type   || c.type.toLowerCase().includes(type.toLowerCase());
             const matchPrice = !price  || c.price <= parseFloat(price);
             const matchDrop  = !dropin || String(c.allowDropIn) === dropin;
-
             return matchLevel && matchType && matchPrice && matchDrop;
         });
 
-        // 3. Pagination Logic on the Filtered List
-        const limit = 9;
-        const page = parseInt(pageQuery) || 1;
+        const limit        = 9;
+        const page         = parseInt(pageQuery) || 1;
         const totalCourses = filtered.length;
-        const totalPages = Math.ceil(totalCourses / limit);
-        const offset = (page - 1) * limit;
-
+        const totalPages   = Math.ceil(totalCourses / limit);
+        const offset       = (page - 1) * limit;
         const pagedCourses = filtered.slice(offset, offset + limit);
 
         const cards = await Promise.all(
@@ -123,22 +118,20 @@ export const listCourses = async (req, res, next) => {
         res.render("courses", {
             title: "Upcoming Courses",
             courses: cards,
-            // Pass filters back to the view to keep dropdowns selected
             filters: { level, type, price, dropin },
             pagination: {
-                current: page,
-                total: totalPages,
-                hasNext: page < totalPages,
-                hasPrev: page > 1,
-                nextPage: page + 1,
-                prevPage: page - 1,
-                // Add filter params to pagination links
+                current:     page,
+                total:       totalPages,
+                hasNext:     page < totalPages,
+                hasPrev:     page > 1,
+                nextPage:    page + 1,
+                prevPage:    page - 1,
                 queryParams: `&level=${level || ''}&type=${type || ''}&price=${price || ''}&dropin=${dropin || ''}`,
-                pages: Array.from({length: totalPages}, (_, i) => ({
-                    number: i + 1,
-                    isCurrent: (i + 1) === page
-                }))
-            }
+                pages: Array.from({ length: totalPages }, (_, i) => ({
+                    number:    i + 1,
+                    isCurrent: (i + 1) === page,
+                })),
+            },
         });
     } catch (err) {
         next(err);
@@ -169,7 +162,7 @@ export const courseDetailPage = async (req, res, next) => {
             isFull:      (s.bookedCount ?? 0) >= (s.capacity ?? 0),
             upcoming:    new Date(s.startDateTime) >= now,
             allowDropIn: course.allowDropIn,
-            user:        req.user ? {
+            user: req.user ? {
                 id:    req.user._id,
                 name:  req.user.name,
                 email: req.user.email,
@@ -183,7 +176,7 @@ export const courseDetailPage = async (req, res, next) => {
                 title:         course.title,
                 level:         course.level,
                 type:          fmtType(course.type),
-                price:         course.price, // Added requirement
+                price:         course.price,
                 allowDropIn:   course.allowDropIn,
                 startDate:     course.startDate ? fmtDateOnly(course.startDate) : "",
                 endDate:       course.endDate   ? fmtDateOnly(course.endDate)   : "",
@@ -202,7 +195,7 @@ export const courseDetailPage = async (req, res, next) => {
     }
 };
 
-/* ── Book course page (registered users only) ───────────────── */
+/* ── Book course page ───────────────────────────────────────── */
 export const getBookCoursePage = async (req, res, next) => {
     try {
         const course = await CourseModel.findById(req.params.id);
@@ -231,7 +224,7 @@ export const getBookCoursePage = async (req, res, next) => {
                 title:       course.title,
                 level:       course.level,
                 type:        fmtType(course.type),
-                price:       course.price, // Added requirement
+                price:       course.price,
                 allowDropIn: course.allowDropIn,
                 startDate:   course.startDate ? fmtDateOnly(course.startDate) : "",
                 endDate:     course.endDate   ? fmtDateOnly(course.endDate)   : "",
@@ -250,7 +243,7 @@ export const getBookCoursePage = async (req, res, next) => {
     }
 };
 
-/* ── Book course (registered users only) ───────────────────── */
+/* ── Book course ────────────────────────────────────────────── */
 export const postBookCourse = async (req, res, next) => {
     try {
         const { consent } = req.body;
@@ -304,7 +297,7 @@ export const postBookCourse = async (req, res, next) => {
     }
 };
 
-/* ── Book session (registered users only) ──────────────────── */
+/* ── Book session ───────────────────────────────────────────── */
 export const postBookSession = async (req, res, next) => {
     try {
         const booking = await bookSessionForUser(req.user._id, req.params.id);
@@ -318,7 +311,97 @@ export const postBookSession = async (req, res, next) => {
     }
 };
 
-/* ── Cancel booking (registered users only) ─────────────────── */
+/* ── User Profile ───────────────────────────────────────────── */
+export const profilePage = async (req, res, next) => {
+    try {
+        const user = req.user;
+        if (!user) return res.redirect("/login");
+
+        res.render("profile", {
+            title:        "My Profile",
+            name:         user.name,
+            email:        user.email,
+            image:        user.image,
+            userInitials: user.userInitials,
+            createdAt:    user.createdAt ? fmtDateOnly(user.createdAt) : "N/A",
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+/* ── Edit Profile (GET) ─────────────────────────────────────── */
+export const getEditProfilePage = async (req, res, next) => {
+    try {
+        const user = req.user;
+        if (!user) return res.redirect("/login");
+
+        res.render("account/profile-edit", {
+            title:        "Edit Profile",
+            name:         user.name,
+            email:        user.email,
+            image:        user.image,
+            userInitials: user.userInitials,
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+/* ── Edit Profile (POST) ────────────────────────────────────── */
+export const postEditProfile = async (req, res, next) => {
+    try {
+        const user = req.user;
+        if (!user) return res.redirect("/login");
+
+        const { name, email } = req.body;
+        const errors = [];
+
+        if (!name || name.trim().length < 2)
+            errors.push({ msg: "Name must be at least 2 characters." });
+        if (name && name.trim().length > 80)
+            errors.push({ msg: "Name must be 80 characters or fewer." });
+        if (!email || !email.includes("@"))
+            errors.push({ msg: "Please enter a valid email address." });
+
+        if (errors.length) {
+            return res.status(400).render("account/profile-edit", {
+                title:        "Edit Profile",
+                name,
+                email,
+                image:        user.image,
+                userInitials: user.userInitials,
+                errors:       { list: errors },
+            });
+        }
+
+        // Check email uniqueness if it changed
+        if (email.trim().toLowerCase() !== user.email) {
+            const existing = await UserModel.findByEmail(email.trim().toLowerCase());
+            if (existing && String(existing._id) !== String(user._id)) {
+                return res.status(409).render("account/profile-edit", {
+                    title:        "Edit Profile",
+                    name,
+                    email,
+                    image:        user.image,
+                    userInitials: user.userInitials,
+                    errors:       { list: [{ msg: "That email address is already in use." }] },
+                });
+            }
+        }
+
+        await UserModel.update(user._id, {
+            name:  name.trim(),
+            email: email.trim().toLowerCase(),
+        });
+
+        res.redirect("/profile");
+    } catch (err) {
+        next(err);
+    }
+};
+
+/* ── Cancel booking ─────────────────────────────────────────── */
 export const postCancelBooking = async (req, res, next) => {
     try {
         const booking = await BookingModel.findById(req.params.bookingId);
@@ -357,14 +440,14 @@ export const schedulePage = async (req, res, next) => {
     try {
         const showMyBookings = req.query.my === "1";
 
-        const courses = await CourseModel.list();
+        const courses   = await CourseModel.list();
         const courseMap = Object.fromEntries(courses.map(c => [c._id, c]));
 
         const allSessions = (
             await Promise.all(courses.map(c => SessionModel.listByCourse(c._id)))
         ).flat();
 
-        let bookedSessionIds = new Set();
+        let bookedSessionIds   = new Set();
         let bookingBySessionId = {};
         if (req.user) {
             const bookings = await BookingModel.listByUser(req.user._id);
@@ -413,7 +496,7 @@ export const schedulePage = async (req, res, next) => {
                 isFull:      (s.bookedCount ?? 0) >= (s.capacity ?? 0),
                 isBooked,
                 bookingId:   isBooked ? bookingBySessionId[s._id] : null,
-                user:        req.user ? {
+                user: req.user ? {
                     id:    req.user._id,
                     name:  req.user.name,
                     email: req.user.email,
@@ -462,12 +545,11 @@ export const schedulePage = async (req, res, next) => {
     }
 };
 
-/* ── Instructors (public) ───────────────────────────────────── */
+/* ── Instructors ────────────────────────────────────────────── */
 export const instructorsPage = async (req, res, next) => {
     try {
         const allUsers = await UserModel.list();
 
-        // Filter for instructors and map to the required format
         const instructors = allUsers
             .filter(u => u.role === "instructor")
             .map(u => ({
@@ -475,14 +557,10 @@ export const instructorsPage = async (req, res, next) => {
                 name:  u.name,
                 email: u.email,
                 bio:   u.bio,
-                // Using a UI Avatar service as a placeholder since there's no image URL in the data
-                image: u.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=random&size=128`
+                image: u.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=random&size=128`,
             }));
 
-        res.render("instructors", {
-            title: "Our Instructors",
-            instructors
-        });
+        res.render("instructors", { title: "Our Instructors", instructors });
     } catch (err) {
         next(err);
     }
@@ -493,28 +571,16 @@ export const aboutPage = (req, res) => {
     res.render("about", {
         title: "About Us",
         studio: {
-            name: "Yoga Studio",
-            tagline: `Find balance, build strength, 
-breathe deeper`,
-            description: `Nestled in the heart of the city, our yoga studio 
-offers a sanctuary for body, mind, and spirit. 
-
-Blending ancient traditions with modern wellness 
-practices, we guide you on a transformative journey 
-toward flexibility, inner peace, and self-discovery.`,
-            mission: `Our mission is to empower every student to unlock 
-their full potential through mindful movement and 
-conscious breath.
-
-We create a welcoming space where beginners and 
-experienced practitioners alike can grow, connect, 
-and find their center.`,
+            name:        "Yoga Studio",
+            tagline:     "Find balance, build strength, breathe deeper",
+            description: `Nestled in the heart of the city, our yoga studio offers a sanctuary for body, mind, and spirit. Blending ancient traditions with modern wellness practices, we guide you on a transformative journey toward flexibility, inner peace, and self-discovery.`,
+            mission:     `Our mission is to empower every student to unlock their full potential through mindful movement and conscious breath. We create a welcoming space where beginners and experienced practitioners alike can grow, connect, and find their center.`,
         },
         team: true,
         contact: {
             address: ["123 Example Street, Glasgow"],
-            phone: ["+44 131 000 0000"],
-            email: ["hello@yogastudio.com"],
+            phone:   ["+44 131 000 0000"],
+            email:   ["hello@yogastudio.com"],
         },
         social: {
             instagram: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
@@ -524,8 +590,7 @@ and find their center.`,
     });
 };
 
-
-/* ── Booking confirmation (registered users only) ───────────── */
+/* ── Booking confirmation ────────────────────────────────────── */
 export const bookingConfirmationPage = async (req, res, next) => {
     try {
         const booking = await BookingModel.findById(req.params.bookingId);
