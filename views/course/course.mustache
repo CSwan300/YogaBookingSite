@@ -47,9 +47,11 @@
                     <td>
                         {{#allowDropIn}}
                             {{#user}}
-                                <form action="/sessions/{{id}}/book" method="post">
-                                    <input type="hidden" name="userId" value="{{user.id}}">
-                                    <button class="btn" type="submit" {{#isFull}}disabled{{/isFull}}>Book Session</button>
+                                <form action="/courses/{{courseId}}/book/session" method="get">
+                                    <input type="hidden" name="sessionId" value="{{id}}">
+                                    <button class="btn" type="submit" {{#isFull}}disabled{{/isFull}}>
+                                        Book Session
+                                    </button>
                                 </form>
                             {{/user}}
                             {{^user}}

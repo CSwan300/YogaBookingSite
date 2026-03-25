@@ -1,6 +1,7 @@
 {"name":"Ava","email":"ava@yoga.local","role":"instructor","image":"https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=256&h=256&fit=crop","bio":"Ava has been teaching yoga for over 10 years, specialising in restorative and mindfulness-based practices.","userInitials":"A","createdAt":"2026-03-25T02:21:55.977Z","_id":"1zaCimNJfPSFjKwO"}
 {"name":"Raj","email":"raj@yoga.local","role":"instructor","image":"https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=256&h=256&fit=crop","bio":"Raj specialises in Ashtanga and power yoga, bringing a structured and energetic approach to every session.","userInitials":"R","createdAt":"2026-03-25T02:21:55.977Z","_id":"6pk6FKMBHUr4tqfA"}
-{"name":"test test","email":"t@g","role":"student","userInitials":"TT","image":"https://ui-avatars.com/api/?name=test%20test&background=DB2777&color=fff&size=128","createdAt":"2026-03-25T12:15:40.209Z","_id":"CMzMTCvsYv3unldE"}
+{"name":"aSAD","email":"as@g","role":"student","userInitials":"A","image":"https://ui-avatars.com/api/?name=aSAD&background=2563EB&color=fff&size=128","createdAt":"2026-03-25T21:56:30.033Z","_id":"7QU1Lupd5ME8rwYi"}
+{"name":"PEnis","email":"t@gm","role":"student","userInitials":"P","image":"https://ui-avatars.com/api/?name=PEnis&background=7C3AED&color=fff&size=128","createdAt":"2026-03-25T12:15:40.209Z","_id":"CMzMTCvsYv3unldE"}
 {"name":"Nina","email":"nina@student.local","role":"student","password":"password123","image":"https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=256&h=256&fit=crop","userInitials":"N","createdAt":"2026-03-25T02:21:55.977Z","_id":"GXHZDFUtGQTFwtzi"}
 {"name":"Fiona","email":"fiona@student.local","role":"student","password":"password123","image":"https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=256&h=256&fit=crop","userInitials":"F","createdAt":"2026-03-25T02:21:55.977Z","_id":"H9zD9oKAx2jFX6tg"}
 {"name":"Chen","email":"chen@yoga.local","role":"instructor","image":"https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=256&h=256&fit=crop","bio":"Chen is an advanced practitioner with a focus on arm balances, inversions, and strength-based yoga.","userInitials":"C","createdAt":"2026-03-25T02:21:55.977Z","_id":"ORzSlH9Z0jQkeIq6"}
@@ -16,9 +17,6 @@
 {"name":"James","email":"james@student.local","role":"student","password":"password123","image":"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=256&h=256&fit=crop","userInitials":"J","createdAt":"2026-03-25T02:21:55.977Z","_id":"nd0hBr0qs2h5u3kV"}
 {"name":"Tom","email":"tom@student.local","role":"student","password":"password123","image":"https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=256&h=256&fit=crop","userInitials":"T","createdAt":"2026-03-25T02:21:55.977Z","_id":"tj2DfR5SqfkmYCLZ"}
 {"$$indexCreated":{"fieldName":"email","unique":true,"sparse":false}}
-{"$$deleted":true,"_id":"CMzMTCvsYv3unldE"}
-{"name":"PEnis","email":"t@g","role":"student","userInitials":"P","image":"https://ui-avatars.com/api/?name=PEnis&background=7C3AED&color=fff&size=128","createdAt":"2026-03-25T12:15:40.209Z","_id":"CMzMTCvsYv3unldE"}
-{"$$deleted":true,"_id":"CMzMTCvsYv3unldE"}
-{"name":"PEnis","email":"t@gm","role":"student","userInitials":"P","image":"https://ui-avatars.com/api/?name=PEnis&background=7C3AED&color=fff&size=128","createdAt":"2026-03-25T12:15:40.209Z","_id":"CMzMTCvsYv3unldE"}
-{"$$deleted":true,"_id":"CMzMTCvsYv3unldE"}
-{"name":"PEnis","email":"t@gm","role":"student","userInitials":"P","image":"https://ui-avatars.com/api/?name=PEnis&background=7C3AED&color=fff&size=128","createdAt":"2026-03-25T12:15:40.209Z","_id":"CMzMTCvsYv3unldE"}
+{"name":"ahsahhs","email":"asas@a","role":"student","userInitials":"A","image":"https://ui-avatars.com/api/?name=ahsahhs&background=059669&color=fff&size=128","createdAt":"2026-03-25T22:47:00.540Z","_id":"JnEySr18ykntZ0f5"}
+{"$$deleted":true,"_id":"JnEySr18ykntZ0f5"}
+{"name":"ahsahhs","email":"asas@a","role":"student","userInitials":"A","image":"https://ui-avatars.com/api/?name=ahsahhs&background=059669&color=fff&size=128","createdAt":"2026-03-25T22:47:00.540Z","_id":"JnEySr18ykntZ0f5"}

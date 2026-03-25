@@ -1,0 +1,81 @@
+{{> head}}
+{{> header}}
+<main class="container">
+    <article class="booking-card">
+        <h1>Cancel Booking</h1>
+
+        {{#isSingleSession}}
+            <div class="alert alert-warning">
+                <p>You are about to cancel <strong>one session</strong> from your booking. Your other sessions will not be affected.</p>
+            </div>
+        {{/isSingleSession}}
+        {{^isSingleSession}}
+            <div class="alert alert-warning">
+                <p>You are about to cancel your <strong>entire booking block</strong>. All sessions listed below will be removed.</p>
+            </div>
+        {{/isSingleSession}}
+
+        <section class="booking-info">
+            <dl class="kv">
+                <dt>Booking ID</dt>
+                <dd>{{booking.id}}</dd>
+                <dt>Type</dt>
+                <dd>{{booking.type}}</dd>
+                <dt>Booked On</dt>
+                <dd>{{booking.createdAt}}</dd>
+                <dt>Current Status</dt>
+                <dd><span class="status-pill {{booking.status}}">{{booking.status}}</span></dd>
+            </dl>
+        </section>
+
+        <hr>
+
+        <section class="sessions-management">
+            <h2>Sessions Affected</h2>
+            <ul class="session-list">
+                {{#sessions}}
+                    <li class="session-item {{#isTarget}}highlight{{/isTarget}}">
+                        <div class="session-meta">
+                            <span class="session-date"><strong>{{start}}</strong></span>
+                            <span class="session-time"> to {{end}}</span>
+                        </div>
+                        {{#isTarget}}
+                            <span class="badge danger">Will be cancelled</span>
+                        {{/isTarget}}
+                    </li>
+                {{/sessions}}
+                {{^sessions}}
+                    <li>No sessions found for this booking.</li>
+                {{/sessions}}
+            </ul>
+        </section>
+
+        <hr>
+
+        <div class="danger-zone">
+            {{#isSingleSession}}
+                <h3>Confirm Session Cancellation</h3>
+                <p>This will permanently remove the highlighted session from your booking.</p>
+                <form action="/bookings/{{booking.id}}/sessions/{{targetSessionId}}/cancel" method="POST">
+                    <input type="hidden" name="returnTo" value="/bookings/{{booking.id}}">
+                    <div class="action-row">
+                        <button type="submit" class="btn danger">Yes, Cancel This Session</button>
+                        <a href="/bookings/{{booking.id}}" class="btn">Keep It</a>
+                    </div>
+                </form>
+            {{/isSingleSession}}
+            {{^isSingleSession}}
+                <h3>Confirm Full Cancellation</h3>
+                <p>This will permanently cancel all remaining sessions and release your spots.</p>
+                <form action="/bookings/{{booking.id}}/cancel" method="POST">
+                    <input type="hidden" name="returnTo" value="/profile">
+                    <div class="action-row">
+                        <button type="submit" class="btn danger">Yes, Cancel Entire Booking</button>
+                        <a href="/bookings/{{booking.id}}" class="btn">Keep It</a>
+                    </div>
+                </form>
+            {{/isSingleSession}}
+        </div>
+    </article>
+</main>
+{{> footer}}

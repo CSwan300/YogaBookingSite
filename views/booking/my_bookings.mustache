@@ -1,0 +1,49 @@
+{{> head}}
+{{> header}}
+<main class="container">
+    <article>
+        <h1>My Bookings</h1>
+
+        {{#hasBookings}}
+            <ul class="booking-list">
+                {{#bookings}}
+                    <li class="booking-card">
+                        <div class="booking-card-header">
+                            <div>
+                                <h2 class="booking-title">{{courseTitle}}</h2>
+                                <p class="muted">Booked on {{createdAt}}</p>
+                            </div>
+                            <span class="status-pill {{status}}">{{status}}</span>
+                        </div>
+
+                        <dl class="kv">
+                            <dt>Booking ID</dt>
+                            <dd>{{id}}</dd>
+                            <dt>Type</dt>
+                            <dd>{{type}}</dd>
+                            <dt>Sessions</dt>
+                            <dd>{{sessionCount}}</dd>
+                            <dt>Next Session</dt>
+                            <dd>{{nextSession}}</dd>
+                        </dl>
+
+                        <div class="actions">
+                            <a href="/bookings/{{id}}" class="btn">View Booking</a>
+                            {{^isCancelled}}
+                                <a href="/bookings/{{id}}/cancel-confirm" class="btn danger">Cancel</a>
+                            {{/isCancelled}}
+                        </div>
+                    </li>
+                {{/bookings}}
+            </ul>
+        {{/hasBookings}}
+
+        {{^hasBookings}}
+            <div class="empty-state">
+                <p class="muted">You have no bookings yet.</p>
+                <a href="/courses" class="btn">Browse Courses</a>
+            </div>
+        {{/hasBookings}}
+    </article>
+</main>
+{{> footer}}

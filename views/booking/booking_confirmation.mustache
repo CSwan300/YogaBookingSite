@@ -1,23 +1,19 @@
 {{> head}}
 {{> header}}
-
 <main class="container">
     <article class="booking-card">
         <h1>Booking Confirmation</h1>
-
         {{#isCancelled}}
             <div class="alert alert-muted">
                 <p><strong>Status:</strong> This entire booking block has been cancelled.</p>
             </div>
         {{/isCancelled}}
-
         {{^isCancelled}}
             {{#isUpdated}}
                 <div class="alert alert-success">
                     <p>Session successfully removed from your booking.</p>
                 </div>
             {{/isUpdated}}
-
             <p>Your booking details are shown below.</p>
         {{/isCancelled}}
 
@@ -25,13 +21,10 @@
             <dl class="kv">
                 <dt>Booking ID</dt>
                 <dd>{{booking.id}}</dd>
-
                 <dt>Type</dt>
                 <dd>{{booking.type}}</dd>
-
                 <dt>Booked On</dt>
                 <dd>{{booking.createdAt}}</dd>
-
                 <dt>Current Status</dt>
                 <dd><span class="status-pill {{booking.status}}">{{booking.status}}</span></dd>
             </dl>
@@ -42,8 +35,7 @@
         {{^isCancelled}}
             <section class="sessions-management">
                 <h2>Your Scheduled Sessions</h2>
-                <p class="help-text">You can cancel individual sessions below if you cannot attend specific dates.</p>
-
+                <p class="help-text">View your upcoming sessions below. To cancel a session or your entire booking, use the manage button.</p>
                 <ul class="session-list">
                     {{#sessions}}
                         <li class="session-item">
@@ -51,13 +43,9 @@
                                 <span class="session-date"><strong>{{start}}</strong></span>
                                 <span class="session-time"> to {{end}}</span>
                             </div>
-
-                            <form action="/bookings/{{booking.id}}/sessions/{{id}}/cancel" method="POST" class="session-cancel-form">
-                                <input type="hidden" name="returnTo" value="/bookings/{{booking.id}}">
-                                <button type="submit" class="btn danger small" onclick="return confirm('Are you sure you want to cancel ONLY this session?')">
-                                    Cancel Session
-                                </button>
-                            </form>
+                            <a href="/bookings/{{bookingId}}/cancel-confirm?session={{id}}" class="btn danger small">
+                            Cancel This Session
+                            </a>
                         </li>
                     {{/sessions}}
                     {{^sessions}}
@@ -69,20 +57,15 @@
             <div class="danger-zone">
                 <h3>Cancel Entire Booking</h3>
                 <p>This will cancel all remaining sessions listed above and release your spots.</p>
-
-                <form action="/bookings/{{booking.id}}/cancel" method="POST">
-                    <input type="hidden" name="returnTo" value="/profile">
-                    <button type="submit" class="btn danger" onclick="return confirm('WARNING: This will cancel every session in this block. Proceed?')">
-                        Cancel Entire Block
-                    </button>
-                </form>
+                <a href="/bookings/{{booking.id}}/cancel-confirm" class="btn danger">
+                    Cancel Entire Booking
+                </a>
             </div>
         {{/isCancelled}}
 
         <div class="actions">
-            <a href="{{returnTo}}" class="btn">← Back</a>
+            <a href="/" class="btn">← Home</a>
         </div>
     </article>
 </main>
-
 {{> footer}}
