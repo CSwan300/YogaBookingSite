@@ -9,6 +9,7 @@
 {"name":"Grace","email":"grace@student.local","role":"student","password":"password123","_id":"NfUGNS0oLhs45OuU"}
 {"name":"Ben","email":"ben@yoga.local","role":"instructor","bio":"Ben brings a dynamic energy to his Vinyasa classes, blending breath, movement, and mindful transitions.","_id":"QqEx4HRb33R1cqdN"}
 {"name":"Chen","email":"chen@yoga.local","role":"instructor","bio":"Chen is an advanced practitioner with a focus on arm balances, inversions, and strength-based yoga.","_id":"VBNw0KWpOQDyr0OC"}
+{"name":"testtettst","email":"t@gmail.com","role":"student","_id":"ZKFCetwqyQ1eCj24"}
 {"name":"Isla","email":"isla@yoga.local","role":"instructor","bio":"Isla's gentle approach makes her classes perfect for beginners and those recovering from injury.","_id":"d94z0aUNVINDKYS4"}
 {"name":"Oliver","email":"oliver@student.local","role":"student","password":"password123","_id":"ivE37MGEIdR4Kccu"}
 {"name":"Fiona","email":"fiona@student.local","role":"student","password":"password123","_id":"o2SIYAJEoJusRo3D"}

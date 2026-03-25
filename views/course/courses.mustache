@@ -2,10 +2,43 @@
 {{> header}}
 
 <main class="wrap">
-    <header style="margin-top: var(--space-2xl); margin-bottom: var(--space-xl);">
+    <header class="course-page-header">
         <h1>Upcoming Courses</h1>
         <p class="muted">Explore our current blocks and workshops.</p>
     </header>
+
+    <div class="schedule-controls">
+        <form id="filter-form" class="filter-group" method="GET" action="/courses">
+            <select name="level" class="filter-select">
+                <option value="">All Levels</option>
+                <option value="beginner" {{#filters.beginner}}selected{{/filters.beginner}}>Beginner</option>
+                <option value="intermediate" {{#filters.intermediate}}selected{{/filters.intermediate}}>Intermediate</option>
+                <option value="advanced" {{#filters.advanced}}selected{{/filters.advanced}}>Advanced</option>
+            </select>
+
+            <select name="type" class="filter-select">
+                <option value="">All Types</option>
+                <option value="block" {{#filters.isBlock}}selected{{/filters.isBlock}}>Block</option>
+                <option value="workshop" {{#filters.isWorkshop}}selected{{/filters.isWorkshop}}>Workshop</option>
+            </select>
+
+            <select name="price" class="filter-select">
+                <option value="">Any Price</option>
+                <option value="50" {{#filters.price50}}selected{{/filters.price50}}>Under £50</option>
+                <option value="100" {{#filters.price100}}selected{{/filters.price100}}>Under £100</option>
+                <option value="200" {{#filters.price200}}selected{{/filters.price200}}>Under £200</option>
+                <option value="300" {{#filters.price300}}selected{{/filters.price300}}>Under £300</option>
+            </select>
+
+            <select name="dropin" class="filter-select">
+                <option value="">All Drop-in</option>
+                <option value="true" {{#filters.dropinTrue}}selected{{/filters.dropinTrue}}>Drop-in OK</option>
+                <option value="false" {{#filters.dropinFalse}}selected{{/filters.dropinFalse}}>Block Only</option>
+            </select>
+
+            <a href="/courses" class="btn">Clear Filters</a>
+        </form>
+    </div>
 
     <div class="cards">
         {{#courses}}
@@ -14,15 +47,25 @@
                 <h3>{{title}}</h3>
 
                 <p class="muted">
-                    Type: {{type}} {{#allowDropIn}}• Drop-in OK{{/allowDropIn}}
+                    {{type}} {{#allowDropIn}}• Drop-in Available{{/allowDropIn}}
                 </p>
 
                 <p>{{description}}</p>
 
                 <div class="course-details">
-                    <p><strong>Price:</strong> £{{price}}</p>
-                    <p class="muted" style="font-size: 0.85rem;">Dates: {{startDate}} – {{endDate}}</p>
-                    <p class="muted" style="font-size: 0.85rem;">Next session: {{nextSession}}</p>
+                    <p class="price-full"><strong>Full Block:</strong> £{{price}}</p>
+
+                    {{#allowDropIn}}
+                        <p class="price-dropin">
+                            <strong>Drop-in:</strong> £{{#dropInPrice}}{{dropInPrice}}{{/dropInPrice}}{{^dropInPrice}}15{{/dropInPrice}}
+                            <span class="muted">/ session</span>
+                        </p>
+                    {{/allowDropIn}}
+
+                    <div class="course-meta">
+                        <p class="muted">Dates: {{startDate}} – {{endDate}}</p>
+                        <p class="muted">Next: {{nextSession}}</p>
+                    </div>
                 </div>
 
                 <div class="card-footer">
@@ -32,11 +75,48 @@
         {{/courses}}
 
         {{^courses}}
-            <div style="grid-column: 1 / -1; text-align: center; padding: var(--space-2xl);">
-                <p class="muted">No courses available at the moment.</p>
+            <div class="no-results">
+                <p class="muted">No courses match your criteria.</p>
+                <a href="/courses" class="btn">View all courses</a>
             </div>
         {{/courses}}
     </div>
+
+    {{#pagination.total}}
+        <nav class="pagination">
+            {{#pagination.hasPrev}}
+                <a href="/courses?page={{pagination.prevPage}}{{pagination.queryParams}}" class="btn">← Previous</a>
+            {{/pagination.hasPrev}}
+
+            <div class="page-numbers">
+                {{#pagination.pages}}
+                    <a href="/courses?page={{number}}{{pagination.queryParams}}" class="btn {{#isCurrent}}primary{{/isCurrent}}">
+                    {{number}}
+                    </a>
+                {{/pagination.pages}}
+            </div>
+
+            {{#pagination.hasNext}}
+                <a href="/courses?page={{pagination.nextPage}}{{pagination.queryParams}}" class="btn">Next →</a>
+            {{/pagination.hasNext}}
+        </nav>
+    {{/pagination.total}}
 </main>
+
+<script>
+    (function() {
+        'use strict';
+
+        const filterForm = document.getElementById('filter-form');
+        const selects = document.querySelectorAll('.filter-select');
+
+        // Whenever a dropdown changes, submit the form to reload the page with new filters
+        selects.forEach(select => {
+            select.addEventListener('change', () => {
+                filterForm.submit();
+            });
+        });
+    })();
+</script>
 
 {{> footer}}
