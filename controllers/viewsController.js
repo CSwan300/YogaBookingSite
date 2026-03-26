@@ -211,8 +211,48 @@ export const courseDetailPage = async (req, res, next) => {
         next(err);
     }
 };
+export const myBookingsPage = async (req, res, next) => {
+    try {
+        const rawBookings = await BookingModel.listByUser(req.user._id);
+        const activeBookings = rawBookings.filter(b => b.status !== "CANCELLED");
 
-/* ── My Bookings ────────────────────────────────────────────── */
+        const bookings = await Promise.all(
+            activeBookings.map(async (b) => {
+                const sessionData = await Promise.all(
+                    (b.sessionIds || []).map(sid => SessionModel.findById(sid))
+                );
+
+                const validSessions = sessionData.filter(s => s !== null);
+
+                const now = new Date();
+                const upcoming = validSessions
+                    .filter(s => new Date(s.startDateTime) >= now)
+                    .sort((a, b) => new Date(a.startDateTime) - new Date(b.startDateTime));
+
+                const nextSession = upcoming[0]
+                    ? fmtDate(upcoming[0].startDateTime)
+                    : "No upcoming sessions";
+
+                const firstSession = validSessions[0];
+                let courseTitle = "Unknown Course";
+                if (firstSession?.courseId) {
+                    const course = await CourseModel.findById(firstSession.courseId);
+                    if (course) courseTitle = course.title;
+                }
+
+                return {
+                    id:           String(b._id),
+                    type:         fmtType(b.type),
+                    status:       b.status,
+                    createdAt:    b.createdAt ? fmtDateOnly(b.createdAt) : "",
+                    sessionCount: validSessions.length,
+                    nextSession,
+                    courseTitle,
+                };
+            })
+        );
+
+
 /* ── My Bookings ────────────────────────────────────────────── */
 export const myBookingsPage = async (req, res, next) => {
     try {

@@ -21,6 +21,15 @@
         </div>
     {{/course.allowDropIn}}
 
+    {{#course.allowDropIn}}
+        <div class="alert info" role="note">
+            <p>
+                Want to attend just one session?
+                <a href="/courses/{{course.id}}/book/session">Book a single drop-in session instead →</a>
+            </p>
+        </div>
+    {{/course.allowDropIn}}
+
     {{#errors}}
         <div class="alert error" role="alert" aria-live="assertive">
             <ul>
