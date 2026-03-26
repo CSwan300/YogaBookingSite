@@ -3,10 +3,11 @@ import { CourseModel } from "../models/courseModel.js";
 import { SessionModel } from "../models/sessionModel.js";
 import {
     bookCourseForUser,
-    bookSessionForUser,
+    bookSessionsForUser,
 } from "../services/bookingService.js";
 import { BookingModel } from "../models/bookingModel.js";
 import { UserModel } from "../models/userModel.js";
+
 
 /* ── Formatters ─────────────────────────────────────────────── */
 const fmtDate = (iso) =>
@@ -49,10 +50,13 @@ const duration = (start, end) => {
 export const homePage = async (req, res, next) => {
     try {
         const courses = await CourseModel.list();
-        const cards = await Promise.all(
+        const now = new Date();
+
+        const cards = (await Promise.all(
             courses.map(async (c) => {
                 const sessions = await SessionModel.listByCourse(c._id);
-                const nextSession = sessions[0];
+                const futureSessions = sessions.filter(s => new Date(s.startDateTime) >= now);
+                if (futureSessions.length === 0) return null;
                 return {
                     id:            c._id,
                     title:         c.title,
@@ -60,14 +64,15 @@ export const homePage = async (req, res, next) => {
                     type:          fmtType(c.type),
                     price:         c.price,
                     allowDropIn:   c.allowDropIn,
+                    location:      c.location,
                     startDate:     c.startDate ? fmtDateOnly(c.startDate) : "",
                     endDate:       c.endDate   ? fmtDateOnly(c.endDate)   : "",
-                    nextSession:   nextSession  ? fmtDate(nextSession.startDateTime) : "TBA",
-                    sessionsCount: sessions.length,
+                    nextSession:   fmtDate(futureSessions[0].startDateTime),
+                    sessionsCount: futureSessions.length,
                     description:   c.description,
                 };
             })
-        );
+        )).filter(Boolean);
         res.render("home", { title: "Yoga Courses", courses: cards });
     } catch (err) {
         next(err);
@@ -96,24 +101,29 @@ export const listCourses = async (req, res, next) => {
         const offset       = (page - 1) * limit;
         const pagedCourses = filtered.slice(offset, offset + limit);
 
-        const cards = await Promise.all(
+        const now = new Date();
+
+        const cards = (await Promise.all(
             pagedCourses.map(async (c) => {
                 const sessions = await SessionModel.listByCourse(c._id);
+                const futureSessions = sessions.filter(s => new Date(s.startDateTime) >= now);
+                if (futureSessions.length === 0) return null;
                 return {
-                    id:            c._id,
-                    title:         c.title,
-                    level:         c.level,
-                    type:          fmtType(c.type),
-                    price:         c.price,
-                    dropInPrice:   c.dropInPrice || null,
-                    allowDropIn:   c.allowDropIn,
-                    startDate:     c.startDate ? fmtDateOnly(c.startDate) : "",
-                    endDate:       c.endDate   ? fmtDateOnly(c.endDate)   : "",
-                    nextSession:   sessions[0] ? fmtDate(sessions[0].startDateTime) : "TBA",
-                    description:   c.description,
+                    id:          c._id,
+                    title:       c.title,
+                    level:       c.level,
+                    type:        fmtType(c.type),
+                    price:       c.price,
+                    dropInPrice: c.dropInPrice || null,
+                    allowDropIn: c.allowDropIn,
+                    location:    c.location,
+                    startDate:   c.startDate ? fmtDateOnly(c.startDate) : "",
+                    endDate:     c.endDate   ? fmtDateOnly(c.endDate)   : "",
+                    nextSession: fmtDate(futureSessions[0].startDateTime),
+                    description: c.description,
                 };
             })
-        );
+        )).filter(Boolean);
 
         res.render("courses", {
             title: "Upcoming Courses",
@@ -153,7 +163,8 @@ export const courseDetailPage = async (req, res, next) => {
 
         const rows = sessions.map((s) => ({
             id:          s._id,
-            courseId:    String(course._id),   // ← move it here
+
+            courseId:    String(course._id),
             start:       fmtDate(s.startDateTime),
             end:         fmtDate(s.endDateTime),
             duration:    duration(s.startDateTime, s.endDateTime),
@@ -163,6 +174,7 @@ export const courseDetailPage = async (req, res, next) => {
             remaining:   Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0)),
             isFull:      (s.bookedCount ?? 0) >= (s.capacity ?? 0),
             upcoming:    new Date(s.startDateTime) >= now,
+            isPast:    new Date(s.startDateTime) < now,
             allowDropIn: course.allowDropIn,
             dropInPrice: course.dropInPrice ?? null,
             user: req.user ? {
@@ -181,12 +193,12 @@ export const courseDetailPage = async (req, res, next) => {
                 type:          fmtType(course.type),
                 price:         course.price,
                 allowDropIn:   course.allowDropIn,
+                location:      course.location,
                 startDate:     course.startDate ? fmtDateOnly(course.startDate) : "",
                 endDate:       course.endDate   ? fmtDateOnly(course.endDate)   : "",
                 description:   course.description,
                 sessionsCount: sessions.length,
-                courseId:    String(course._id),
-
+                courseId:      String(course._id),
             },
             sessions: rows,
             user: req.user ? {
@@ -240,6 +252,55 @@ export const myBookingsPage = async (req, res, next) => {
             })
         );
 
+
+/* ── My Bookings ────────────────────────────────────────────── */
+export const myBookingsPage = async (req, res, next) => {
+    try {
+        const rawBookings = await BookingModel.listByUser(req.user._id);
+        const activeBookings = rawBookings.filter(b => b.status !== "CANCELLED");
+
+        const bookings = await Promise.all(
+            activeBookings.map(async (b) => {
+                const sessionData = await Promise.all(
+                    (b.sessionIds || []).map(sid => SessionModel.findById(sid))
+                );
+
+                const validSessions = sessionData.filter(s => s !== null);
+
+                const now = new Date();
+                const upcoming = validSessions
+                    .filter(s => new Date(s.startDateTime) >= now)
+                    .sort((a, b) => new Date(a.startDateTime) - new Date(b.startDateTime));
+
+                const nextSession = upcoming[0]
+                    ? fmtDate(upcoming[0].startDateTime)
+                    : "No upcoming sessions";
+
+                const firstSession = validSessions[0];
+                let courseTitle = "Unknown Course";
+                let location = "TBA"; // Default value
+
+                if (firstSession?.courseId) {
+                    const course = await CourseModel.findById(firstSession.courseId);
+                    if (course) {
+                        courseTitle = course.title;
+                        location = course.location; // Extract location from course
+                    }
+                }
+
+                return {
+                    id:           String(b._id),
+                    type:         fmtType(b.type),
+                    status:       b.status,
+                    createdAt:    b.createdAt ? fmtDateOnly(b.createdAt) : "",
+                    sessionCount: validSessions.length,
+                    nextSession,
+                    courseTitle,
+                    location, // Pass location to the frontend
+                };
+            })
+        );
+
         res.render("my_bookings", {
             title:       "My Bookings",
             bookings,
@@ -255,6 +316,7 @@ export const myBookingsPage = async (req, res, next) => {
         next(err);
     }
 };
+
 /* ── Book course page ───────────────────────────────────────── */
 export const getBookCoursePage = async (req, res, next) => {
     try {
@@ -268,14 +330,13 @@ export const getBookCoursePage = async (req, res, next) => {
         const sessions = await SessionModel.listByCourse(course._id);
         const now = new Date();
 
-        const rows = sessions
-            .filter(s => new Date(s.startDateTime) >= now)
-            .map(s => ({
-                id:        s._id,
-                start:     fmtDate(s.startDateTime),
-                remaining: Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0)),
-                isFull:    (s.bookedCount ?? 0) >= (s.capacity ?? 0),
-            }));
+        const rows = sessions.map(s => ({
+            id:        s._id,
+            start:     fmtDate(s.startDateTime),
+            remaining: Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0)),
+            isFull:    (s.bookedCount ?? 0) >= (s.capacity ?? 0),
+            isPast:    new Date(s.startDateTime) < now,
+        }));
 
         res.render("course_book", {
             title: `Book: ${course.title}`,
@@ -286,21 +347,25 @@ export const getBookCoursePage = async (req, res, next) => {
                 type:        fmtType(course.type),
                 price:       course.price,
                 allowDropIn: course.allowDropIn,
+                location:    course.location,
                 startDate:   course.startDate ? fmtDateOnly(course.startDate) : "",
                 endDate:     course.endDate   ? fmtDateOnly(course.endDate)   : "",
                 description: course.description,
             },
             sessions:      rows,
-            sessionsCount: rows.length,
+            sessionsCount: rows.filter(s => !s.isPast).length,
             user: {
                 id:    req.user._id,
                 name:  req.user.name,
                 email: req.user.email,
             },
+
         });
+
     } catch (err) {
         next(err);
     }
+
 };
 
 /* ── Book course ────────────────────────────────────────────── */
@@ -316,13 +381,13 @@ export const postBookCourse = async (req, res, next) => {
             const sessions = await SessionModel.listByCourse(course._id);
             const now = new Date();
 
-            const upcomingSessions = sessions
-                .filter(s => new Date(s.startDateTime) >= now)
-                .map(s => ({
-                    id:        s._id,
-                    start:     fmtDate(s.startDateTime),
-                    remaining: Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0)),
-                }));
+            const allSessions = sessions.map(s => ({
+                id:        s._id,
+                start:     fmtDate(s.startDateTime),
+                remaining: Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0)),
+                isFull:    (s.bookedCount ?? 0) >= (s.capacity ?? 0),
+                isPast:    new Date(s.startDateTime) < now,
+            }));
 
             return res.status(400).render("course_book", {
                 title: `Book: ${course.title}`,
@@ -333,12 +398,13 @@ export const postBookCourse = async (req, res, next) => {
                     type:        fmtType(course.type),
                     price:       course.price,
                     allowDropIn: course.allowDropIn,
+                    location:    course.location,
                     startDate:   course.startDate ? fmtDateOnly(course.startDate) : "",
                     endDate:     course.endDate   ? fmtDateOnly(course.endDate)   : "",
                     description: course.description,
                 },
-                sessions:      upcomingSessions,
-                sessionsCount: upcomingSessions.length,
+                sessions:      allSessions,
+                sessionsCount: allSessions.filter(s => !s.isPast).length,
                 user: {
                     id:    req.user._id,
                     name:  req.user.name,
@@ -360,16 +426,20 @@ export const postBookCourse = async (req, res, next) => {
 };
 
 /* ── Book session ───────────────────────────────────────────── */
+
 export const postBookSession = async (req, res, next) => {
     try {
-        const sessionId = req.body.sessionId;
-        if (!sessionId)
+        // checkboxes post as array or single string — normalise to array
+        const raw = req.body.sessionIds;
+        const sessionIds = Array.isArray(raw) ? raw : raw ? [raw] : [];
+
+        if (!sessionIds.length)
             return res.status(400).render("error", {
                 title:   "Booking failed",
-                message: "No session selected. Please choose a session and try again.",
+                message: "No sessions selected. Please choose at least one session.",
             });
 
-        const booking = await bookSessionForUser(req.user._id, sessionId);
+        const booking = await bookSessionsForUser(req.user._id, sessionIds);
         res.redirect(`/bookings/${booking._id}?status=${booking.status}`);
     } catch (err) {
         const message =
@@ -381,9 +451,6 @@ export const postBookSession = async (req, res, next) => {
 };
 
 /* ── Cancel booking page (GET) ──────────────────────────────── */
-// Handles two scenarios via query param:
-//   /bookings/:bookingId/cancel-confirm              → cancel entire booking
-//   /bookings/:bookingId/cancel-confirm?session=:sid → cancel single session
 export const getCancelBookingPage = async (req, res, next) => {
     try {
         const { bookingId } = req.params;
@@ -405,7 +472,6 @@ export const getCancelBookingPage = async (req, res, next) => {
         if (booking.status === "CANCELLED")
             return res.redirect(`/bookings/${bookingId}`);
 
-        // Fetch full session details for every session in the booking
         const sessionData = await Promise.all(
             (booking.sessionIds || []).map(sid => SessionModel.findById(sid))
         );
@@ -416,7 +482,6 @@ export const getCancelBookingPage = async (req, res, next) => {
                 id:       String(s._id),
                 start:    fmtDate(s.startDateTime),
                 end:      fmtTimeOnly(s.endDateTime),
-                // Mark only the targeted session so the template can highlight it
                 isTarget: targetSessionId ? String(s._id) === targetSessionId : true,
             }));
 
@@ -612,9 +677,12 @@ export const schedulePage = async (req, res, next) => {
             }
         }
 
-        const sessions = showMyBookings
-            ? allSessions.filter(s => bookedSessionIds.has(String(s._id)))
-            : allSessions;
+        const now = new Date();
+
+        const sessions = (showMyBookings
+                ? allSessions.filter(s => bookedSessionIds.has(String(s._id)))
+                : allSessions
+        ).filter(s => new Date(s.startDateTime) >= now);
 
         const weekMap = new Map();
 
@@ -649,6 +717,7 @@ export const schedulePage = async (req, res, next) => {
                 courseTitle: course.title,
                 courseLevel: course.level,
                 courseId:    String(course._id),
+                location:    course.location,
                 canBook:     course.allowDropIn,
                 spotsLeft:   Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0)),
                 isFull:      (s.bookedCount ?? 0) >= (s.capacity ?? 0),
@@ -765,6 +834,8 @@ export const getBookSessionPage = async (req, res, next) => {
 
         const sessions = await SessionModel.listByCourse(course._id);
 
+        const now = new Date();
+
         const rows = sessions.map(s => {
             const remaining = Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0));
             return {
@@ -773,6 +844,7 @@ export const getBookSessionPage = async (req, res, next) => {
                 remaining,
                 isFull:          remaining === 0,
                 pluralRemaining: remaining !== 1,
+                isPast:          new Date(s.startDateTime) < now,
             };
         });
 
@@ -783,6 +855,7 @@ export const getBookSessionPage = async (req, res, next) => {
                 title:       course.title,
                 level:       course.level,
                 type:        fmtType(course.type),
+                location:    course.location,
                 description: course.description,
             },
             sessions: rows,
@@ -811,7 +884,6 @@ export const bookingConfirmationPage = async (req, res, next) => {
             (booking.sessionIds || []).map(sid => SessionModel.findById(sid))
         );
 
-        // Pass bookingId on each session so the template can build cancel-confirm links
         const sessions = sessionData
             .filter(s => s !== null)
             .map(s => ({

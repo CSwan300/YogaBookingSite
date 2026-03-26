@@ -7,51 +7,60 @@ const canReserveAll = (sessions) =>
   sessions.every((s) => (s.bookedCount ?? 0) < (s.capacity ?? 0));
 
 export async function bookCourseForUser(userId, courseId) {
-  const course = await CourseModel.findById(courseId);
-  if (!course) throw new Error("Course not found");
-  const sessions = await SessionModel.listByCourse(courseId);
-  if (sessions.length === 0) throw new Error("Course has no sessions");
+    const course = await CourseModel.findById(courseId);
+    if (!course) throw new Error("Course not found");
 
-  let status = "CONFIRMED";
-  if (!canReserveAll(sessions)) {
-    status = "WAITLISTED";
-  } else {
-    for (const s of sessions) await SessionModel.incrementBookedCount(s._id, 1);
-  }
+    const allSessions = await SessionModel.listByCourse(courseId);
+    const now = new Date();
+    const sessions = allSessions.filter(s => new Date(s.startDateTime) >= now);
 
-  return BookingModel.create({
-    userId,
-    courseId,
-    type: "COURSE",
-    sessionIds: sessions.map((s) => s._id),
-    status,
-  });
+    if (sessions.length === 0) throw new Error("Course has no upcoming sessions");
+
+    let status = "CONFIRMED";
+    if (!canReserveAll(sessions)) {
+        status = "WAITLISTED";
+    } else {
+        for (const s of sessions) await SessionModel.incrementBookedCount(s._id, 1);
+    }
+
+    return BookingModel.create({
+        userId,
+        courseId,
+        type: "COURSE",
+        sessionIds: sessions.map((s) => s._id),
+        status,
+    });
 }
 
-export async function bookSessionForUser(userId, sessionId) {
-  const session = await SessionModel.findById(sessionId);
-  if (!session) throw new Error("Session not found");
-  const course = await CourseModel.findById(session.courseId);
-  if (!course) throw new Error("Course not found");
+export async function bookSessionsForUser(userId, sessionIds) {
+    if (!sessionIds?.length) throw new Error("No sessions selected");
 
-  if (!course.allowDropIn && course.type === "WEEKLY_BLOCK") {
-    const err = new Error("Drop-in not allowed for this course");
-    err.code = "DROPIN_NOT_ALLOWED";
-    throw err;
-  }
+    const course = await CourseModel.findById(
+        (await SessionModel.findById(sessionIds[0])).courseId
+    );
+    if (!course) throw new Error("Course not found");
+    if (!course.allowDropIn) {
+        const err = new Error("Drop-in not allowed for this course");
+        err.code = "DROPIN_NOT_ALLOWED";
+        throw err;
+    }
 
-  let status = "CONFIRMED";
-  if ((session.bookedCount ?? 0) >= (session.capacity ?? 0)) {
-    status = "WAITLISTED";
-  } else {
-    await SessionModel.incrementBookedCount(session._id, 1);
-  }
+    const sessions = await Promise.all(sessionIds.map(id => SessionModel.findById(id)));
 
-  return BookingModel.create({
-    userId,
-    courseId: course._id,
-    type: "SESSION",
-    sessionIds: [session._id],
-    status,
-  });
+    let status = "CONFIRMED";
+    for (const session of sessions) {
+        if ((session.bookedCount ?? 0) >= (session.capacity ?? 0)) {
+            status = "WAITLISTED";
+        } else {
+            await SessionModel.incrementBookedCount(session._id, 1);
+        }
+    }
+
+    return BookingModel.create({
+        userId,
+        courseId: course._id,
+        type:     "SESSION",
+        sessionIds: sessions.map(s => s._id),
+        status,
+    });
 }

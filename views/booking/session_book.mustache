@@ -18,11 +18,6 @@
         </div>
     {{/errors}}
 
-    {{!
-        POSTs to /sessions/book (body-based) rather than /sessions/:id/book.
-        The selected radio value (name="sessionId") carries the chosen session ID.
-        postBookSession must read req.body.sessionId — update the route accordingly.
-    }}
     <form method="post" action="/sessions/book">
 
         <fieldset>
@@ -50,31 +45,31 @@
         </fieldset>
 
         <fieldset>
-            <legend>Choose a session</legend>
+            <legend>Choose sessions</legend>
 
-            <p class="muted">Select one session to attend as a drop-in.</p>
+            <p class="muted">Select one or more sessions to attend as drop-ins.</p>
 
             {{#sessions}}
-                <div class="field radio-session{{#isFull}} radio-session--full{{/isFull}}">
-                    <input
-                            id="session-{{id}}"
-                            name="sessionId"
-                            type="radio"
-                            value="{{id}}"
-                        {{#isFull}}disabled{{/isFull}}
-                        {{#isSelected}}checked{{/isSelected}}
-                            required
-                    >
-                    <label for="session-{{id}}">
-                        <span class="session-label-date">{{start}}</span>
-                        {{#isFull}}
-                            <span class="badge full">Full</span>
-                        {{/isFull}}
-                        {{^isFull}}
-                            <span class="badge">{{remaining}} place{{#pluralRemaining}}s{{/pluralRemaining}} left</span>
-                        {{/isFull}}
-                    </label>
-                </div>
+                {{^isPast}}
+                    <div class="field checkbox-session{{#isFull}} checkbox-session--full{{/isFull}}">
+                        <input
+                                id="session-{{id}}"
+                                name="sessionIds"
+                                type="checkbox"
+                                value="{{id}}"
+                                {{#isFull}}disabled{{/isFull}}
+                        >
+                        <label for="session-{{id}}">
+                            <span class="session-label-date">{{start}}</span>
+                            {{#isFull}}
+                                <span class="badge full">Full</span>
+                            {{/isFull}}
+                            {{^isFull}}
+                                <span class="badge">{{remaining}} place{{#pluralRemaining}}s{{/pluralRemaining}} left</span>
+                            {{/isFull}}
+                        </label>
+                    </div>
+                {{/isPast}}
             {{/sessions}}
 
             {{^sessions}}
@@ -83,7 +78,7 @@
         </fieldset>
 
         <div class="actions">
-            <button class="btn primary" type="submit"{{^sessions}} disabled{{/sessions}}>
+            <button class="btn primary" type="submit" {{^sessions}}disabled{{/sessions}}>
                 Confirm Drop-in Booking
             </button>
             <a href="/courses/{{course.id}}/book" class="btn">Book full course instead</a>
@@ -91,7 +86,5 @@
         </div>
     </form>
 </article>
-
-
 
 {{> footer}}
