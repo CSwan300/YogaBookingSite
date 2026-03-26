@@ -3,10 +3,11 @@ import { CourseModel } from "../models/courseModel.js";
 import { SessionModel } from "../models/sessionModel.js";
 import {
     bookCourseForUser,
-    bookSessionForUser,
+    bookSessionsForUser,
 } from "../services/bookingService.js";
 import { BookingModel } from "../models/bookingModel.js";
 import { UserModel } from "../models/userModel.js";
+
 
 /* ── Formatters ─────────────────────────────────────────────── */
 const fmtDate = (iso) =>
@@ -49,10 +50,13 @@ const duration = (start, end) => {
 export const homePage = async (req, res, next) => {
     try {
         const courses = await CourseModel.list();
-        const cards = await Promise.all(
+        const now = new Date();
+
+        const cards = (await Promise.all(
             courses.map(async (c) => {
                 const sessions = await SessionModel.listByCourse(c._id);
-                const nextSession = sessions[0];
+                const futureSessions = sessions.filter(s => new Date(s.startDateTime) >= now);
+                if (futureSessions.length === 0) return null;
                 return {
                     id:            c._id,
                     title:         c.title,
@@ -63,12 +67,12 @@ export const homePage = async (req, res, next) => {
                     location:      c.location,
                     startDate:     c.startDate ? fmtDateOnly(c.startDate) : "",
                     endDate:       c.endDate   ? fmtDateOnly(c.endDate)   : "",
-                    nextSession:   nextSession  ? fmtDate(nextSession.startDateTime) : "TBA",
-                    sessionsCount: sessions.length,
+                    nextSession:   fmtDate(futureSessions[0].startDateTime),
+                    sessionsCount: futureSessions.length,
                     description:   c.description,
                 };
             })
-        );
+        )).filter(Boolean);
         res.render("home", { title: "Yoga Courses", courses: cards });
     } catch (err) {
         next(err);
@@ -97,25 +101,29 @@ export const listCourses = async (req, res, next) => {
         const offset       = (page - 1) * limit;
         const pagedCourses = filtered.slice(offset, offset + limit);
 
-        const cards = await Promise.all(
+        const now = new Date();
+
+        const cards = (await Promise.all(
             pagedCourses.map(async (c) => {
                 const sessions = await SessionModel.listByCourse(c._id);
+                const futureSessions = sessions.filter(s => new Date(s.startDateTime) >= now);
+                if (futureSessions.length === 0) return null;
                 return {
-                    id:            c._id,
-                    title:         c.title,
-                    level:         c.level,
-                    type:          fmtType(c.type),
-                    price:         c.price,
-                    dropInPrice:   c.dropInPrice || null,
-                    allowDropIn:   c.allowDropIn,
-                    location:      c.location,
-                    startDate:     c.startDate ? fmtDateOnly(c.startDate) : "",
-                    endDate:       c.endDate   ? fmtDateOnly(c.endDate)   : "",
-                    nextSession:   sessions[0] ? fmtDate(sessions[0].startDateTime) : "TBA",
-                    description:   c.description,
+                    id:          c._id,
+                    title:       c.title,
+                    level:       c.level,
+                    type:        fmtType(c.type),
+                    price:       c.price,
+                    dropInPrice: c.dropInPrice || null,
+                    allowDropIn: c.allowDropIn,
+                    location:    c.location,
+                    startDate:   c.startDate ? fmtDateOnly(c.startDate) : "",
+                    endDate:     c.endDate   ? fmtDateOnly(c.endDate)   : "",
+                    nextSession: fmtDate(futureSessions[0].startDateTime),
+                    description: c.description,
                 };
             })
-        );
+        )).filter(Boolean);
 
         res.render("courses", {
             title: "Upcoming Courses",
@@ -155,6 +163,7 @@ export const courseDetailPage = async (req, res, next) => {
 
         const rows = sessions.map((s) => ({
             id:          s._id,
+
             courseId:    String(course._id),
             start:       fmtDate(s.startDateTime),
             end:         fmtDate(s.endDateTime),
@@ -165,6 +174,7 @@ export const courseDetailPage = async (req, res, next) => {
             remaining:   Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0)),
             isFull:      (s.bookedCount ?? 0) >= (s.capacity ?? 0),
             upcoming:    new Date(s.startDateTime) >= now,
+            isPast:    new Date(s.startDateTime) < now,
             allowDropIn: course.allowDropIn,
             dropInPrice: course.dropInPrice ?? null,
             user: req.user ? {
@@ -280,14 +290,13 @@ export const getBookCoursePage = async (req, res, next) => {
         const sessions = await SessionModel.listByCourse(course._id);
         const now = new Date();
 
-        const rows = sessions
-            .filter(s => new Date(s.startDateTime) >= now)
-            .map(s => ({
-                id:        s._id,
-                start:     fmtDate(s.startDateTime),
-                remaining: Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0)),
-                isFull:    (s.bookedCount ?? 0) >= (s.capacity ?? 0),
-            }));
+        const rows = sessions.map(s => ({
+            id:        s._id,
+            start:     fmtDate(s.startDateTime),
+            remaining: Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0)),
+            isFull:    (s.bookedCount ?? 0) >= (s.capacity ?? 0),
+            isPast:    new Date(s.startDateTime) < now,
+        }));
 
         res.render("course_book", {
             title: `Book: ${course.title}`,
@@ -304,16 +313,19 @@ export const getBookCoursePage = async (req, res, next) => {
                 description: course.description,
             },
             sessions:      rows,
-            sessionsCount: rows.length,
+            sessionsCount: rows.filter(s => !s.isPast).length,
             user: {
                 id:    req.user._id,
                 name:  req.user.name,
                 email: req.user.email,
             },
+
         });
+
     } catch (err) {
         next(err);
     }
+
 };
 
 /* ── Book course ────────────────────────────────────────────── */
@@ -329,13 +341,13 @@ export const postBookCourse = async (req, res, next) => {
             const sessions = await SessionModel.listByCourse(course._id);
             const now = new Date();
 
-            const upcomingSessions = sessions
-                .filter(s => new Date(s.startDateTime) >= now)
-                .map(s => ({
-                    id:        s._id,
-                    start:     fmtDate(s.startDateTime),
-                    remaining: Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0)),
-                }));
+            const allSessions = sessions.map(s => ({
+                id:        s._id,
+                start:     fmtDate(s.startDateTime),
+                remaining: Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0)),
+                isFull:    (s.bookedCount ?? 0) >= (s.capacity ?? 0),
+                isPast:    new Date(s.startDateTime) < now,
+            }));
 
             return res.status(400).render("course_book", {
                 title: `Book: ${course.title}`,
@@ -351,8 +363,8 @@ export const postBookCourse = async (req, res, next) => {
                     endDate:     course.endDate   ? fmtDateOnly(course.endDate)   : "",
                     description: course.description,
                 },
-                sessions:      upcomingSessions,
-                sessionsCount: upcomingSessions.length,
+                sessions:      allSessions,
+                sessionsCount: allSessions.filter(s => !s.isPast).length,
                 user: {
                     id:    req.user._id,
                     name:  req.user.name,
@@ -374,16 +386,20 @@ export const postBookCourse = async (req, res, next) => {
 };
 
 /* ── Book session ───────────────────────────────────────────── */
+
 export const postBookSession = async (req, res, next) => {
     try {
-        const sessionId = req.body.sessionId;
-        if (!sessionId)
+        // checkboxes post as array or single string — normalise to array
+        const raw = req.body.sessionIds;
+        const sessionIds = Array.isArray(raw) ? raw : raw ? [raw] : [];
+
+        if (!sessionIds.length)
             return res.status(400).render("error", {
                 title:   "Booking failed",
-                message: "No session selected. Please choose a session and try again.",
+                message: "No sessions selected. Please choose at least one session.",
             });
 
-        const booking = await bookSessionForUser(req.user._id, sessionId);
+        const booking = await bookSessionsForUser(req.user._id, sessionIds);
         res.redirect(`/bookings/${booking._id}?status=${booking.status}`);
     } catch (err) {
         const message =
@@ -621,9 +637,12 @@ export const schedulePage = async (req, res, next) => {
             }
         }
 
-        const sessions = showMyBookings
-            ? allSessions.filter(s => bookedSessionIds.has(String(s._id)))
-            : allSessions;
+        const now = new Date();
+
+        const sessions = (showMyBookings
+                ? allSessions.filter(s => bookedSessionIds.has(String(s._id)))
+                : allSessions
+        ).filter(s => new Date(s.startDateTime) >= now);
 
         const weekMap = new Map();
 
@@ -775,6 +794,8 @@ export const getBookSessionPage = async (req, res, next) => {
 
         const sessions = await SessionModel.listByCourse(course._id);
 
+        const now = new Date();
+
         const rows = sessions.map(s => {
             const remaining = Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0));
             return {
@@ -783,6 +804,7 @@ export const getBookSessionPage = async (req, res, next) => {
                 remaining,
                 isFull:          remaining === 0,
                 pluralRemaining: remaining !== 1,
+                isPast:          new Date(s.startDateTime) < now,
             };
         });
 

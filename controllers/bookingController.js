@@ -1,7 +1,7 @@
 // controllers/bookingController.js
 import {
     bookCourseForUser,
-    bookSessionForUser,
+    bookSessionsForUser,
 } from "../services/bookingService.js";
 import { BookingModel } from "../models/bookingModel.js";
 import { SessionModel } from "../models/sessionModel.js";
@@ -82,7 +82,7 @@ export const bookCourse = async (req, res) => {
 export const bookSession = async (req, res) => {
     try {
         const { userId, sessionId } = req.body;
-        const booking = await bookSessionForUser(userId, sessionId);
+        const booking = await bookSessionsForUser(userId, [sessionId]);
         res.status(201).json({ booking });
     } catch (err) {
         console.error(err);

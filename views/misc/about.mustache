@@ -1,7 +1,7 @@
 {{> head}}
 {{> header}}
 
-<article>
+<article class="content-page">
     <h1>About {{studio.name}}</h1>
     <p class="muted">{{studio.tagline}}</p>
 
@@ -14,7 +14,10 @@
 
     {{#team}}
         <h2>Meet the Team</h2>
-        <a href="/instructors">View all instructors</a>
+        <div class="instructor-cta">
+            <p class="muted">Our classes are led by experienced, passionate instructors dedicated to your practice.</p>
+            <a href="/instructors" class="btn primary">View all instructors →</a>
+        </div>
     {{/team}}
 
     {{#contact}}

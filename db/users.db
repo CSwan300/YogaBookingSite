@@ -16,4 +16,3 @@
 {"name":"Isla","email":"isla@yoga.local","role":"instructor","image":"https://images.unsplash.com/photo-1588282322673-c31965a75c3e?w=256&h=256&fit=crop","bio":"Isla's gentle approach makes her classes perfect for beginners and those recovering from injury.","userInitials":"I","createdAt":"2026-03-25T22:56:39.462Z","_id":"uzItvxzbXBoQFbWz"}
 {"name":"Ben","email":"ben@yoga.local","role":"instructor","image":"https://images.unsplash.com/photo-1552196564-972b3afe73d3?w=256&h=256&fit=crop","bio":"Ben brings a dynamic energy to his Vinyasa classes, blending breath, movement, and mindful transitions.","userInitials":"B","createdAt":"2026-03-25T22:56:39.462Z","_id":"z698fyNaV93FUeR7"}
 {"$$indexCreated":{"fieldName":"email","unique":true,"sparse":false}}
-{"$$indexCreated":{"fieldName":"email","unique":true}}

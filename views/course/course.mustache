@@ -9,9 +9,9 @@
     <p>{{course.description}}</p>
     <p class="muted">Dates: {{course.startDate}} – {{course.endDate}}</p>
     <p class="muted">Location: {{course.location}}</p>
+
     <section class="booking-box">
         <h2>Book the full course</h2>
-        {{! --- SHOW FULL PRICE --- }}
         <p class="price-display">Total Price: <strong>£{{course.price}}</strong></p>
 
         {{#user}}
@@ -29,40 +29,47 @@
         <h2>Sessions</h2>
         <table class="table">
             <thead>
-            {{! --- ADDED PRICE COLUMN --- }}
-            <tr><th>Start</th><th>End</th><th>Price</th><th>Capacity</th><th>Remaining</th><th></th></tr>
+            <tr>
+                <th>Start</th>
+                <th>End</th>
+                <th>Price</th>
+                <th>Capacity</th>
+                <th>Remaining</th>
+                <th></th>
+            </tr>
             </thead>
             <tbody>
             {{#sessions}}
-                <tr>
-                    <td>{{start}}</td>
-                    <td>{{end}}</td>
-                    {{! --- SHOW DROP-IN PRICE IF ALLOWED --- }}
-                    <td>
-                        {{#allowDropIn}}£{{dropInPrice}}{{/allowDropIn}}
-                        {{^allowDropIn}}—{{/allowDropIn}}
-                    </td>
-                    <td>{{capacity}}</td>
-                    <td>{{remaining}}</td>
-                    <td>
-                        {{#allowDropIn}}
-                            {{#user}}
-                                <form action="/courses/{{courseId}}/book/session" method="get">
-                                    <input type="hidden" name="sessionId" value="{{id}}">
-                                    <button class="btn" type="submit" {{#isFull}}disabled{{/isFull}}>
-                                        Book Session
-                                    </button>
-                                </form>
-                            {{/user}}
-                            {{^user}}
-                                <a href="/login?redirect=/sessions/{{id}}" class="btn">Login</a>
-                            {{/user}}
-                        {{/allowDropIn}}
-                        {{^allowDropIn}}
-                            <span class="muted">Block Only</span>
-                        {{/allowDropIn}}
-                    </td>
-                </tr>
+                {{^isPast}}
+                    <tr>
+                        <td>{{start}}</td>
+                        <td>{{end}}</td>
+                        <td>
+                            {{#allowDropIn}}£{{dropInPrice}}{{/allowDropIn}}
+                            {{^allowDropIn}}—{{/allowDropIn}}
+                        </td>
+                        <td>{{capacity}}</td>
+                        <td>{{remaining}}</td>
+                        <td>
+                            {{#allowDropIn}}
+                                {{#user}}
+                                    <form action="/courses/{{courseId}}/book/session" method="get">
+                                        <input type="hidden" name="sessionId" value="{{id}}">
+                                        <button class="btn" type="submit" {{#isFull}}disabled{{/isFull}}>
+                                            Book Session
+                                        </button>
+                                    </form>
+                                {{/user}}
+                                {{^user}}
+                                    <a href="/login?redirect=/sessions/{{id}}" class="btn">Login</a>
+                                {{/user}}
+                            {{/allowDropIn}}
+                            {{^allowDropIn}}
+                                <span class="muted">Block Only</span>
+                            {{/allowDropIn}}
+                        </td>
+                    </tr>
+                {{/isPast}}
             {{/sessions}}
             </tbody>
         </table>
