@@ -60,6 +60,7 @@ export const homePage = async (req, res, next) => {
                     type:          fmtType(c.type),
                     price:         c.price,
                     allowDropIn:   c.allowDropIn,
+                    location:      c.location,
                     startDate:     c.startDate ? fmtDateOnly(c.startDate) : "",
                     endDate:       c.endDate   ? fmtDateOnly(c.endDate)   : "",
                     nextSession:   nextSession  ? fmtDate(nextSession.startDateTime) : "TBA",
@@ -107,6 +108,7 @@ export const listCourses = async (req, res, next) => {
                     price:         c.price,
                     dropInPrice:   c.dropInPrice || null,
                     allowDropIn:   c.allowDropIn,
+                    location:      c.location,
                     startDate:     c.startDate ? fmtDateOnly(c.startDate) : "",
                     endDate:       c.endDate   ? fmtDateOnly(c.endDate)   : "",
                     nextSession:   sessions[0] ? fmtDate(sessions[0].startDateTime) : "TBA",
@@ -153,7 +155,7 @@ export const courseDetailPage = async (req, res, next) => {
 
         const rows = sessions.map((s) => ({
             id:          s._id,
-            courseId:    String(course._id),   // ← move it here
+            courseId:    String(course._id),
             start:       fmtDate(s.startDateTime),
             end:         fmtDate(s.endDateTime),
             duration:    duration(s.startDateTime, s.endDateTime),
@@ -181,12 +183,12 @@ export const courseDetailPage = async (req, res, next) => {
                 type:          fmtType(course.type),
                 price:         course.price,
                 allowDropIn:   course.allowDropIn,
+                location:      course.location,
                 startDate:     course.startDate ? fmtDateOnly(course.startDate) : "",
                 endDate:       course.endDate   ? fmtDateOnly(course.endDate)   : "",
                 description:   course.description,
                 sessionsCount: sessions.length,
-                courseId:    String(course._id),
-
+                courseId:      String(course._id),
             },
             sessions: rows,
             user: req.user ? {
@@ -199,6 +201,9 @@ export const courseDetailPage = async (req, res, next) => {
         next(err);
     }
 };
+
+/* ── My Bookings ────────────────────────────────────────────── */
+/* ── My Bookings ────────────────────────────────────────────── */
 export const myBookingsPage = async (req, res, next) => {
     try {
         const rawBookings = await BookingModel.listByUser(req.user._id);
@@ -223,9 +228,14 @@ export const myBookingsPage = async (req, res, next) => {
 
                 const firstSession = validSessions[0];
                 let courseTitle = "Unknown Course";
+                let location = "TBA"; // Default value
+
                 if (firstSession?.courseId) {
                     const course = await CourseModel.findById(firstSession.courseId);
-                    if (course) courseTitle = course.title;
+                    if (course) {
+                        courseTitle = course.title;
+                        location = course.location; // Extract location from course
+                    }
                 }
 
                 return {
@@ -236,6 +246,7 @@ export const myBookingsPage = async (req, res, next) => {
                     sessionCount: validSessions.length,
                     nextSession,
                     courseTitle,
+                    location, // Pass location to the frontend
                 };
             })
         );
@@ -255,6 +266,7 @@ export const myBookingsPage = async (req, res, next) => {
         next(err);
     }
 };
+
 /* ── Book course page ───────────────────────────────────────── */
 export const getBookCoursePage = async (req, res, next) => {
     try {
@@ -286,6 +298,7 @@ export const getBookCoursePage = async (req, res, next) => {
                 type:        fmtType(course.type),
                 price:       course.price,
                 allowDropIn: course.allowDropIn,
+                location:    course.location,
                 startDate:   course.startDate ? fmtDateOnly(course.startDate) : "",
                 endDate:     course.endDate   ? fmtDateOnly(course.endDate)   : "",
                 description: course.description,
@@ -333,6 +346,7 @@ export const postBookCourse = async (req, res, next) => {
                     type:        fmtType(course.type),
                     price:       course.price,
                     allowDropIn: course.allowDropIn,
+                    location:    course.location,
                     startDate:   course.startDate ? fmtDateOnly(course.startDate) : "",
                     endDate:     course.endDate   ? fmtDateOnly(course.endDate)   : "",
                     description: course.description,
@@ -381,9 +395,6 @@ export const postBookSession = async (req, res, next) => {
 };
 
 /* ── Cancel booking page (GET) ──────────────────────────────── */
-// Handles two scenarios via query param:
-//   /bookings/:bookingId/cancel-confirm              → cancel entire booking
-//   /bookings/:bookingId/cancel-confirm?session=:sid → cancel single session
 export const getCancelBookingPage = async (req, res, next) => {
     try {
         const { bookingId } = req.params;
@@ -405,7 +416,6 @@ export const getCancelBookingPage = async (req, res, next) => {
         if (booking.status === "CANCELLED")
             return res.redirect(`/bookings/${bookingId}`);
 
-        // Fetch full session details for every session in the booking
         const sessionData = await Promise.all(
             (booking.sessionIds || []).map(sid => SessionModel.findById(sid))
         );
@@ -416,7 +426,6 @@ export const getCancelBookingPage = async (req, res, next) => {
                 id:       String(s._id),
                 start:    fmtDate(s.startDateTime),
                 end:      fmtTimeOnly(s.endDateTime),
-                // Mark only the targeted session so the template can highlight it
                 isTarget: targetSessionId ? String(s._id) === targetSessionId : true,
             }));
 
@@ -649,6 +658,7 @@ export const schedulePage = async (req, res, next) => {
                 courseTitle: course.title,
                 courseLevel: course.level,
                 courseId:    String(course._id),
+                location:    course.location,
                 canBook:     course.allowDropIn,
                 spotsLeft:   Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0)),
                 isFull:      (s.bookedCount ?? 0) >= (s.capacity ?? 0),
@@ -783,6 +793,7 @@ export const getBookSessionPage = async (req, res, next) => {
                 title:       course.title,
                 level:       course.level,
                 type:        fmtType(course.type),
+                location:    course.location,
                 description: course.description,
             },
             sessions: rows,
@@ -811,7 +822,6 @@ export const bookingConfirmationPage = async (req, res, next) => {
             (booking.sessionIds || []).map(sid => SessionModel.findById(sid))
         );
 
-        // Pass bookingId on each session so the template can build cancel-confirm links
         const sessions = sessionData
             .filter(s => s !== null)
             .map(s => ({
