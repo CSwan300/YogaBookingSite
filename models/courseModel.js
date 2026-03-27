@@ -13,8 +13,8 @@ export const CourseModel = {
         const query = {};
         if (level) query.level = level;
         if (type)  query.type = type;
-        if (dropin === 'yes') query.allowDropIn = true;
-        if (dropin === 'no')  query.allowDropIn = false;
+        if (dropin === "yes") query.allowDropIn = true;
+        if (dropin === "no")  query.allowDropIn = false;
 
         if (q) {
             const regex = new RegExp(q, "i");
@@ -22,28 +22,37 @@ export const CourseModel = {
         }
 
         const skip = (page - 1) * limit;
-        const courses = await coursesDb.find(query).sort({ startDate: 1 }).skip(skip).limit(limit);
+        const courses = await coursesDb
+            .find(query)
+            .sort({ startDate: 1 })
+            .skip(skip)
+            .limit(limit);
         const total = await coursesDb.count(query);
 
         return {
             courses,
             pagination: {
-                page: parseInt(page),
+                page:       parseInt(page),
                 totalPages: Math.ceil(total / limit),
-                hasNext: page * limit < total,
-                hasPrev: page > 1,
-                total
-            }
+                hasNext:    page * limit < total,
+                hasPrev:    page > 1,
+                total,
+            },
         };
     },
 
-    // Added for seed script - creates new course
+    // Seed / admin create
     async create(courseData) {
         return coursesDb.insertAsync(courseData);
     },
 
-    // Added for seed script - updates course with sessionIds
+    // Seed / admin update
     async update(id, updateData) {
         return coursesDb.updateAsync({ _id: id }, { $set: updateData }, {});
-    }
+    },
+
+    // Admin delete
+    async delete(id) {
+        return coursesDb.remove({ _id: id });
+    },
 };

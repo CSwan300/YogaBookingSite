@@ -1,0 +1,25 @@
+{{> head}}
+{{> header}}
+
+<main>
+    <article class="wrap">
+        {{#course}}
+            <h1>Class List: {{title}}</h1>
+        {{/course}}
+
+        {{#sessions}}
+            <div class="card">
+                <h3>{{start}} - Participants ({{participants.length}})</h3>
+                <ul>
+                    {{#participants}}
+                        <li>{{name}} &lt;{{email}}&gt;</li>
+                    {{/participants}}
+                </ul>
+            </div>
+        {{/sessions}}
+
+        <a href="/dashboard/classes" class="btn">← Back to Classes</a>
+    </article>
+</main>
+
+{{> footer}}

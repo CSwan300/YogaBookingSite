@@ -1,0 +1,126 @@
+{{> head}}
+{{> header}}
+
+<main>
+    <article class="wrap">
+        <div class="page-hero">
+            <h1>Manage Courses</h1>
+            {{#success}}<div class="alert success text-center">Operation successful!</div>{{/success}}
+        </div>
+
+        <div class="card mb-8">
+            <h3 class="mb-4">Add New Course</h3>
+            <form method="POST" action="/dashboard/courses" class="form-grid">
+                <div class="field">
+                    <label>Title</label>
+                    <input type="text" name="title" placeholder="e.g. 8-Week Hatha" required>
+                </div>
+
+                <div class="field">
+                    <label>Level</label>
+                    <select name="level">
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="advanced">Advanced</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Type (Category)</label>
+                    <select name="type" required>
+                        <option value="" disabled selected>Select type...</option>
+                        <option value="weekly_block">Weekly Block</option>
+                        <option value="workshop">Workshop</option>
+                        <option value="retreat">Retreat</option>
+                        <option value="one_off">One-off Session</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Price (£)</label>
+                    <input type="number" name="price" step="0.01" required>
+                </div>
+
+                <div class="field">
+                    <label>Course Start Date</label>
+                    <input type="date" name="startDate" required>
+                </div>
+
+                <div class="field">
+                    <label>Course End Date</label>
+                    <input type="date" name="endDate" required>
+                </div>
+
+                <div class="field">
+                    <label>Instructor</label>
+                    <select name="instructorId" required>
+                        <option value="" disabled selected>Select an instructor</option>
+                        {{#instructors}}
+                            <option value="{{id}}">{{name}}</option>
+                        {{/instructors}}
+                    </select>
+                </div>
+
+                <div class="field flex items-center mt-4">
+                    <input type="checkbox" id="dropin" name="allowDropIn" class="mr-2">
+                    <label for="dropin" class="mb-0">Allow Drop-in Bookings</label>
+                </div>
+
+                <div class="form-actions mt-4">
+                    <button type="submit" class="btn primary">Create Course</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Level</th>
+                    <th>Price</th>
+                    <th>Schedule</th>
+                    <th>Sessions</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {{#courses}}
+                    <tr>
+                        <td><strong>{{title}}</strong><br><small class="text-muted">{{type}}</small></td>
+                        <td><span class="badge">{{level}}</span></td>
+                        <td>£{{price}}</td>
+                        <td>
+                            <div class="text-xs">
+                                <strong>Start:</strong> {{startDate}}<br>
+                                <strong>End:</strong> {{endDate}}
+                            </div>
+                        </td>
+                        <td class="text-center">{{sessionsCount}}</td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="/dashboard/courses/{{_id}}/update" class="btn small">Edit</a>
+
+                                <form method="POST" action="/dashboard/courses/{{_id}}/delete" style="display:inline;">
+                                    <button type="submit" class="btn small danger" onclick="return confirm('Delete this course?')">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {{/courses}}
+                {{^courses}}
+                    <tr>
+                        <td colspan="6" class="text-center py-8 text-muted italic">No courses created yet.</td>
+                    </tr>
+                {{/courses}}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-8">
+            <a href="/dashboard" class="btn">← Back to Dashboard</a>
+        </div>
+    </article>
+</main>
+
+{{> footer}}

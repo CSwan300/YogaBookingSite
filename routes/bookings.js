@@ -1,12 +1,15 @@
-// routes/bookings.js
-import { Router } from 'express';
-import { bookCourse, bookSession, cancelBooking } from '../controllers/bookingController.js';
-import { requireAuth } from '../middlewares/auth.js';
+import { Router } from "express";
+import {
+    getProfile,
+    getEditProfile,
+    postEditProfile,
+} from "../controllers/ProfileController.js";
+import { requireAuth } from "../middlewares/auth.js";
 
 const router = Router();
 
-router.post('/course',        requireAuth, bookCourse);
-router.post('/session',       requireAuth, bookSession);
-router.delete('/:bookingId',  requireAuth, cancelBooking);
+router.get("/profile",       requireAuth, getProfile);
+router.get("/profile/edit",  requireAuth, getEditProfile);
+router.post("/profile/edit", requireAuth, postEditProfile);
 
 export default router;

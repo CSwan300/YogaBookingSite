@@ -1,0 +1,35 @@
+{{> head}}
+{{> header}}
+
+<main>
+    <article class="wrap">
+        <div class="page-hero">
+            <h1>Manage Classes</h1>
+        </div>
+
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                <tr><th>Course</th><th>Date/Time</th><th>Capacity</th><th>Booked</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                {{#sessions}}
+                    <tr>
+                        <td>{{courseTitle}} ({{courseLevel}})</td>
+                        <td>{{start}}</td>
+                        <td>{{capacity}}</td>
+                        <td>{{bookedCount}}/{{capacity}}</td>
+                        <td>
+                            <a href="/dashboard/classlist/{{courseId}}" class="btn small">View List</a>
+                        </td>
+                    </tr>
+                {{/sessions}}
+                </tbody>
+            </table>
+        </div>
+
+        <a href="/dashboard" class="btn">← Back to Dashboard</a>
+    </article>
+</main>
+
+{{> footer}}

@@ -1,0 +1,81 @@
+{{> head}}
+{{> header}}
+
+<main>
+    <article class="wrap">
+        <div class="page-hero">
+            <h1>Edit Course: {{course.title}}</h1>
+            <p>Modify the details for this course below.</p>
+        </div>
+
+        <div class="card mb-8">
+            <form method="POST" action="/dashboard/courses/{{course._id}}/update" class="form-grid">
+
+                <div class="field">
+                    <label>Title</label>
+                    <input type="text" name="title" value="{{course.title}}" required>
+                </div>
+
+                <div class="field">
+                    <label>Level</label>
+                    <select name="level">
+                        <option value="{{course.level}}" selected>Current: {{course.level}}</option>
+                        <hr> <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="advanced">Advanced</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Type (Category)</label>
+                    <select name="type" required>
+                        <option value="{{course.type}}" selected>Current: {{course.type}}</option>
+                        <hr>
+                        <option value="weekly_block">Weekly Block</option>
+                        <option value="workshop">Workshop</option>
+                        <option value="retreat">Retreat</option>
+                        <option value="one_off">One-off Session</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Price (£)</label>
+                    <input type="number" name="price" step="0.01" value="{{course.price}}" required>
+                </div>
+
+                <div class="field">
+                    <label>Course Start Date</label>
+                    <input type="date" name="startDate" value="{{course.startDate}}" required>
+                </div>
+
+                <div class="field">
+                    <label>Course End Date</label>
+                    <input type="date" name="endDate" value="{{course.endDate}}" required>
+                </div>
+
+                <div class="field">
+                    <label>Instructor</label>
+                    <select name="instructorId" required>
+                        <option value="{{course.instructorId}}" selected>Current Instructor ID: {{course.instructorId}}</option>
+                        <hr>
+                        {{#instructors}}
+                            <option value="{{id}}">{{name}}</option>
+                        {{/instructors}}
+                    </select>
+                </div>
+
+                <div class="field flex items-center mt-4">
+                    <input type="checkbox" id="dropin" name="allowDropIn" {{#course.allowDropIn}}checked{{/course.allowDropIn}}>
+                    <label for="dropin" class="mb-0">Allow Drop-in Bookings</label>
+                </div>
+
+                <div class="form-actions mt-6">
+                    <button type="submit" class="btn primary">Update Course Details</button>
+                    <a href="/dashboard/courses" class="btn outline">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </article>
+</main>
+
+{{> footer}}

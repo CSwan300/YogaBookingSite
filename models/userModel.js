@@ -1,18 +1,20 @@
-import { usersDb } from './_db.js';
+import { usersDb } from "./_db.js";
 
-const AVATAR_COLORS = ['4F46E5', '059669', 'D97706', 'DB2777', '2563EB', '7C3AED'];
+const AVATAR_COLORS = ["4F46E5", "059669", "D97706", "DB2777", "2563EB", "7C3AED"];
 
 function deriveAvatarFields(name, customImage = null) {
     const userInitials = name
-        .split(' ')
+        .split(" ")
         .filter(Boolean)
-        .map(word => word.charAt(0))
+        .map((word) => word.charAt(0))
         .slice(0, 2)
-        .join('')
+        .join("")
         .toUpperCase();
 
     const bgColor = AVATAR_COLORS[name.length % AVATAR_COLORS.length];
-    const generatedImage = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${bgColor}&color=fff&size=128`;
+    const generatedImage = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+        name
+    )}&background=${bgColor}&color=fff&size=128`;
 
     return {
         userInitials,
@@ -52,12 +54,11 @@ export const UserModel = {
 
     async update(id, data) {
         const existing = await usersDb.findOne({ _id: id });
-        if (!existing) throw new Error('User not found');
+        if (!existing) throw new Error("User not found");
 
         const nameChanged = data.name && data.name !== existing.name;
-        const hasCustomImage = data.image !== undefined
-            ? Boolean(data.image)
-            : existing._hasCustomImage;
+        const hasCustomImage =
+            data.image !== undefined ? Boolean(data.image) : existing._hasCustomImage;
 
         let avatarFields = {};
         if (nameChanged && !hasCustomImage) {
@@ -71,15 +72,12 @@ export const UserModel = {
             avatarFields._hasCustomImage = true;
         }
 
-        // Merge all fields into a single updated object
         const updatedUser = {
             ...existing,
             ...data,
-            ...avatarFields
+            ...avatarFields,
         };
 
-        // FORCE REPLACEMENT: Remove the old entry and insert the updated one
-        // This solves the issue where update() creates a second entry
         await usersDb.remove({ _id: id });
         await usersDb.insert(updatedUser);
 

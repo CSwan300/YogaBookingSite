@@ -1,7 +1,7 @@
 // controllers/bookingController.js
 import {
     bookCourseForUser,
-    bookSessionForUser,
+    bookSessionsForUser,
 } from "../services/bookingService.js";
 import { BookingModel } from "../models/bookingModel.js";
 import { SessionModel } from "../models/sessionModel.js";
@@ -100,13 +100,10 @@ export const cancelIndividualSession = async (req, res) => {
         if (!booking) return res.status(404).json({ error: "Booking not found" });
         if (booking.status === "CANCELLED") return res.status(400).json({ error: "Booking already cancelled" });
 
-        // 1. Decrement the count for the specific session
         await SessionModel.incrementBookedCount(sessionId, -1);
 
-        // 2. Remove session from the booking document
         const updatedBooking = await BookingModel.removeSession(bookingId, sessionId);
 
-        // 3. Redirect back or return JSON
         if (req.body.returnTo) {
             return res.redirect(req.body.returnTo);
         }

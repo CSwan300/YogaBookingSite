@@ -1,0 +1,56 @@
+{{> head}}
+{{> header}}
+
+<main>
+    <article class="wrap">
+        <div class="page-hero">
+            <h1>Manage Organisers</h1>
+            {{#success}}<div class="alert success">{{success}}!</div>{{/success}}
+        </div>
+
+        <div class="card">
+            <h3>Add New Organiser</h3>
+            <form method="POST" action="/dashboard/organisers">
+                <div class="field">
+                    <label>Name</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="field">
+                    <label>Email</label>
+                    <input type="email" name="email" required>
+                </div>
+                <div class="field">
+                    <label>Password</label>
+                    <input type="password" name="password" required>
+                </div>
+                <button type="submit" class="btn primary">Add Organiser</button>
+            </form>
+        </div>
+
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                <tr><th>Name</th><th>Email</th><th>Created</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                {{#organisers}}
+                    <tr>
+                        <td>{{name}}</td>
+                        <td>{{email}}</td>
+                        <td>{{createdAt}}</td>
+                        <td>
+                            <form method="POST" action="/dashboard/organisers/{{_id}}/delete" style="display:inline;">
+                                <button type="submit" class="btn small danger" onclick="return confirm('Remove?')">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                {{/organisers}}
+                </tbody>
+            </table>
+        </div>
+
+        <a href="/dashboard" class="btn">← Back to Dashboard</a>
+    </article>
+</main>
+
+{{> footer}}

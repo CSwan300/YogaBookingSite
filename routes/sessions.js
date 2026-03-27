@@ -1,49 +1,27 @@
 import { Router } from "express";
+import { requireAuth } from "../middlewares/auth.js";
 import { SessionModel } from "../models/sessionModel.js";
 import { BookingModel } from "../models/bookingModel.js";
-import { requireAuth, requireOrganiser } from "../middlewares/auth.js";
+
 
 const router = Router();
 
-
-// ── Book a single session (drop-in) ──────────────────────────
+// Pure route - delegates to model helpers
 router.post("/:id/book", requireAuth, async (req, res, next) => {
     try {
-        const session = await SessionModel.findById(req.params.id);
-        if (!session) return res.status(404).render("error", {
-            title: "Not found",
-            message: "Session not found."
-        });
-
-        if (session.bookedCount >= session.capacity) {
-            return res.status(409).render("error", {
-                title: "Session full",
-                message: "Sorry, this session is fully booked."
-            });
-        }
-
-        const existing = await BookingModel.findByUserAndSession(
-            req.user._id,
-            session._id
-        );
-        if (existing) {
-            return res.status(409).render("error", {
-                title: "Already booked",
-                message: "You have already booked this session."
-            });
-        }
-
-        await BookingModel.create({
-            userId:    req.user._id,
-            sessionId: session._id,
-            courseId:  session.courseId,
-            type:      "drop-in",
-        });
-
-        await SessionModel.incrementBookedCount(session._id);
+        // Models handle all validation + business logic
+        const { session } = await SessionModel.findByIdWithValidation(req.params.id, req.user._id);
+        await BookingModel.createDropInBooking(req.user._id, session);
 
         res.redirect(`/courses/${session.courseId}?booked=session`);
     } catch (err) {
+        // Models throw specific errors
+        if (err.message === 'Session full') {
+            return res.status(409).render("error", { title: "Session full", message: "Sorry, this session is fully booked." });
+        }
+        if (err.message === 'Already booked this session') {
+            return res.status(409).render("error", { title: "Already booked", message: "You have already booked this session." });
+        }
         next(err);
     }
 });

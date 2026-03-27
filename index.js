@@ -1,4 +1,3 @@
-// index.js
 import express from "express";
 import cookieParser from "cookie-parser";
 import session from "express-session";
@@ -44,12 +43,10 @@ app.set("views", [
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-// ── Cookie parser (signed cookies for JWT) ───────────────────
+// ── Cookie parser ────────────────────────────────────────────
 app.use(cookieParser(process.env.COOKIE_SECRET || "dev-cookie-secret"));
 
-// ── Session (used for flash messages) ───────────────────────
-// NOTE: For production swap MemoryStore for a persistent store,
-// e.g. connect-mongo or connect-redis, to survive restarts.
+// ── Session ──────────────────────────────────────────────────
 app.use(
     session({
         secret: process.env.SESSION_SECRET || "dev-session-secret",
@@ -58,7 +55,7 @@ app.use(
         cookie: {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            maxAge: 7 * 24 * 60 * 60 * 1000,
         },
     })
 );
@@ -66,27 +63,27 @@ app.use(
 // ── Static files ─────────────────────────────────────────────
 app.use("/static", express.static(path.join(__dirname, "public")));
 
-// ── Attach real JWT user ─────────────────────────────────────
+// ── Attach JWT user ──────────────────────────────────────────
 app.use(attachSessionUser);
 
 // ── Health ───────────────────────────────────────────────────
 app.get("/health", (req, res) => res.json({ ok: true }));
 
-// ── SSR view routes ──────────────────────────────────────────
-app.use("/", viewRoutes);
-app.use("/", profileRoutes);
+// ── SSR View Routes ──────────────────────────────────────────
+app.use("/", viewRoutes);     // Main HTML pages + admin dashboards
+app.use("/", profileRoutes);  // Profile routes
 
-// ── JSON API routes ──────────────────────────────────────────
-app.use("/api/courses",  courseRoutes);
-app.use("/api/sessions", sessionRoutes);
-app.use("/api/bookings", bookingRoutes);
+// ── JSON API Routes (original filenames) ─────────────────────
+app.use("/api/courses",  courseRoutes);   //  courses.js
+app.use("/api/sessions", sessionRoutes);  //  sessions.js
+app.use("/api/bookings", bookingRoutes);  // bookings.js
 
 // ── Error handlers ───────────────────────────────────────────
 export const not_found = (req, res) =>
-    res.status(404).type("text/plain").send("404 Not found.");
+    res.status(404).render("error", { title: "Not Found", message: "Page not found." });
 export const server_error = (err, req, res, next) => {
     console.error(err);
-    res.status(500).type("text/plain").send("Internal Server Error.");
+    res.status(500).render("error", { title: "Server Error", message: "Something went wrong." });
 };
 app.use(not_found);
 app.use(server_error);

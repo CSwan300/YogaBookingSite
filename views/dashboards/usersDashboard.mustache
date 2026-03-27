@@ -1,0 +1,40 @@
+{{> head}}
+{{> header}}
+
+<main>
+    <article class="wrap">
+        <div class="page-hero">
+            <h1>Manage Users</h1>
+            {{! Changed from #if success to just #success }}
+            {{#success}}
+                <div class="alert success">{{success}}!</div>
+            {{/success}}
+        </div>
+
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                <tr><th>Name</th><th>Email</th><th>Created</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                {{#users}}
+                    <tr>
+                        <td>{{name}}</td>
+                        <td>{{email}}</td>
+                        <td>{{createdAt}}</td>
+                        <td>
+                            <form method="POST" action="/dashboard/users/{{_id}}/delete" style="display:inline;">
+                                <button type="submit" class="btn small danger" onclick="return confirm('Remove user?')">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                {{/users}}
+                </tbody>
+            </table>
+        </div>
+
+        <a href="/dashboard" class="btn">← Back to Dashboard</a>
+    </article>
+</main>
+
+{{> footer}}

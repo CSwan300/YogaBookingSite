@@ -1,0 +1,70 @@
+{{> head}}
+{{> header}}
+
+<main>
+    <article class="wrap">
+        <div class="page-hero">
+            <h1>Manage Instructors</h1>
+            {{#success}}<div class="alert success">{{success}}!</div>{{/success}}
+        </div>
+
+        <div class="card">
+            <h3>Add New Instructor</h3>
+            <form method="POST" action="/dashboard/instructors">
+                <div class="field">
+                    <label>Name</label>
+                    <input type="text" name="name" placeholder="Full Name" required>
+                </div>
+                <div class="field">
+                    <label>Email</label>
+                    <input type="email" name="email" placeholder="email@yoga.local" required>
+                </div>
+                <div class="field">
+                    <label>Bio</label>
+                    <textarea name="bio" rows="2" placeholder="Briefly describe instructor's experience..."></textarea>
+                </div>
+                <div class="field">
+                    <label>Password</label>
+                    <input type="password" name="password" required>
+                </div>
+                <button type="submit" class="btn primary">Add Instructor</button>
+            </form>
+        </div>
+
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Bio</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {{#instructors}}
+                    <tr>
+                        <td><strong>{{name}}</strong></td>
+                        <td>{{email}}</td>
+                        <td><small>{{bio}}</small></td>
+                        <td>
+                            <form method="POST" action="/dashboard/instructors/{{_id}}/delete" style="display:inline;">
+                                <button type="submit" class="btn small danger" onclick="return confirm('Remove instructor?')">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                {{/instructors}}
+                {{^instructors}}
+                    <tr>
+                        <td colspan="4" class="text-center italic text-muted">No instructors registered yet.</td>
+                    </tr>
+                {{/instructors}}
+                </tbody>
+            </table>
+        </div>
+
+        <a href="/dashboard" class="btn">← Back to Dashboard</a>
+    </article>
+</main>
+
+{{> footer}}
