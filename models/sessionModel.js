@@ -3,6 +3,7 @@
 import { sessionsDb } from './_db.js';
 
 export const SessionModel = {
+
   async create(session) {
     return sessionsDb.insert(session);
   },
@@ -20,4 +21,5 @@ export const SessionModel = {
     await sessionsDb.update({ _id: id }, { $set: { bookedCount: next } });
     return this.findById(id);
   }
+
 };

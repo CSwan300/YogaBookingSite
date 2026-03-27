@@ -1,7 +1,7 @@
 // controllers/bookingController.js
 import {
     bookCourseForUser,
-    bookSessionForUser,
+    bookSessionsForUser,
 } from "../services/bookingService.js";
 import { BookingModel } from "../models/bookingModel.js";
 import { SessionModel } from "../models/sessionModel.js";
