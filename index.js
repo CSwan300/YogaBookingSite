@@ -65,7 +65,7 @@ app.use("/static", express.static(path.join(__dirname, "public")));
 
 // ── Attach JWT user ──────────────────────────────────────────
 app.use(attachSessionUser);
-
+//for the dashboard
 app.use((req, res, next) => {
     if (req.user) {
         res.locals.user = req.user;

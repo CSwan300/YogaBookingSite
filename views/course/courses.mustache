@@ -55,8 +55,12 @@
                 <h3>{{title}}</h3>
 
                 <p class="muted">
-                    {{type}}{{#allowDropIn}} &bull; Drop-in Available{{/allowDropIn}}
-                </p>
+                    {{#allowDropIn}}
+                        <span class="tag tag-success">Single Lessons Available</span>
+                    {{/allowDropIn}}
+                    {{^allowDropIn}}
+                        <span class="tag tag-info">Block Lessons Only</span>
+                    {{/allowDropIn}}                </p>
 
                 <p>{{description}}</p>
 

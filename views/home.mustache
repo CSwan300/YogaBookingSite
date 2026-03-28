@@ -2,37 +2,58 @@
 {{> header}}
 
 <main class="wrap">
-    <header class="page-header">
-        <h1>Upcoming Courses</h1>
+    <header class="page-header text-center">
+        <span class="badge">Expand Your Horizons</span>
+        <h1>Find Your Next Adventure</h1>
+        <p class="subtitle">Whether you're a curious beginner or looking to master your craft, there’s a seat waiting for you.</p>
     </header>
 
     <div class="cards">
         {{#courses}}
-            <section class="card">
-                <span class="tag">{{level}}</span>
-                <h3>{{title}}</h3>
+            <article class="card card-hover">
+                <header class="card-top">
+                    <span class="tag tag-{{level}}">{{level}}</span>
+                    {{#allowDropIn}}
+                        <span class="tag tag-success">Single Lessons Available</span>
+                    {{/allowDropIn}}
+                    {{^allowDropIn}}
+                        <span class="tag tag-info">Block Lessons Only</span>
+                    {{/allowDropIn}}
+                </header>
 
-                <p class="muted">
-                    Type: {{type}} {{#allowDropIn}}• Drop-in OK{{/allowDropIn}}
-                </p>
+                <div class="card-body">
+                    <h3>{{title}}</h3>
+                    <p class="description">{{description}}</p>
 
-                <p>{{description}}</p>
-
-                <div class="course-details">
-                    <p><strong>Price:</strong> £{{price}}</p>
-                    <p class="muted">Location: {{location}}</p>
-                    <p class="muted">Dates: {{startDate}} – {{endDate}}</p>
-                    <p class="muted">Next session: {{nextSession}}</p>
+                    <div class="details-grid">
+                        <div class="detail-item">
+                            <strong>When:</strong>
+                            <span>{{startDate}} – {{endDate}}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Where:</strong>
+                            <span>{{location}}</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="card-footer">
-                    <a href="/courses/{{id}}" class="btn primary">View &amp; Book</a>
+                    <div class="price-box">
+                        <span class="label">Cost -</span>
+                        <span class="price-value">£{{price}}</span>
+                    </div>
+                    <a href="/courses/{{id}}" class="btn btn-primary">Save My Spot</a>
                 </div>
-            </section>
+            </article>
         {{/courses}}
 
         {{^courses}}
-            <p class="muted">No courses available at the moment.</p>
+            <section class="empty-state">
+                <div class="icon">✨</div>
+                <h3>New things are brewing!</h3>
+                <p>We’re currently polishing our next round of sessions. Join our newsletter to be the first to know when they launch.</p>
+
+            </section>
         {{/courses}}
     </div>
 </main>
