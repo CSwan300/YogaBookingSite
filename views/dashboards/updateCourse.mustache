@@ -5,73 +5,74 @@
     <article class="wrap">
         <div class="page-hero">
             <h1>Edit Course: {{course.title}}</h1>
-            <p>Modify the details for this course below.</p>
+            <p class="help-text">Modify the details for this course below.</p>
         </div>
 
-        <div class="card mb-8">
+        <div class="card">
             <form method="POST" action="/dashboard/courses/{{course._id}}/update" class="form-grid">
 
                 <div class="field">
-                    <label>Title</label>
-                    <input type="text" name="title" value="{{course.title}}" required>
+                    <label for="edit-title">Title</label>
+                    <input id="edit-title" type="text" name="title" value="{{course.title}}" required>
                 </div>
 
                 <div class="field">
-                    <label>Level</label>
-                    <select name="level">
-                        <option value="{{course.level}}" selected>Current: {{course.level}}</option>
-                        <hr> <option value="beginner">Beginner</option>
-                        <option value="intermediate">Intermediate</option>
-                        <option value="advanced">Advanced</option>
-                    </select>
+                    <label for="edit-level">Level</label>
+                    <div class="select-wrap">
+                        <select id="edit-level" name="level">
+                            <option value="beginner" {{#course.isBeginnerLevel}}selected{{/course.isBeginnerLevel}}>Beginner</option>
+                            <option value="intermediate" {{#course.isIntermediateLevel}}selected{{/course.isIntermediateLevel}}>Intermediate</option>
+                            <option value="advanced" {{#course.isAdvancedLevel}}selected{{/course.isAdvancedLevel}}>Advanced</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="field">
-                    <label>Type (Category)</label>
-                    <select name="type" required>
-                        <option value="{{course.type}}" selected>Current: {{course.type}}</option>
-                        <hr>
-                        <option value="weekly_block">Weekly Block</option>
-                        <option value="workshop">Workshop</option>
-                        <option value="retreat">Retreat</option>
-                        <option value="one_off">One-off Session</option>
-                    </select>
+                    <label for="edit-type">Type (Category)</label>
+                    <div class="select-wrap">
+                        <select id="edit-type" name="type" required>
+                            <option value="weekly_block" {{#course.isWeeklyBlock}}selected{{/course.isWeeklyBlock}}>Weekly Block</option>
+                            <option value="workshop" {{#course.isWorkshop}}selected{{/course.isWorkshop}}>Workshop</option>
+                            <option value="retreat" {{#course.isRetreat}}selected{{/course.isRetreat}}>Retreat</option>
+                            <option value="one_off" {{#course.isOneOff}}selected{{/course.isOneOff}}>One-off Session</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="field">
-                    <label>Price (£)</label>
-                    <input type="number" name="price" step="0.01" value="{{course.price}}" required>
+                    <label for="edit-price">Price (£)</label>
+                    <input id="edit-price" type="number" name="price" step="0.01" value="{{course.price}}" required>
                 </div>
 
                 <div class="field">
-                    <label>Course Start Date</label>
-                    <input type="date" name="startDate" value="{{course.startDate}}" required>
+                    <label for="edit-start">Course Start Date</label>
+                    <input id="edit-start" type="date" name="startDate" value="{{course.startDate}}" required>
                 </div>
 
                 <div class="field">
-                    <label>Course End Date</label>
-                    <input type="date" name="endDate" value="{{course.endDate}}" required>
+                    <label for="edit-end">Course End Date</label>
+                    <input id="edit-end" type="date" name="endDate" value="{{course.endDate}}" required>
                 </div>
 
                 <div class="field">
-                    <label>Instructor</label>
-                    <select name="instructorId" required>
-                        <option value="{{course.instructorId}}" selected>Current Instructor ID: {{course.instructorId}}</option>
-                        <hr>
-                        {{#instructors}}
-                            <option value="{{id}}">{{name}}</option>
-                        {{/instructors}}
-                    </select>
+                    <label for="edit-instructor">Instructor</label>
+                    <div class="select-wrap">
+                        <select id="edit-instructor" name="instructorId" required>
+                            {{#instructors}}
+                                <option value="{{id}}" {{#isSelected}}selected{{/isSelected}}>{{name}}</option>
+                            {{/instructors}}
+                        </select>
+                    </div>
                 </div>
 
-                <div class="field flex items-center mt-4">
-                    <input type="checkbox" id="dropin" name="allowDropIn" {{#course.allowDropIn}}checked{{/course.allowDropIn}}>
-                    <label for="dropin" class="mb-0">Allow Drop-in Bookings</label>
+                <div class="field checkbox">
+                    <input type="checkbox" id="edit-dropin" name="allowDropIn" {{#course.allowDropIn}}checked{{/course.allowDropIn}}>
+                    <label for="edit-dropin">Allow Drop-in Bookings</label>
                 </div>
 
-                <div class="form-actions mt-6">
-                    <button type="submit" class="btn primary">Update Course Details</button>
-                    <a href="/dashboard/courses" class="btn outline">Cancel</a>
+                <div class="actions">
+                    <button type="submit" class="btn primary">Update Course</button>
+                    <a href="/dashboard/courses" class="btn">Cancel</a>
                 </div>
             </form>
         </div>

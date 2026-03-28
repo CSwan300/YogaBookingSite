@@ -2,41 +2,49 @@
 {{> header}}
 
 <main class="wrap">
-    <header class="course-page-header">
+    <header class="page-hero">
         <h1>Upcoming Courses</h1>
-        <p class="muted">Explore our current blocks and workshops.</p>
+        <p class="help-text">Explore our current blocks and workshops.</p>
     </header>
 
     <div class="schedule-controls">
         <form id="filter-form" class="filter-group" method="GET" action="/courses">
-            <select name="level" class="filter-select">
-                <option value="">All Levels</option>
-                <option value="beginner" {{#filters.beginner}}selected{{/filters.beginner}}>Beginner</option>
-                <option value="intermediate" {{#filters.intermediate}}selected{{/filters.intermediate}}>Intermediate</option>
-                <option value="advanced" {{#filters.advanced}}selected{{/filters.advanced}}>Advanced</option>
-            </select>
+            <div class="select-wrap">
+                <select name="level" class="filter-select">
+                    <option value="">All Levels</option>
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+                </select>
+            </div>
 
-            <select name="type" class="filter-select">
-                <option value="">All Types</option>
-                <option value="block" {{#filters.isBlock}}selected{{/filters.isBlock}}>Block</option>
-                <option value="workshop" {{#filters.isWorkshop}}selected{{/filters.isWorkshop}}>Workshop</option>
-            </select>
+            <div class="select-wrap">
+                <select name="type" class="filter-select">
+                    <option value="">All Types</option>
+                    <option value="block">Block</option>
+                    <option value="workshop">Workshop</option>
+                </select>
+            </div>
 
-            <select name="price" class="filter-select">
-                <option value="">Any Price</option>
-                <option value="50" {{#filters.price50}}selected{{/filters.price50}}>Under £50</option>
-                <option value="100" {{#filters.price100}}selected{{/filters.price100}}>Under £100</option>
-                <option value="200" {{#filters.price200}}selected{{/filters.price200}}>Under £200</option>
-                <option value="300" {{#filters.price300}}selected{{/filters.price300}}>Under £300</option>
-            </select>
+            <div class="select-wrap">
+                <select name="price" class="filter-select">
+                    <option value="">Any Price</option>
+                    <option value="50">Under £50</option>
+                    <option value="100">Under £100</option>
+                    <option value="200">Under £200</option>
+                    <option value="300">Under £300</option>
+                </select>
+            </div>
 
-            <select name="dropin" class="filter-select">
-                <option value="">All Drop-in</option>
-                <option value="true" {{#filters.dropinTrue}}selected{{/filters.dropinTrue}}>Drop-in OK</option>
-                <option value="false" {{#filters.dropinFalse}}selected{{/filters.dropinFalse}}>Block Only</option>
-            </select>
+            <div class="select-wrap">
+                <select name="dropin" class="filter-select">
+                    <option value="">All Drop-in</option>
+                    <option value="true">Drop-in OK</option>
+                    <option value="false">Block Only</option>
+                </select>
+            </div>
 
-            <a href="/courses" class="btn">Clear Filters</a>
+            <a href="/courses" class="btn" id="filter-reset">Clear</a>
         </form>
     </div>
 
@@ -47,7 +55,7 @@
                 <h3>{{title}}</h3>
 
                 <p class="muted">
-                    {{type}} {{#allowDropIn}}• Drop-in Available{{/allowDropIn}}
+                    {{type}}{{#allowDropIn}} &bull; Drop-in Available{{/allowDropIn}}
                 </p>
 
                 <p>{{description}}</p>
@@ -61,6 +69,7 @@
                             <span class="muted">/ session</span>
                         </p>
                     {{/allowDropIn}}
+
                     <div class="course-meta">
                         <p class="muted">Location: {{location}}</p>
                         <p class="muted">Dates: {{startDate}} – {{endDate}}</p>
@@ -82,17 +91,15 @@
         {{/courses}}
     </div>
 
-    {{#pagination.total}}
-        <nav class="pagination">
+    <div class="pagination-wrap">
+        <nav class="pagination" aria-label="Page navigation">
             {{#pagination.hasPrev}}
                 <a href="/courses?page={{pagination.prevPage}}{{pagination.queryParams}}" class="btn">← Previous</a>
             {{/pagination.hasPrev}}
 
             <div class="page-numbers">
                 {{#pagination.pages}}
-                    <a href="/courses?page={{number}}{{pagination.queryParams}}" class="btn {{#isCurrent}}primary{{/isCurrent}}">
-                    {{number}}
-                    </a>
+                    <a href="/courses?page={{number}}{{pagination.queryParams}}" class="btn{{#isCurrent}} active{{/isCurrent}}">{{number}}</a>
                 {{/pagination.pages}}
             </div>
 
@@ -100,23 +107,30 @@
                 <a href="/courses?page={{pagination.nextPage}}{{pagination.queryParams}}" class="btn">Next →</a>
             {{/pagination.hasNext}}
         </nav>
-    {{/pagination.total}}
+    </div>
 </main>
 
+{{> footer}}
+
 <script>
-    (function() {
+    (function () {
         'use strict';
 
         const filterForm = document.getElementById('filter-form');
-        const selects = document.querySelectorAll('.filter-select');
+        const selects    = document.querySelectorAll('.filter-select');
+        const urlParams  = new URLSearchParams(window.location.search);
 
-        // Whenever a dropdown changes, submit the form to reload the page with new filters
-        selects.forEach(select => {
-            select.addEventListener('change', () => {
+        // Restore dropdown state from URL
+        selects.forEach(function (select) {
+            var val = urlParams.get(select.name);
+            if (val !== null) select.value = val;
+        });
+
+        // Auto-submit on change
+        selects.forEach(function (select) {
+            select.addEventListener('change', function () {
                 filterForm.submit();
             });
         });
-    })();
+    }());
 </script>
-
-{{> footer}}

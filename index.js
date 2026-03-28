@@ -66,6 +66,15 @@ app.use("/static", express.static(path.join(__dirname, "public")));
 // ── Attach JWT user ──────────────────────────────────────────
 app.use(attachSessionUser);
 
+app.use((req, res, next) => {
+    if (req.user) {
+        res.locals.user = req.user;
+        // Check if the role string is exactly "organiser"
+        res.locals.isOrganiser = req.user.role === "organiser";
+    }
+    next();
+});
+
 // ── Health ───────────────────────────────────────────────────
 app.get("/health", (req, res) => res.json({ ok: true }));
 

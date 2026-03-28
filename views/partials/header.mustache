@@ -15,13 +15,9 @@
             <a href="/instructors">Instructors</a>
             <a href="/about">About</a>
 
-            {{#user}}
-                {{#user.role}}
-                    {{#isOrganiser}}  <!-- 👈 pass this from your controller -->
-                        <a href="/dashboard">Organiser</a>
-                    {{/isOrganiser}}
-                {{/user.role}}
-            {{/user}}
+            {{#isOrganiser}}
+                <a href="/dashboard">Dashboards</a>
+            {{/isOrganiser}}
         </nav>
 
         <div class="header-actions">

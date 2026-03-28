@@ -2,10 +2,13 @@
 {{> header}}
 
 <article class="wrap">
-    <h1>{{course.title}}</h1>
-    <p class="muted">
-        Level: {{course.level}} • Type: {{course.type}} {{#course.allowDropIn}}• Drop-in available{{/course.allowDropIn}}
-    </p>
+    <div class="page-hero">
+        <h1>{{course.title}}</h1>
+        <p class="muted">
+            Level: {{course.level}} &bull; Type: {{course.type}}{{#course.allowDropIn}} &bull; Drop-in available{{/course.allowDropIn}}
+        </p>
+    </div>
+
     <p>{{course.description}}</p>
     <p class="muted">Dates: {{course.startDate}} – {{course.endDate}}</p>
     <p class="muted">Location: {{course.location}}</p>
@@ -25,54 +28,56 @@
         {{/user}}
     </section>
 
-    <section>
+    <section class="sessions-section">
         <h2>Sessions</h2>
-        <table class="table">
-            <thead>
-            <tr>
-                <th>Start</th>
-                <th>End</th>
-                <th>Price</th>
-                <th>Capacity</th>
-                <th>Remaining</th>
-                <th></th>
-            </tr>
-            </thead>
-            <tbody>
-            {{#sessions}}
-                {{^isPast}}
-                    <tr>
-                        <td>{{start}}</td>
-                        <td>{{end}}</td>
-                        <td>
-                            {{#allowDropIn}}£{{dropInPrice}}{{/allowDropIn}}
-                            {{^allowDropIn}}—{{/allowDropIn}}
-                        </td>
-                        <td>{{capacity}}</td>
-                        <td>{{remaining}}</td>
-                        <td>
-                            {{#allowDropIn}}
-                                {{#user}}
-                                    <form action="/courses/{{courseId}}/book/session" method="get">
-                                        <input type="hidden" name="sessionId" value="{{id}}">
-                                        <button class="btn" type="submit" {{#isFull}}disabled{{/isFull}}>
-                                            Book Session
-                                        </button>
-                                    </form>
-                                {{/user}}
-                                {{^user}}
-                                    <a href="/login?redirect=/sessions/{{id}}" class="btn">Login</a>
-                                {{/user}}
-                            {{/allowDropIn}}
-                            {{^allowDropIn}}
-                                <span class="muted">Block Only</span>
-                            {{/allowDropIn}}
-                        </td>
-                    </tr>
-                {{/isPast}}
-            {{/sessions}}
-            </tbody>
-        </table>
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Price</th>
+                    <th>Capacity</th>
+                    <th>Remaining</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {{#sessions}}
+                    {{^isPast}}
+                        <tr>
+                            <td>{{start}}</td>
+                            <td>{{end}}</td>
+                            <td>
+                                {{#allowDropIn}}£{{dropInPrice}}{{/allowDropIn}}
+                                {{^allowDropIn}}—{{/allowDropIn}}
+                            </td>
+                            <td>{{capacity}}</td>
+                            <td>{{remaining}}</td>
+                            <td>
+                                {{#allowDropIn}}
+                                    {{#user}}
+                                        <form action="/courses/{{courseId}}/book/session" method="get">
+                                            <input type="hidden" name="sessionId" value="{{id}}">
+                                            <button class="btn small" type="submit" {{#isFull}}disabled{{/isFull}}>
+                                                Book Session
+                                            </button>
+                                        </form>
+                                    {{/user}}
+                                    {{^user}}
+                                        <a href="/login?redirect=/sessions/{{id}}" class="btn small">Login</a>
+                                    {{/user}}
+                                {{/allowDropIn}}
+                                {{^allowDropIn}}
+                                    <span class="muted">Block Only</span>
+                                {{/allowDropIn}}
+                            </td>
+                        </tr>
+                    {{/isPast}}
+                {{/sessions}}
+                </tbody>
+            </table>
+        </div>
     </section>
 
     <div class="actions">

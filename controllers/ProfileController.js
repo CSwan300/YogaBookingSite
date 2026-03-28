@@ -2,11 +2,15 @@ import { UserModel } from '../models/userModel.js';
 
 // ─── GET /profile ────────────────────────────────────────────────────────────
 export async function getProfile(req, res) {
-    const user = await UserModel.findById(req.user._id);
-    if (!user) return res.redirect('/login');
+    // .lean() makes the result a plain JS object instead of a Mongoose document
+    const userDoc = await UserModel.findById(req.user._id).lean();
+    if (!userDoc) return res.redirect('/login');
+
+    const formatted = formatUser(userDoc);
 
     res.render('profile', {
-        ...formatUser(user),
+        ...formatted,        // For the profile card: {{name}}, {{email}}
+        user: formatted,     // For the header: {{user.role.isOrganiser}}
         pageTitle: 'My Profile',
     });
 }
@@ -16,8 +20,11 @@ export async function getEditProfile(req, res) {
     const user = await UserModel.findById(req.user._id);
     if (!user) return res.redirect('/login');
 
+    const formatted = formatUser(user);
+
     res.render('profile-edit', {
-        ...formatUser(user),
+        ...formatted,
+        user: formatted,
         pageTitle: 'Edit Profile',
         errors: [],
     });
@@ -31,9 +38,12 @@ export async function postEditProfile(req, res) {
     const { name, email } = req.body;
     const errors = validate({ name, email });
 
+    const formatted = formatUser(user);
+
     if (errors.length) {
         return res.render('profile-edit', {
-            ...formatUser(user),
+            ...formatted,
+            user: formatted,
             name,
             email,
             pageTitle: 'Edit Profile',
@@ -41,12 +51,12 @@ export async function postEditProfile(req, res) {
         });
     }
 
-    // Check email uniqueness if it changed
     if (email !== user.email) {
         const existing = await UserModel.findByEmail(email);
         if (existing && String(existing._id) !== String(user._id)) {
             return res.render('profile-edit', {
-                ...formatUser(user),
+                ...formatted,
+                user: formatted,
                 name,
                 email,
                 pageTitle: 'Edit Profile',
@@ -55,7 +65,6 @@ export async function postEditProfile(req, res) {
         }
     }
 
-    // This now performs a delete-then-insert internally to prevent duplicates
     await UserModel.update(user._id, { name, email });
 
     res.redirect('/profile');
@@ -78,11 +87,16 @@ function validate({ name, email }) {
 }
 
 function formatUser(user) {
+    // If user is a Mongoose document, convert to object; otherwise use as is
+    const plainUser = user.toObject ? user.toObject() : user;
+
     return {
-        ...user,
-        id: user._id,
-        createdAt: user.createdAt
-            ? new Date(user.createdAt).toLocaleDateString('en-GB', {
+        ...plainUser,
+        id: plainUser._id.toString(),
+        // Ensure role exists so the template doesn't crash looking for .isOrganiser
+        role: plainUser.role || {},
+        createdAt: plainUser.createdAt
+            ? new Date(plainUser.createdAt).toLocaleDateString('en-GB', {
                 day: '2-digit',
                 month: 'short',
                 year: 'numeric',

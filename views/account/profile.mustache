@@ -25,9 +25,13 @@
                 <span class="value">{{createdAt}}</span>
             </div>
         </div>
-
         <div class="profile-actions">
             <a href="/profile/edit" class="btn-edit">Edit Profile</a>
+
+            {{#isOrganiser}}
+                <a href="/dashboard" class="btn-edit">View Dashboards</a>
+            {{/isOrganiser}}
+
             <a href="/logout" class="btn-signout">Sign out</a>
         </div>
     </div>

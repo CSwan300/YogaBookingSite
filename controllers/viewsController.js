@@ -539,7 +539,17 @@ export const profilePage = async (req, res, next) => {
         if (!user) return res.redirect("/login");
 
         res.render("profile", {
-            title:        "My Profile",
+            title: "My Profile",
+            // We pass the 'user' object here so {{#user.role.isOrganiser}} works in the header
+            user: {
+                id:           String(user._id),
+                name:         user.name,
+                email:        user.email,
+                image:        user.image,
+                userInitials: user.userInitials,
+                role:         user.role, // <--- THIS WAS MISSING
+            },
+            // These stay here for the body of your profile page
             name:         user.name,
             email:        user.email,
             image:        user.image,
@@ -1148,4 +1158,4 @@ export const getUpdateCoursePage = async (req, res, next) => {
             instructors
         });
     } catch (err) { next(err); }
-};
+};4
