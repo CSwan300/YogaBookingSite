@@ -1,5 +1,5 @@
 //viewsController.js
-//imports
+//import lines
 import { CourseModel } from "../models/courseModel.js";
 import { SessionModel } from "../models/sessionModel.js";
 import {
@@ -547,9 +547,8 @@ export const profilePage = async (req, res, next) => {
                 email:        user.email,
                 image:        user.image,
                 userInitials: user.userInitials,
-                role:         user.role, // <--- THIS WAS MISSING
+                role:         user.role,
             },
-            // These stay here for the body of your profile page
             name:         user.name,
             email:        user.email,
             image:        user.image,
@@ -1002,17 +1001,20 @@ export const bookingConfirmationPage = async (req, res, next) => {
 
 /* ── Admin Dashboards ────────────────────────────────────────── */
 
+/* ── Admin Dashboard ────────────────────────────────────────── */
 export const adminDashboardPage = async (req, res, next) => {
     try {
         const data = await getAdminDashboardData();
-        res.render("AdminDashboard", {
-            title: "Admin Dashboard",
-            ...data,
-            user: req.user
-        });
-    } catch (err) { next(err); }
-};
 
+
+        res.render("admindashboard", {
+            title: "Admin Dashboard",
+            ...data
+        });
+    } catch (err) {
+        next(err);
+    }
+};
 export const coursesDashboardPage = async (req, res, next) => {
     try {
         const data = await getCoursesDashboardData();
@@ -1069,7 +1071,6 @@ export const classListDashboardPage = async (req, res, next) => {
 
 export const instructorsDashboardPage = async (req, res, next) => {
     try {
-        // Corrected: No 'organiserLogic' prefix needed
         const data = await getInstructorsData();
         if (req.query.success) data.success = req.query.success;
         res.render("instructorsDashboard", {

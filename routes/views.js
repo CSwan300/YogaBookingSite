@@ -46,7 +46,7 @@ router.get("/login",       loginPage);
 router.post("/login",      postLogin);
 router.get("/register",    registerPage);
 router.post("/register",   postRegister);
-router.get("/logout",      logoutHandler); // <--- This now works perfectly
+router.get("/logout",      logoutHandler);
 
 /* ── Booking Features (Protected) ─────────────────────────── */
 router.get("/courses/:id/book",         requireAuth, getBookCoursePage);
