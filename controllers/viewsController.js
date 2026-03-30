@@ -1017,7 +1017,7 @@ export const adminDashboardPage = async (req, res, next) => {
 export const coursesDashboardPage = async (req, res, next) => {
     try {
         const data = await getCoursesDashboardData();
-        res.render("CoursesDashboard", {
+        res.render("coursesDashboard", {
             title: "Manage Courses",
             success: req.query.success,
             ...data
@@ -1049,7 +1049,7 @@ export const postUpdateCoursePage = async (req, res, next) => {
 export const classesDashboardPage = async (req, res, next) => {
     try {
         const data = await getClassesDashboardData();
-        res.render("ClassesDashboard", {
+        res.render("classesDashboard", {
             title: "Manage Classes",
             ...data
         });
@@ -1098,7 +1098,7 @@ export const postDeleteInstructorPage = async (req, res, next) => {
 export const organisersDashboardPage = async (req, res, next) => {
     try {
         const data = await getOrganisersData();
-        res.render("OrganisersDashboard", {
+        res.render("organisersDashboard", {
             title: "Manage Organisers",
             success: req.query.success,
             ...data
@@ -1123,7 +1123,7 @@ export const postDeleteOrganiserPage = async (req, res, next) => {
 export const usersDashboardPage = async (req, res, next) => {
     try {
         const data = await getUsersData();
-        res.render("UsersDashboard", {
+        res.render("usersDashboard", {
             title: "Manage Users",
             success: req.query.success,
             ...data
