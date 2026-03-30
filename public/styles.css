@@ -2514,6 +2514,56 @@ article:has(.calendar-grid) p { text-align: left; }
     .form-section {
         padding: var(--space-md) var(--space-lg);
     }
+    body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        margin: 0;
+    }
+
+    .pagination-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        margin-top: 2rem;
+        margin-bottom: 7rem;
+        padding: 20px 0;
+        position: relative;
+        clear: both;
+        z-index: 2;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+    }
+
+    .pagination {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.75rem;
+        height: auto;
+        line-height: normal;
+        background: transparent !important;
+        border: none !important;
+    }
+
+    .page-numbers {
+        display: flex;
+        flex-direction: row;
+        gap: 0.5rem;
+    }
+
+    .pagination .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        vertical-align: middle;
+        padding: 0.5rem 0.75rem;
+        min-width: 2.5rem;
+        box-sizing: border-box;
+    }
 }
 
 @media (max-width: 480px) {
@@ -2548,27 +2598,6 @@ article:has(.calendar-grid) p { text-align: left; }
     .kv { grid-template-columns: 1fr; gap: 0; }
     .kv dt { margin-top: 0.6rem; }
 
-    /* Pagination wraps and centres cleanly on mobile */
-    .pagination {
-        gap: 0.35rem;
-        justify-content: center;
-        flex-wrap: wrap;
-        margin-top: var(--space-md);
-    }
-
-    .pagination .btn {
-        min-width: 2rem;
-        padding: 0.4rem 0.5rem;
-        font-size: 0.8rem;
-    }
-
-    .page-numbers {
-        display: flex;
-        gap: 0.35rem;
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-
     .user strong,
     .user .user-name { display: none; }
     .user { padding: 0.3rem 0.55rem; }
@@ -2586,4 +2615,55 @@ article:has(.calendar-grid) p { text-align: left; }
     .form-grid { grid-template-columns: 1fr; }
     .form-grid .field,
     .form-grid .actions { grid-column: 1 / -1; }
+
+    body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        margin: 0;
+    }
+
+    .pagination-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        margin-top: 2rem;
+        margin-bottom: 7rem;
+        padding: 20px 0;
+        position: relative;
+        clear: both;
+        z-index: 2;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+    }
+
+    .pagination {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.75rem;
+        height: auto;
+        line-height: normal;
+        background: transparent !important;
+        border: none !important;
+    }
+
+    .page-numbers {
+        display: flex;
+        flex-direction: row;
+        gap: 0.5rem;
+    }
+
+    .pagination .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        vertical-align: middle;
+        padding: 0.5rem 0.75rem;
+        min-width: 2.5rem;
+        box-sizing: border-box;
+    }
 }
