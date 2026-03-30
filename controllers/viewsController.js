@@ -1006,7 +1006,6 @@ export const adminDashboardPage = async (req, res, next) => {
     try {
         const data = await getAdminDashboardData();
 
-
         res.render("adminDashboard", {
             title: "Admin Dashboard",
             ...data
