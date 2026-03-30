@@ -70,7 +70,6 @@ npm install
 ```
 
 **3. Set up environment variables**
-
 Create a `.env` file in the project root:
 
 ```bash
