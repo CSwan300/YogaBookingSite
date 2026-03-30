@@ -1,7 +1,4 @@
-# **Live Demo** 
-```
-https://campbellswanwebdev2courseworklivedemo.onrender.com
-```
+
 # Yoga Booking — WAD2 Coursework
 
 *A full-stack yoga class booking web application built with Node.js, Express, and NeDB.*
