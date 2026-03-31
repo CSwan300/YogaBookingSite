@@ -1,5 +1,4 @@
-import { userModel } from '../models/userModel.js';
-
+import userModel from '../models/userModel.js';
 // ─── GET /profile ────────────────────────────────────────────────────────────
 export async function getProfile(req, res) {
     // userModel returns plain objects, so .lean() is not needed
