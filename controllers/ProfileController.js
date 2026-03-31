@@ -1,9 +1,9 @@
-import { UserModel } from '../models/UserModel.js';
+import { userModel } from '../models/userModel.js';
 
 // ─── GET /profile ────────────────────────────────────────────────────────────
 export async function getProfile(req, res) {
-    // Removed .lean() - UserModel returns plain objects, not Mongoose documents
-    const userDoc = await UserModel.findById(req.user._id);
+    // userModel returns plain objects, so .lean() is not needed
+    const userDoc = await userModel.findById(req.user._id);
 
     if (!userDoc) return res.redirect('/login');
 
@@ -18,7 +18,7 @@ export async function getProfile(req, res) {
 
 // ─── GET /profile/edit ───────────────────────────────────────────────────────
 export async function getEditProfile(req, res) {
-    const user = await UserModel.findById(req.user._id);
+    const user = await userModel.findById(req.user._id);
     if (!user) return res.redirect('/login');
 
     const formatted = formatUser(user);
@@ -33,7 +33,7 @@ export async function getEditProfile(req, res) {
 
 // ─── POST /profile/edit ──────────────────────────────────────────────────────
 export async function postEditProfile(req, res) {
-    const user = await UserModel.findById(req.user._id);
+    const user = await userModel.findById(req.user._id);
     if (!user) return res.redirect('/login');
 
     const { name, email } = req.body;
@@ -54,7 +54,7 @@ export async function postEditProfile(req, res) {
 
     // Check if email is being changed and if the new one is taken
     if (email !== user.email) {
-        const existing = await UserModel.findByEmail(email);
+        const existing = await userModel.findByEmail(email);
         // Compare IDs as strings to ensure accurate matching
         if (existing && String(existing._id) !== String(user._id)) {
             return res.render('profile-edit', {
@@ -68,7 +68,7 @@ export async function postEditProfile(req, res) {
         }
     }
 
-    await UserModel.update(user._id, { name, email });
+    await userModel.update(user._id, { name, email });
 
     res.redirect('/profile');
 }
@@ -90,17 +90,14 @@ function validate({ name, email }) {
 }
 
 function formatUser(user) {
-    // Check if user exists to prevent crashes
     if (!user) return {};
 
-    // In your custom model, user is already a plain object.
-    // We keep the check just in case you ever switch to Mongoose.
+    // Handles both plain objects and Mongoose documents if you switch later
     const plainUser = user.toObject ? user.toObject() : user;
 
     return {
         ...plainUser,
         id: plainUser._id ? plainUser._id.toString() : '',
-        // Ensure role exists so the template doesn't crash looking for .isOrganiser
         role: plainUser.role || {},
         createdAt: plainUser.createdAt
             ? new Date(plainUser.createdAt).toLocaleDateString('en-GB', {
