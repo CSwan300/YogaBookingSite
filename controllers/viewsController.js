@@ -1,13 +1,13 @@
-//viewsController.js
-//import lines
+// controllers/viewsController.js
+
 import { CourseModel } from "../models/courseModel.js";
 import { SessionModel } from "../models/sessionModel.js";
+import { BookingModel } from "../models/bookingModel.js";
+import { userModel as UserModel } from "../models/userModel.js";
 import {
     bookCourseForUser,
     bookSessionsForUser,
 } from "../services/bookingService.js";
-import { BookingModel } from "../models/bookingModel.js";
-import { userModel as UserModel } from "../models/userModel.js";
 import {
     getAdminDashboardData,
     getCoursesDashboardData, createCourse, deleteCourse, updateCourse,
@@ -15,8 +15,10 @@ import {
     getOrganisersData, createOrganiser, deleteOrganiser,
     getUsersData, deleteUser,
     getInstructorsData, createInstructor, deleteInstructor,
-} from "../controllers/organiserController.js";
+} from "./organiserController.js";
 
+import { createSession } from "./apiController.js";
+import { requireAuth } from "../middlewares/auth.js";
 /* ── Formatters ─────────────────────────────────────────────── */
 const fmtDate = (iso) =>
     new Date(iso).toLocaleString("en-GB", {
@@ -1169,4 +1171,68 @@ export const getUpdateCoursePage = async (req, res, next) => {
             instructors
         });
     } catch (err) { next(err); }
-};4
+};
+/* ── Session Logic moved from Routes ── */
+
+/**
+ * Handles session creation (POST /sessions)
+ * Renamed to match the import in routes/sessions.js
+ */
+export const postCreateSession = (req, res, next) => {
+    // If the request is from an API/JSON client
+    if (req.headers.accept?.includes("application/json")) {
+        return createSession(req, res, next);
+    }
+    // Otherwise, ensure the user is logged in before calling the API controller
+    return requireAuth(req, res, () => createSession(req, res, next));
+};
+
+/**
+ * Renders the drop-in booking page for a single session
+ */
+export const getSingleSessionBookPage = async (req, res, next) => {
+    try {
+        const session = await SessionModel.findById(req.params.id);
+        if (!session) {
+            return res.status(404).render("error", { title: "Not Found", message: "Session not found." });
+        }
+
+        const course = await CourseModel.findById(session.courseId);
+        if (!course) {
+            return res.status(404).render("error", { title: "Not Found", message: "Course not found." });
+        }
+
+        if (!course.allowDropIn) {
+            return res.status(400).render("error", { title: "Not Allowed", message: "Drop-ins are disabled for this course." });
+        }
+
+        const now = new Date();
+        const remaining = Math.max(0, (session.capacity ?? 0) - (session.bookedCount ?? 0));
+
+        res.render("session_book", {
+            title: "Book Session",
+            course: {
+                id:          course._id,
+                title:       course.title,
+                level:       course.level,
+                location:    course.location,
+                description: course.description,
+            },
+            sessions: [{
+                id:              String(session._id),
+                start:           fmtDate(session.startDateTime),
+                remaining,
+                isFull:          remaining === 0,
+                pluralRemaining: remaining !== 1,
+                isPast:          new Date(session.startDateTime) < now,
+            }],
+            user: req.user ? {
+                id:    req.user._id,
+                name:  req.user.name,
+                email: req.user.email,
+            } : null,
+        });
+    } catch (err) {
+        next(err);
+    }
+};
