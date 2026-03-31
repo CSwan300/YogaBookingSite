@@ -1,6 +1,6 @@
 import { CourseModel } from "../models/courseModel.js";
 import { SessionModel } from "../models/sessionModel.js";
-import { UserModel } from "../models/userModel.js";
+import { userModel } from "../models/userModel.js";
 import { BookingModel } from "../models/bookingModel.js";
 
 /* ── Helpers ────────────────────────────────────────────────── */
@@ -22,7 +22,7 @@ export const getAdminDashboardData = async () => ({});
 
 export const getCoursesDashboardData = async () => {
     const courses = await CourseModel.list();
-    const users = await UserModel.list();
+    const users = await userModel.list(); // Updated to lowercase
 
     const instructors = users
         .filter(u => u.role === "instructor")
@@ -72,17 +72,15 @@ export const getClassListData = async (courseId) => {
 
     const sessions = await SessionModel.listByCourse(course._id);
     const allBookings = await BookingModel.list();
-    const allUsers = await UserModel.list();
+    const allUsers = await userModel.list(); // Updated to lowercase
 
     const formattedSessions = sessions.map((session) => {
-        // Filter bookings that contain this specific session ID and aren't cancelled
         const bookingsForThisSession = allBookings.filter(b => {
             const sIds = b.sessionIds || [];
             const isActive = b.status?.toUpperCase() !== "CANCELLED";
             return sIds.some(id => String(id) === String(session._id)) && isActive;
         });
 
-        // Map the bookings to actual User names by matching IDs
         const participantList = bookingsForThisSession.map(b => {
             const user = allUsers.find(u => String(u._id) === String(b.userId));
             return {
@@ -109,10 +107,9 @@ export const getClassListData = async (courseId) => {
 export const createCourse = async (courseData) => {
     const formattedData = {
         ...courseData,
-        // Convert checkbox "on" or string "true" to a real boolean
         allowDropIn: courseData.allowDropIn === 'true' || courseData.allowDropIn === 'on',
         price: parseFloat(courseData.price),
-        sessionIds: [], // Initialise empty
+        sessionIds: [], 
         createdAt: new Date().toISOString()
     };
     return await CourseModel.create(formattedData);
@@ -129,34 +126,33 @@ export const updateCourse = async (id, updateData) => {
 /* ── Organiser Management ───────────────────────────────────── */
 
 export const getOrganisersData = async () => {
-    const users = await UserModel.list();
+    const users = await userModel.list(); // Updated to lowercase
     return { organisers: users.filter(u => u.role === "organiser") };
 };
 
 export const createOrganiser = async (userData) => {
-    return await UserModel.create({ ...userData, role: "organiser" });
+    return await userModel.create({ ...userData, role: "organiser" }); // Updated to lowercase
 };
 
 export const deleteOrganiser = async (id) => {
-    return await UserModel.delete(id);
+    return await userModel.delete(id); // Updated to lowercase
 };
 
 /* ── User Management ────────────────────────────────────────── */
 
 export const getUsersData = async () => {
-    const users = await UserModel.list();
+    const users = await userModel.list(); // Updated to lowercase
     return { users: users.filter(u => u.role !== "organiser") };
 };
 
 export const deleteUser = async (id) => {
-    return await UserModel.delete(id);
+    return await userModel.delete(id); // Updated to lowercase
 };
 
 /* ── Instructor Management ───────────────────────────────────── */
 
 export const getInstructorsData = async () => {
-    const users = await UserModel.list();
-    // Filter to only show users with the instructor role
+    const users = await userModel.list(); // Updated to lowercase
     return {
         instructors: users.filter(u => u.role === "instructor"),
         title: "Manage Instructors"
@@ -164,8 +160,7 @@ export const getInstructorsData = async () => {
 };
 
 export const createInstructor = async (userData) => {
-    // We ensure the role is set to instructor regardless of form input
-    return await UserModel.create({
+    return await userModel.create({ // Updated to lowercase
         ...userData,
         role: "instructor",
         userInitials: userData.name ? userData.name.charAt(0).toUpperCase() : "I",
@@ -174,5 +169,5 @@ export const createInstructor = async (userData) => {
 };
 
 export const deleteInstructor = async (id) => {
-    return await UserModel.delete(id);
+    return await userModel.delete(id); // Updated to lowercase
 };
