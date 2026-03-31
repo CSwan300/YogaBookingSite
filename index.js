@@ -1,6 +1,5 @@
 import express from "express";
 import cookieParser from "cookie-parser";
-import session from "express-session";
 import dotenv from "dotenv";
 import mustacheExpress from "mustache-express";
 import path from "path";
@@ -21,14 +20,11 @@ const __dirname = path.dirname(__filename);
 
 export const app = express();
 
-/* ── Global Template Variables ─────────────────────────────── */
+// ── Global Template Variables ──
 app.locals.year = new Date().getFullYear();
 
-// ── View engine (Mustache) ───────────────────────────────────
-app.engine(
-    "mustache",
-    mustacheExpress(path.join(__dirname, "views", "partials"), ".mustache")
-);
+// ── View engine (Mustache) ──
+app.engine("mustache", mustacheExpress(path.join(__dirname, "views", "partials"), ".mustache"));
 app.set("view engine", "mustache");
 app.set("views", [
     path.join(__dirname, "views"),
@@ -39,69 +35,42 @@ app.set("views", [
     path.join(__dirname, "views", "dashboards"),
 ]);
 
-// ── Body parsing ─────────────────────────────────────────────
+// ── Middleware ──
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
-
-// ── Cookie parser ────────────────────────────────────────────
 app.use(cookieParser(process.env.COOKIE_SECRET || "dev-cookie-secret"));
-
-// ── Session ──────────────────────────────────────────────────
-app.use(
-    session({
-        secret: process.env.SESSION_SECRET || "dev-session-secret",
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-        },
-    })
-);
-
-// ── Static files ─────────────────────────────────────────────
 app.use("/static", express.static(path.join(__dirname, "public")));
-
-// ── Attach JWT user ──────────────────────────────────────────
 app.use(attachSessionUser);
-//for the dashboard
-app.use((req, res, next) => {
-    if (req.user) {
-        res.locals.user = req.user;
-        // Check if the role string is exactly "organiser"
-        res.locals.isOrganiser = req.user.role === "organiser";
-    }
-    next();
-});
 
-// ── Health ───────────────────────────────────────────────────
+// ── Health ──
 app.get("/health", (req, res) => res.json({ ok: true }));
 
-// ── SSR View Routes ──────────────────────────────────────────
-app.use("/", viewRoutes);     // Main HTML pages + admin dashboards
-app.use("/", profileRoutes);  // Profile routes
+// ── Route Mounting ──
+app.use("/courses", courseRoutes);
+app.use("/sessions", sessionRoutes);
+app.use("/bookings", bookingRoutes);
+app.use("/", profileRoutes);
+app.use("/", viewRoutes);
 
-// ── JSON API Routes (original filenames) ─────────────────────
-app.use("/api/courses",  courseRoutes);   //  courses.js
-app.use("/api/sessions", sessionRoutes);  //  sessions.js
-app.use("/api/bookings", bookingRoutes);  // bookings.js
-
-// ── Error handlers ───────────────────────────────────────────
-export const not_found = (req, res) =>
-    res.status(404).render("error", { title: "Not Found", message: "Page not found." });
-export const server_error = (err, req, res, next) => {
+// ── Error handlers ──
+app.use((req, res) => {
+    res.status(404);
+    const accept = req.headers.accept || '';
+    if (accept.includes('text/html') && accept.includes('q=')) {
+        return res.render("error", { title: "Not Found", message: "Page not found." });
+    }
+    return res.type('txt').send('404 Not found');
+});
+app.use((err, req, res, next) => {
     console.error(err);
+    if (req.headers.accept && req.headers.accept.includes("application/json")) {
+        return res.status(500).json({ error: "Internal Server Error" });
+    }
     res.status(500).render("error", { title: "Server Error", message: "Something went wrong." });
-};
-app.use(not_found);
-app.use(server_error);
+});
 
-// ── Start server ─────────────────────────────────────────────
 if (process.env.NODE_ENV !== "test") {
     await initDb();
     const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () =>
-        console.log(`Yoga booking running on http://localhost:${PORT}`)
-    );
+    app.listen(PORT, () => console.log(`Yoga booking running on http://localhost:${PORT}`));
 }

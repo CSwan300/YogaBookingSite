@@ -95,13 +95,12 @@ export const homePage = async (req, res, next) => {
 export const listCourses = async (req, res, next) => {
     try {
         const allCourses = await CourseModel.list();
-
         const { level, type, price, dropin, page: pageQuery } = req.query;
 
         let filtered = allCourses.filter((c) => {
-            const matchLevel = !level  || c.level.toLowerCase() === level.toLowerCase();
-            const matchType  = !type   || c.type.toLowerCase().includes(type.toLowerCase());
-            const matchPrice = !price  || c.price <= parseFloat(price);
+            const matchLevel = !level || c.level.toLowerCase() === level.toLowerCase();
+            const matchType  = !type  || c.type.toLowerCase().includes(type.toLowerCase());
+            const matchPrice = !price || c.price <= parseFloat(price);
             const matchDrop  = !dropin || String(c.allowDropIn) === dropin;
             return matchLevel && matchType && matchPrice && matchDrop;
         });
@@ -109,19 +108,32 @@ export const listCourses = async (req, res, next) => {
         const limit        = 9;
         const page         = parseInt(pageQuery) || 1;
         const totalCourses = filtered.length;
-        const totalPages   = Math.ceil(totalCourses / limit);
+        const totalPages   = Math.ceil(totalCourses / limit) || 1;
         const offset       = (page - 1) * limit;
         const pagedCourses = filtered.slice(offset, offset + limit);
 
-        const now = new Date();
 
+        if (req.headers.accept && req.headers.accept.includes("application/json")) {
+            return res.json({
+                courses: pagedCourses,
+                total: totalCourses,
+                page,
+                totalPages
+            });
+        }
+
+        const now = new Date();
         const cards = (await Promise.all(
             pagedCourses.map(async (c) => {
                 const sessions = await SessionModel.listByCourse(c._id);
+                // Note: In tests, ensure your seeded sessions are in the future
+                // relative to this 'now' variable.
                 const futureSessions = sessions.filter(
                     (s) => new Date(s.startDateTime) >= now
                 );
+
                 if (futureSessions.length === 0) return null;
+
                 return {
                     id:          c._id,
                     title:       c.title,

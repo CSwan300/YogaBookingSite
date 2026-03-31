@@ -1,9 +1,10 @@
-import { UserModel } from '../models/userModel.js';
+import { UserModel } from '../models/UserModel.js';
 
 // ─── GET /profile ────────────────────────────────────────────────────────────
 export async function getProfile(req, res) {
-    // .lean() makes the result a plain JS object instead of a Mongoose document
-    const userDoc = await UserModel.findById(req.user._id).lean();
+    // Removed .lean() - UserModel returns plain objects, not Mongoose documents
+    const userDoc = await UserModel.findById(req.user._id);
+
     if (!userDoc) return res.redirect('/login');
 
     const formatted = formatUser(userDoc);
@@ -51,8 +52,10 @@ export async function postEditProfile(req, res) {
         });
     }
 
+    // Check if email is being changed and if the new one is taken
     if (email !== user.email) {
         const existing = await UserModel.findByEmail(email);
+        // Compare IDs as strings to ensure accurate matching
         if (existing && String(existing._id) !== String(user._id)) {
             return res.render('profile-edit', {
                 ...formatted,
@@ -87,12 +90,16 @@ function validate({ name, email }) {
 }
 
 function formatUser(user) {
-    // If user is a Mongoose document, convert to object; otherwise use as is
+    // Check if user exists to prevent crashes
+    if (!user) return {};
+
+    // In your custom model, user is already a plain object.
+    // We keep the check just in case you ever switch to Mongoose.
     const plainUser = user.toObject ? user.toObject() : user;
 
     return {
         ...plainUser,
-        id: plainUser._id.toString(),
+        id: plainUser._id ? plainUser._id.toString() : '',
         // Ensure role exists so the template doesn't crash looking for .isOrganiser
         role: plainUser.role || {},
         createdAt: plainUser.createdAt

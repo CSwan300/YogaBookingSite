@@ -1,8 +1,11 @@
 // jest.config.mjs
 export default {
-  testEnvironment: "node",
-  transform: {}, // disable transforms unless you use Babel/ts-jest
-  testMatch: ["<rootDir>/tests/**/*.test.js"],
-  // If you need .js treated as ESM explicitly:
-  // extensionsToTreatAsEsm: ['.js'],
+    testEnvironment: "node",
+    transform: {},
+    // REMOVED: extensionsToTreatAsEsm: ['.js'], <-- This was the cause of the error
+    moduleNameMapper: {
+        // Allows Jest to resolve imports that include the .js extension
+        '^(\\.{1,2}/.*)\\.js$': '$1',
+    },
+    testMatch: ["**/tests/**/*.test.js"]
 };

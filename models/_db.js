@@ -7,7 +7,6 @@ import { promises as fs } from "fs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Always resolve relative to this file so seeding and server hit the SAME files
 const dbDir = path.join(__dirname, "../db");
 
 export const usersDb = Datastore.create({
@@ -27,19 +26,37 @@ export const bookingsDb = Datastore.create({
     autoload: true,
 });
 
-// Call this once at startup (server + seed)
 export async function initDb() {
     await fs.mkdir(dbDir, { recursive: true });
 
     const TEN_MINUTES = 10 * 60 * 1000;
 
-    // Modern NeDB (seald-io) allows calling this directly on the DB instance
     usersDb.setAutocompactionInterval(TEN_MINUTES);
     coursesDb.setAutocompactionInterval(TEN_MINUTES);
     sessionsDb.setAutocompactionInterval(TEN_MINUTES);
     bookingsDb.setAutocompactionInterval(TEN_MINUTES);
 
-    // Ensure helpful indexes are ready
     await usersDb.ensureIndex({ fieldName: "email", unique: true });
     await sessionsDb.ensureIndex({ fieldName: "courseId" });
+}
+
+/**
+ * Stop all intervals to allow Jest to exit gracefully.
+ */
+export async function closeDb() {
+    // Wrap in a check to avoid the Proxy trap error
+    const dbs = [usersDb, coursesDb, sessionsDb, bookingsDb];
+    for (const db of dbs) {
+        if (db && typeof db.stopAutocompaction === 'function') {
+            try {
+                db.stopAutocompaction();
+            } catch (e) {
+                // Fallback: manually clear the interval if the proxy fails
+                if (db._autocompactionIntervalId) {
+                    clearInterval(db._autocompactionIntervalId);
+                    db._autocompactionIntervalId = null;
+                }
+            }
+        }
+    }
 }

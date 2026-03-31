@@ -1,29 +1,68 @@
 import { Router } from "express";
 import { requireAuth } from "../middlewares/auth.js";
+import { createSession, getSessionsByCourse } from "../controllers/apiController.js";
+import { postBookSession } from "../controllers/viewsController.js";
 import { SessionModel } from "../models/sessionModel.js";
-import { BookingModel } from "../models/bookingModel.js";
-
+import { CourseModel } from "../models/courseModel.js";
 
 const router = Router();
 
-// Pure route - delegates to model helpers
-router.post("/:id/book", requireAuth, async (req, res, next) => {
+// GET /sessions/:id/book - drop-in booking form
+router.get("/:id/book", requireAuth, async (req, res, next) => {
     try {
-        // Models handle all validation + business logic
-        const { session } = await SessionModel.findByIdWithValidation(req.params.id, req.user._id);
-        await BookingModel.createDropInBooking(req.user._id, session);
+        const session = await SessionModel.findById(req.params.id);
+        if (!session)
+            return res.status(404).render("error", { title: "Not Found", message: "Session not found." });
 
-        res.redirect(`/courses/${session.courseId}?booked=session`);
+        const course = await CourseModel.findById(session.courseId);
+        if (!course)
+            return res.status(404).render("error", { title: "Not Found", message: "Course not found." });
+
+        if (!course.allowDropIn)
+            return res.status(400).render("error", { title: "Not Allowed", message: "Drop-ins are not enabled for this course." });
+
+        const now = new Date();
+        const remaining = Math.max(0, (session.capacity ?? 0) - (session.bookedCount ?? 0));
+
+        res.render("session_book", {
+            title: "Book Session",
+            course: {
+                id:          course._id,
+                title:       course.title,
+                level:       course.level,
+                location:    course.location,
+                description: course.description,
+            },
+            sessions: [{
+                id:              String(session._id),
+                start:           new Date(session.startDateTime).toLocaleString("en-GB"),
+                remaining,
+                isFull:          remaining === 0,
+                pluralRemaining: remaining !== 1,
+                isPast:          new Date(session.startDateTime) < now,
+            }],
+            user: req.user ? {
+                id:    req.user._id,
+                name:  req.user.name,
+                email: req.user.email,
+            } : null,
+        });
     } catch (err) {
-        // Models throw specific errors
-        if (err.message === 'Session full') {
-            return res.status(409).render("error", { title: "Session full", message: "Sorry, this session is fully booked." });
-        }
-        if (err.message === 'Already booked this session') {
-            return res.status(409).render("error", { title: "Already booked", message: "You have already booked this session." });
-        }
         next(err);
     }
 });
+
+// POST /sessions - no auth for API calls
+router.post("/", (req, res, next) => {
+    if (req.headers.accept?.includes("application/json"))
+        return createSession(req, res, next);
+    return requireAuth(req, res, () => createSession(req, res, next));
+});
+
+// GET /sessions/by-course/:courseId
+router.get("/by-course/:courseId", getSessionsByCourse);
+
+// POST /sessions/book (used by the booking flow)
+router.post("/book", requireAuth, postBookSession);
 
 export default router;
