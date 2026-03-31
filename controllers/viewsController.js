@@ -1164,7 +1164,7 @@ export const getUpdateCoursePage = async (req, res, next) => {
 
         const { instructors } = await getCoursesDashboardData();
 
-        res.render("UpdateCourse", {
+        res.render("updateCourse", {
             title: "Edit Course",
             course: formattedCourse,
             instructors

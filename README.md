@@ -33,7 +33,7 @@ controllers/   — Route handler logic
 db/            — NeDB database files
 middlewares/   — Auth and request middleware
 models/        — Data model definitions
-public/        — Static assets (CSS, images, client-side JS)
+public/        — Static assets
 routes/        — Express route definitions
 seed/          — Database seed script
 services/      — Business logic layer
@@ -115,20 +115,24 @@ The app will be available at **http://localhost:3000**
 ## Implemented Features
 
 ### Authentication & Authorisation
+
 - User registration and login
 - JWT-based authentication stored in secure cookies
 - Protected routes via authentication middleware
 - Role-based access control (user vs admin)
-
+- Specialised Dashboards for the admin role
+  
+  
 ### Yoga Class Management
 - Browse available yoga classes
 - View class details (instructor, time, capacity)
 - Book a place on a class
 - Cancel an existing booking
 - View personal booking history
+- Calendar with all bookings 
 
 ### Data Layer
-- NeDB embedded database — no external DB setup required
+- NeDB embedded database
 - Seed script to populate sample classes and users
 - Separate model and service layers for clean architecture
 
