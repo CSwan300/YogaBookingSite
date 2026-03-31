@@ -102,7 +102,7 @@ export const userModel = {
             ...avatarFields,
         };
 
-        // Standard pattern for simple NeDB/file-based DBs: remove then re-insert
+        // Standard pattern for NeDB: remove then re-insert
         await usersDb.remove({ _id: id });
         await usersDb.insert(updatedUser);
 
