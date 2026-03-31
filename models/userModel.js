@@ -2,6 +2,9 @@ import { usersDb } from "./_db.js";
 
 const AVATAR_COLORS = ["4F46E5", "059669", "D97706", "DB2777", "2563EB", "7C3AED"];
 
+/**
+ * Generates initials and a UI-Avatar URL based on the user's name.
+ */
 function deriveAvatarFields(name, customImage = null) {
     const userInitials = name
         .split(" ")
@@ -22,7 +25,10 @@ function deriveAvatarFields(name, customImage = null) {
     };
 }
 
-export const UserModel = {
+export const userModel = {
+    /**
+     * Creates a new user with generated avatar fields.
+     */
     async create(user) {
         const { userInitials, image } = deriveAvatarFields(user.name, user.image);
 
@@ -36,22 +42,37 @@ export const UserModel = {
         return usersDb.insert(newUser);
     },
 
+    /**
+     * Finds a single user by email address.
+     */
     async findByEmail(email) {
         return usersDb.findOne({ email });
     },
 
+    /**
+     * Finds a single user by their unique ID.
+     */
     async findById(id) {
         return usersDb.findOne({ _id: id });
     },
 
+    /**
+     * Returns all users in the database.
+     */
     async list() {
         return usersDb.find({});
     },
 
+    /**
+     * Deletes a user by ID.
+     */
     async delete(id) {
         return usersDb.remove({ _id: id });
     },
 
+    /**
+     * Updates user data and regenerates avatar initials if the name changes.
+     */
     async update(id, data) {
         const existing = await usersDb.findOne({ _id: id });
         if (!existing) throw new Error("User not found");
@@ -61,6 +82,9 @@ export const UserModel = {
             data.image !== undefined ? Boolean(data.image) : existing._hasCustomImage;
 
         let avatarFields = {};
+
+        // If name changes, update initials. 
+        // If they don't have a custom uploaded image, update the UI-Avatar too.
         if (nameChanged && !hasCustomImage) {
             avatarFields = deriveAvatarFields(data.name);
         } else if (nameChanged && hasCustomImage) {
@@ -78,6 +102,7 @@ export const UserModel = {
             ...avatarFields,
         };
 
+        // Standard pattern for simple NeDB/file-based DBs: remove then re-insert
         await usersDb.remove({ _id: id });
         await usersDb.insert(updatedUser);
 
