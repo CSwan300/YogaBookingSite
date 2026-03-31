@@ -33,7 +33,7 @@ controllers/   — Route handler logic
 db/            — NeDB database files
 middlewares/   — Auth and request middleware
 models/        — Data model definitions
-public/        — Static assets (CSS, images, client-side JS)
+public/        — Static assets
 routes/        — Express route definitions
 seed/          — Database seed script
 services/      — Business logic layer
