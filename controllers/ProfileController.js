@@ -1,111 +1,129 @@
-import { usersDb } from "./_db.js";
-
-const AVATAR_COLORS = ["4F46E5", "059669", "D97706", "DB2777", "2563EB", "7C3AED"];
+import { userModel } from '../models/userModel.js';
 
 /**
- * Generates initials and a UI-Avatar URL based on the user's name.
+ * GET /profile
+ * Displays the logged-in user's profile information.
  */
-function deriveAvatarFields(name, customImage = null) {
-    const userInitials = name
-        .split(" ")
-        .filter(Boolean)
-        .map((word) => word.charAt(0))
-        .slice(0, 2)
-        .join("")
-        .toUpperCase();
+export async function getProfile(req, res) {
+    // We look up the user by ID provided by the auth middleware (req.user)
+    const userDoc = await userModel.findById(req.user._id);
 
-    const bgColor = AVATAR_COLORS[name.length % AVATAR_COLORS.length];
-    const generatedImage = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-        name
-    )}&background=${bgColor}&color=fff&size=128`;
+    if (!userDoc) {
+        return res.redirect('/login');
+    }
 
-    return {
-        userInitials,
-        image: customImage || generatedImage,
-    };
+    const formatted = formatUser(userDoc);
+
+    res.render('profile', {
+        ...formatted,        // Spreads name, email, image, etc. for the profile card
+        user: formatted,     // Nested object for header logic (e.g., {{user.role.isOrganiser}})
+        pageTitle: 'My Profile',
+    });
 }
 
-export const userModel = {
-    /**
-     * Creates a new user with generated avatar fields.
-     */
-    async create(user) {
-        const { userInitials, image } = deriveAvatarFields(user.name, user.image);
+/**
+ * GET /profile/edit
+ * Renders the form to update profile details.
+ */
+export async function getEditProfile(req, res) {
+    const user = await userModel.findById(req.user._id);
+    if (!user) return res.redirect('/login');
 
-        const newUser = {
-            ...user,
-            userInitials,
-            image,
-            createdAt: new Date().toISOString(),
-        };
+    const formatted = formatUser(user);
 
-        return usersDb.insert(newUser);
-    },
+    res.render('profile-edit', {
+        ...formatted,
+        user: formatted,
+        pageTitle: 'Edit Profile',
+        errors: [],
+    });
+}
 
-    /**
-     * Finds a single user by email address.
-     */
-    async findByEmail(email) {
-        return usersDb.findOne({ email });
-    },
+/**
+ * POST /profile/edit
+ * Handles the logic for updating user name and email.
+ */
+export async function postEditProfile(req, res) {
+    const user = await userModel.findById(req.user._id);
+    if (!user) return res.redirect('/login');
 
-    /**
-     * Finds a single user by their unique ID.
-     */
-    async findById(id) {
-        return usersDb.findOne({ _id: id });
-    },
+    const { name, email } = req.body;
+    const errors = validate({ name, email });
 
-    /**
-     * Returns all users in the database.
-     */
-    async list() {
-        return usersDb.find({});
-    },
+    const formatted = formatUser(user);
 
-    /**
-     * Deletes a user by ID.
-     */
-    async delete(id) {
-        return usersDb.remove({ _id: id });
-    },
+    // If validation fails, re-render with existing data and error messages
+    if (errors.length) {
+        return res.render('profile-edit', {
+            ...formatted,
+            user: formatted,
+            name,
+            email,
+            pageTitle: 'Edit Profile',
+            errors,
+        });
+    }
 
-    /**
-     * Updates user data and regenerates avatar initials if the name changes.
-     */
-    async update(id, data) {
-        const existing = await usersDb.findOne({ _id: id });
-        if (!existing) throw new Error("User not found");
-
-        const nameChanged = data.name && data.name !== existing.name;
-        const hasCustomImage =
-            data.image !== undefined ? Boolean(data.image) : existing._hasCustomImage;
-
-        let avatarFields = {};
-
-        // If name changes, update initials. 
-        // If they don't have a custom uploaded image, update the UI-Avatar too.
-        if (nameChanged && !hasCustomImage) {
-            avatarFields = deriveAvatarFields(data.name);
-        } else if (nameChanged && hasCustomImage) {
-            const { userInitials } = deriveAvatarFields(data.name, existing.image);
-            avatarFields = { userInitials };
+    // Email Uniqueness Check: If email changed, ensure it's not taken by someone else
+    if (email !== user.email) {
+        const existing = await userModel.findByEmail(email);
+        if (existing && String(existing._id) !== String(user._id)) {
+            return res.render('profile-edit', {
+                ...formatted,
+                user: formatted,
+                name,
+                email,
+                pageTitle: 'Edit Profile',
+                errors: [{ msg: 'That email address is already in use.' }],
+            });
         }
+    }
 
-        if (data.image) {
-            avatarFields._hasCustomImage = true;
-        }
+    // Save changes to the database
+    await userModel.update(user._id, { name, email });
 
-        const updatedUser = {
-            ...existing,
-            ...data,
-            ...avatarFields,
-        };
+    res.redirect('/profile');
+}
 
-        // Standard pattern for simple NeDB/file-based DBs: remove then re-insert
-        await usersDb.remove({ _id: id });
-        await usersDb.insert(updatedUser);
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-        return updatedUser;
-    },
-};
+/**
+ * Simple validation for name and email fields.
+ */
+function validate({ name, email }) {
+    const errors = [];
+    if (!name || name.trim().length < 2) {
+        errors.push({ msg: 'Name must be at least 2 characters.' });
+    }
+    if (name && name.trim().length > 80) {
+        errors.push({ msg: 'Name must be 80 characters or fewer.' });
+    }
+    if (!email || !email.includes('@')) {
+        errors.push({ msg: 'Please enter a valid email address.' });
+    }
+    return errors;
+}
+
+/**
+ * Formats raw database objects for the View layer.
+ * Ensures dates are readable and nested objects exist.
+ */
+function formatUser(user) {
+    if (!user) return {};
+
+    // Standardize object format (handles Mongoose or plain JSON)
+    const plainUser = user.toObject ? user.toObject() : user;
+
+    return {
+        ...plainUser,
+        id: plainUser._id ? plainUser._id.toString() : '',
+        role: plainUser.role || {}, // Prevents "cannot read property isOrganiser of undefined"
+        createdAt: plainUser.createdAt
+            ? new Date(plainUser.createdAt).toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+            })
+            : '—',
+    };
+}
