@@ -1,16 +1,12 @@
-//routes/profile.js
+// routes/profile.js
 import { Router } from "express";
-import {
-    getProfile,
-    getEditProfile,
-    postEditProfile,
-} from "../controllers/ProfileController.js";
+import { profilePage, getEditProfilePage, postEditProfile } from "../controllers/profileController.js";
 import { requireAuth } from "../middlewares/auth.js";
 
 const router = Router();
 
-router.get("/profile",       requireAuth, getProfile);
-router.get("/profile/edit",  requireAuth, getEditProfile);
+router.get("/profile",       requireAuth, profilePage);
+router.get("/profile/edit",  requireAuth, getEditProfilePage);
 router.post("/profile/edit", requireAuth, postEditProfile);
 
 export default router;

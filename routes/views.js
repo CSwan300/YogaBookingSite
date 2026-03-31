@@ -1,4 +1,4 @@
-//routes/views.js
+// routes/views.js
 import { Router } from "express";
 import {
     homePage,
@@ -16,9 +16,6 @@ import {
     schedulePage,
     instructorsPage,
     aboutPage,
-    profilePage,
-    getEditProfilePage,
-    postEditProfile
 } from "../controllers/viewsController.js";
 
 import {
@@ -26,7 +23,7 @@ import {
     postLogin,
     logoutHandler,
     registerPage,
-    postRegister
+    postRegister,
 } from "../controllers/authController.js";
 
 import { requireAuth } from "../middlewares/auth.js";
@@ -43,29 +40,24 @@ router.get("/instructors", instructorsPage);
 router.get("/about",       aboutPage);
 
 /* ── Authentication ─────────────────────────────────────────── */
-router.get("/login",       loginPage);
-router.post("/login",      postLogin);
-router.get("/register",    registerPage);
-router.post("/register",   postRegister);
-router.get("/logout",      logoutHandler);
+router.get("/login",     loginPage);
+router.post("/login",    postLogin);
+router.get("/register",  registerPage);
+router.post("/register", postRegister);
+router.get("/logout",    logoutHandler);
 
-/* ── Booking Features (Protected) ─────────────────────────── */
-router.get("/courses/:id/book",         requireAuth, getBookCoursePage);
-router.post("/courses/:id/book",        requireAuth, postBookCourse);
-router.get("/courses/:id/book/session", requireAuth, getBookSessionPage);
-router.post("/sessions/book",           requireAuth, postBookSession);
-router.get("/bookings",                 requireAuth, myBookingsPage);
-router.get("/bookings/:bookingId",      requireAuth, bookingConfirmationPage);
-router.get("/bookings/:bookingId/cancel-confirm", requireAuth, getCancelBookingPage);
-router.post("/bookings/:bookingId/cancel", requireAuth, postCancelBooking);
-router.post("/bookings/:bookingId/sessions/:sessionId/cancel", requireAuth, postCancelSession);
+/* ── Booking Features (Protected) ───────────────────────────── */
+router.get("/courses/:id/book",                                    requireAuth, getBookCoursePage);
+router.post("/courses/:id/book",                                   requireAuth, postBookCourse);
+router.get("/courses/:id/book/session",                            requireAuth, getBookSessionPage);
+router.post("/sessions/book",                                      requireAuth, postBookSession);
+router.get("/bookings",                                            requireAuth, myBookingsPage);
+router.get("/bookings/:bookingId",                                 requireAuth, bookingConfirmationPage);
+router.get("/bookings/:bookingId/cancel-confirm",                  requireAuth, getCancelBookingPage);
+router.post("/bookings/:bookingId/cancel",                         requireAuth, postCancelBooking);
+router.post("/bookings/:bookingId/sessions/:sessionId/cancel",     requireAuth, postCancelSession);
 
-/* ── Profile ───────────────────────────────────────────────── */
-router.get("/profile",       requireAuth, profilePage);
-router.get("/profile/edit",  requireAuth, getEditProfilePage);
-router.post("/profile/edit", requireAuth, postEditProfile);
-
-/* ── Mount Admin Routes ────────────────────────────────────── */
+/* ── Mount Admin Routes ─────────────────────────────────────── */
 router.use(adminRoutes);
 
 export default router;
