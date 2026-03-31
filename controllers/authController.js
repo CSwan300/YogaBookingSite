@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { userModel } from "../models/userModel.js";
+import { userModel as UserModel } from "../models/userModel.js";
 
 const JWT_SECRET     = process.env.JWT_SECRET     || "dev-secret-change-me";
 const COOKIE_OPTIONS = {

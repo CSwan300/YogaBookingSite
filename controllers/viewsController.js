@@ -7,8 +7,7 @@ import {
     bookSessionsForUser,
 } from "../services/bookingService.js";
 import { BookingModel } from "../models/bookingModel.js";
-import { userModel } from "../models/userModel.js";
-
+import { userModel as UserModel } from "../models/userModel.js";
 import {
     getAdminDashboardData,
     getCoursesDashboardData, createCourse, deleteCourse, updateCourse,

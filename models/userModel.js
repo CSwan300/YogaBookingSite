@@ -109,3 +109,5 @@ export const userModel = {
         return updatedUser;
     },
 };
+
+export const UserModel = userModel;
