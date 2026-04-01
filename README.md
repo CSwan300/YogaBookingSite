@@ -1,4 +1,3 @@
-
 # Yoga Booking — WAD2 Coursework
 
 *A full-stack yoga class booking web application built with Node.js, Express, and NeDB.*
@@ -7,9 +6,7 @@
 
 ## Live Demo
 
-Deployed at: [https://campbellswanwebdev2courseworklivedemo.onrender.com
-](https://campbellswanwebdev2courseworklivedemo.onrender.com
-)
+Deployed at: [https://campbellswanwebdev2courseworklivedemo.onrender.com](https://campbellswanwebdev2courseworklivedemo.onrender.com)
 
 ---
 
@@ -22,6 +19,7 @@ Deployed at: [https://campbellswanwebdev2courseworklivedemo.onrender.com
 - **Authentication:** JSON Web Tokens (JWT) + cookie-parser
 - **Styling:** Pure CSS
 - **Testing:** Jest + Supertest
+- **CI/CD:** GitHub Actions + Render
 - **Dev tooling:** Nodemon, dotenv
 
 ---
@@ -29,12 +27,28 @@ Deployed at: [https://campbellswanwebdev2courseworklivedemo.onrender.com
 ## Project Structure
 
 ```
-controllers/   — Route handler logic
+.github/
+  workflows/
+    deploy.yml — CI/CD pipeline (test → deploy)
+controllers/
+  authController.js          — Login, logout, register
+  bookingController.js       — Booking & cancellation logic (API + form handlers)
+  courseController.js        — Course & session API endpoints
+  coursesListController.js   — Courses listing page (filters, pagination, search)
+  organiserController.js     — Admin dashboard data
+  profileController.js       — Profile view & edit
+  viewsController.js         — Page rendering (delegates to other controllers)
 db/            — NeDB database files
 middlewares/   — Auth and request middleware
 models/        — Data model definitions
 public/        — Static assets
-routes/        — Express route definitions
+routes/
+  admin.js     — Admin dashboard routes
+  bookings.js  — Booking API & form routes
+  courses.js   — Course routes (hybrid API + page)
+  profile.js   — Profile routes
+  sessions.js  — Session routes
+  views.js     — Public page routes
 seed/          — Database seed script
 services/      — Business logic layer
 tests/         — Jest test suites
@@ -67,17 +81,17 @@ npm install
 ```
 
 **3. Set up environment variables**
+
 Create a `.env` file in the project root:
 
 ```bash
-
 echo "SESSION_SECRET=$(openssl rand -hex 32)
 JWT_SECRET=$(openssl rand -hex 64)
 COOKIE_SECRET=$(openssl rand -hex 64)
 PORT=3000" > .env
 ```
 
-or copy env.example and rename to just .env
+Or copy `.env.example` and rename it to `.env`.
 
 **4. Seed the database** *(optional but recommended)*
 
@@ -112,6 +126,46 @@ The app will be available at **http://localhost:3000**
 
 ---
 
+## CI/CD Pipeline
+
+This project uses **GitHub Actions** to automate testing and deployment on every push to `main`.
+
+### Pipeline steps
+
+```
+git push main
+      │
+      ▼
+ npm run test (Jest + --forceExit)
+      │ fails → pipeline stops, no deploy
+      │ passes
+      ▼
+ Trigger Render deploy hook
+      │
+      ▼
+ Render runs: npm ci && npm run seed → npm run start
+```
+
+### Setup requirements
+
+**GitHub Secrets** (Settings → Secrets and variables → Actions):
+
+| Secret | Description |
+|---|---|
+| `COOKIE_SECRET` | Must match your Render environment variable |
+| `JWT_SECRET` | Must match your Render environment variable |
+| `RENDER_DEPLOY_HOOK_URL` | Deploy hook URL from Render |
+
+**Render settings:**
+
+| Field | Value |
+|---|---|
+| Build Command | `npm ci && npm run seed` |
+| Start Command | `npm run start` |
+| Auto-Deploy | Off |
+
+---
+
 ## Implemented Features
 
 ### Authentication & Authorisation
@@ -119,31 +173,36 @@ The app will be available at **http://localhost:3000**
 - User registration and login
 - JWT-based authentication stored in secure cookies
 - Protected routes via authentication middleware
-- Role-based access control (user vs admin)
-- Specialised Dashboards for the admin role
-  
-  
+- Role-based access control (student / organiser)
+- Specialised dashboards for the organiser role
+
 ### Yoga Class Management
-- Browse available yoga classes
-- View class details (instructor, time, capacity)
-- Book a place on a class
-- Cancel an existing booking
+
+- Browse available yoga courses with filters (level, type, drop-in)
+- Full-text search across course titles and descriptions
+- View course details (sessions, capacity, location)
+- Book an entire course or individual drop-in sessions
+- Cancel an existing booking or individual session
 - View personal booking history
-- Calendar with all bookings 
+- Schedule view with weekly calendar layout
 
 ### Data Layer
-- NeDB embedded database
-- Seed script to populate sample classes and users
-- Separate model and service layers for clean architecture
+
+- NeDB embedded database (file-based, no external DB required)
+- Seed script to populate sample courses, sessions, and users
+- Separate model, service, and controller layers for clean architecture
 
 ### Templating & Frontend
+
 - Server-side rendering with Mustache templates
 - Custom CSS styling across all pages
 - Responsive layout for the main booking interface
 
 ### Testing
+
 - Jest test suite with Supertest for HTTP integration tests
 - Tests cover core routes and API endpoints
+- `--forceExit` flag ensures Jest terminates cleanly in CI
 
 ---
 
