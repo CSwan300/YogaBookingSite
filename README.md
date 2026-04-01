@@ -24,37 +24,96 @@ Deployed at: [https://campbellswanwebdev2courseworklivedemo.onrender.com](https:
 
 ---
 
-## Project Structure
+##  Project Structure
 
 ```
-.github/
-  workflows/
-    deploy.yml — CI/CD pipeline (test → deploy)
-controllers/
-  authController.js          — Login, logout, register
-  bookingController.js       — Booking & cancellation logic (API + form handlers)
-  courseController.js        — Course & session API endpoints
-  coursesListController.js   — Courses listing page (filters, pagination, search)
-  organiserController.js     — Admin dashboard data
-  profileController.js       — Profile view & edit
-  viewsController.js         — Page rendering (delegates to other controllers)
-db/            — NeDB database files
-middlewares/   — Auth and request middleware
-models/        — Data model definitions
-public/        — Static assets
-routes/
-  admin.js     — Admin dashboard routes
-  bookings.js  — Booking API & form routes
-  courses.js   — Course routes (hybrid API + page)
-  profile.js   — Profile routes
-  sessions.js  — Session routes
-  views.js     — Public page routes
-seed/          — Database seed script
-services/      — Business logic layer
-tests/         — Jest test suites
-views/         — Mustache HTML templates
-index.js       — Application entry point
+yoga-booking-app/
+├── .github/
+│   └── workflows/
+│       └── deploy.yml              # CI/CD pipeline (test → deploy)
+├── controllers/
+│   ├── authController.js           # Login, logout, and registration
+│   ├── bookingController.js        # Booking & cancellation logic (API + form handlers)
+│   ├── courseController.js         # Course & session API endpoints
+│   ├── coursesListController.js    # Courses listing page (filters, pagination, search)
+│   ├── organiserController.js      # Admin dashboard data retrieval
+│   ├── profileController.js        # User profile view & edit logic
+│   └── viewsController.js          # Page rendering (delegates to specific controllers)
+├── db/
+│   ├── bookings.db                 # Booking records
+│   ├── courses.db                  # Course metadata
+│   ├── sessions.db                 # Individual class/session data
+│   └── users.db                    # User accounts and credentials
+├── middlewares/
+│   ├── auth.js                     # Session/JWT authentication checks
+│   └── demoUser.js                 # Mock user data for development/testing
+├── models/
+│   ├── _db.js                      # Centralised NeDB connection manager
+│   ├── bookingModel.js             # model for booking operations
+│   ├── courseModel.js              # model for course information
+│   ├── sessionModel.js             # model for session scheduling
+│   └── userModel.js                # model for user profiles and security
+├── public/
+│   └── styles.css                  # Global application stylesheet
+├── routes/
+│   ├── admin.js                    # Admin dashboard routes
+│   ├── bookings.js                 # Booking API & form routes
+│   ├── courses.js                  # Course routes (hybrid API + page)
+│   ├── profile.js                  # User profile routes
+│   ├── sessions.js                 # Session-specific routes
+│   └── views.js                    # Public-facing page routes
+├── seed/
+│   └── seed.js                     # Script to reset and populate the DB with initial data
+├── services/
+│   └── bookingService.js           # Core business logic for booking rules
+├── tests/
+│   ├── booking.test.js             # Unit tests for booking logic
+│   ├── helpers.js                  # Test utilities and setup/teardown functions
+│   ├── routes.api.test.js          # Integration tests for API endpoints
+│   ├── routes.errors.test.js       # Error handling and status code tests
+│   ├── routes.health.test.js       # Server uptime and connectivity checks
+│   └── routes.ssr.test.js          # Tests for server-side rendered templates
+├── views/
+│   ├── account/
+│   │   ├── login.mustache          # User sign-in form
+│   │   ├── logout.mustache         # Sign-out confirmation or redirect page
+│   │   ├── profile.mustache        # User account details view
+│   │   ├── profile-edit.mustache   # Form to update user information
+│   │   └── register.mustache       # New user sign-up form
+│   ├── booking/
+│   │   ├── booking_confirmation.mustache  # Post-booking success page
+│   │   ├── cancel_booking.mustache        # Booking cancellation interface
+│   │   ├── course_book.mustache           # Main booking page for a specific course
+│   │   ├── my_bookings.mustache           # Dashboard for a user's active/past bookings
+│   │   └── session_book.mustache          # Selection page for specific time slots/sessions
+│   ├── course/
+│   │   ├── course.mustache         # Detailed view for a single course
+│   │   └── courses.mustache        # Searchable gallery/list of all available courses
+│   ├── dashboards/
+│   │   ├── adminDashboard.mustache        # High-level overview for administrators
+│   │   ├── classesDashboard.mustache      # Management view for individual class sessions
+│   │   ├── classListDashboard.mustache    # Detailed roster/attendee list for a class
+│   │   ├── coursesDashboard.mustache      # Admin-only course management list
+│   │   ├── instructorsDashboard.mustache  # Management panel for staff/instructors
+│   │   ├── organisersDashboard.mustache   # Dashboard for event/course organisers
+│   │   ├── updateCourse.mustache          # Editor interface for existing course content
+│   │   └── usersDashboard.mustache        # User account management and permissions
+│   ├── misc/
+│   │   ├── about.mustache          # Project information and "About Us" content
+│   │   ├── error.mustache          # Generic error handler (404, 500)
+│   │   ├── instructors.mustache    # Public directory of course instructors
+│   │   └── schedule.mustache       # Master calendar/timetable view
+│   ├── partials/
+│   │   ├── footer.mustache         # Standardised page footer and copyright
+│   │   ├── head.mustache           # HTML <head> (metadata, CSS imports, title)
+│   │   └── header.mustache         # Global navigation bar and branding
+│   └── home.mustache               # Main application landing page
+├── .env                            # Environment variables (ignored by Git)
+├── .gitignore                      # Ignores node_modules and .db files
+├── index.js                        # Application entry point and server configuration
+└── package.json                    # Project metadata, dependencies, and scripts
 ```
+
 
 ---
 
