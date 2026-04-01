@@ -163,6 +163,9 @@ async function run() {
     await createBookings(students, { c1, c2, c3 });
 
     console.log("✅ Seed complete. All courses set for May 2026 and beyond.");
+    //force it to leave
+    process.exit(0);
+
 }
 
 run().catch(console.error);
