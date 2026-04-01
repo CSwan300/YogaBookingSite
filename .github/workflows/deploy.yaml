@@ -10,7 +10,7 @@ name: Test & Deploy
 on:
   push:
     branches:
-      - master
+      - main   # change to your production branch if different
 
 jobs:
   test-and-deploy:
@@ -39,8 +39,10 @@ jobs:
         run: npm ci
 
       # ── 4. Run tests ────────────────────────────────────────
+      # --forceExit ensures Jest doesn't hang after tests complete,
+      # which can happen with ES modules (--experimental-vm-modules)
       - name: Run tests
-        run: npm run test
+        run: node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --config jest.config.mjs
 
       # ── 5. Trigger Render deploy (only if tests passed) ─────
       - name: Deploy to Render
