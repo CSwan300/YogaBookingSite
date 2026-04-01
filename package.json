@@ -7,8 +7,6 @@
     "dev": "nodemon index.js",
     "seed": "node seed/seed.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --config jest.config.mjs"
-
-
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
