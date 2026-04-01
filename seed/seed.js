@@ -168,4 +168,7 @@ async function run() {
 
 }
 
-run().catch(console.error);
+run().catch((err) => {
+    console.error("❌ Seed failed:", err);
+    process.exit(1);
+});
