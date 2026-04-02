@@ -9,6 +9,17 @@
 
     <div class="schedule-controls">
         <form id="filter-form" class="filter-group" method="GET" action="/courses">
+            <div class="search-wrap">
+                <input
+                        type="text"
+                        name="q"
+                        class="filter-input"
+                        placeholder="Search courses..."
+                        aria-label="Search courses"
+                        autocomplete="off"
+                >
+            </div>
+
             <div class="select-wrap">
                 <select name="level" class="filter-select">
                     <option value="">All Levels</option>
@@ -60,7 +71,8 @@
                     {{/allowDropIn}}
                     {{^allowDropIn}}
                         <span class="tag tag-info">Block Lessons Only</span>
-                    {{/allowDropIn}}                </p>
+                    {{/allowDropIn}}
+                </p>
 
                 <p>{{description}}</p>
 
@@ -69,8 +81,7 @@
 
                     {{#allowDropIn}}
                         <p class="price-dropin">
-                            <strong>Drop-in:</strong> £{{#dropInPrice}}{{dropInPrice}}{{/dropInPrice}}{{^dropInPrice}}15{{/dropInPrice}}
-                            <span class="muted">/ session</span>
+                            <strong>Drop-in:</strong> £{{displayDropInPrice}} <span class="muted">/ session</span>
                         </p>
                     {{/allowDropIn}}
 
@@ -122,19 +133,47 @@
 
         const filterForm = document.getElementById('filter-form');
         const selects    = document.querySelectorAll('.filter-select');
+        const searchInput = document.querySelector('.filter-input');
         const urlParams  = new URLSearchParams(window.location.search);
 
-        // Restore dropdown state from URL
+        /**
+         * Debounce function to prevent submitting the form on every single keypress.
+         * It waits until the user stops typing for 'delay' milliseconds.
+         */
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), delay);
+            };
+        }
+
+        // 1. Restore state from URL on page load
         selects.forEach(function (select) {
-            var val = urlParams.get(select.name);
+            const val = urlParams.get(select.name);
             if (val !== null) select.value = val;
         });
 
-        // Auto-submit on change
+        if (searchInput && urlParams.has('q')) {
+            searchInput.value = urlParams.get('q');
+            // Put cursor at the end of the text
+            searchInput.focus();
+            searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+        }
+
+        // 2. Auto-submit dropdowns when they change
         selects.forEach(function (select) {
             select.addEventListener('change', function () {
                 filterForm.submit();
             });
         });
+
+        // 3. Search as user types (with 300ms debounce)
+        if (searchInput) {
+            searchInput.addEventListener('input', debounce(function () {
+                filterForm.submit();
+            }, 300));
+        }
+
     }());
 </script>

@@ -7,20 +7,24 @@ import { closeDb } from "../models/_db.js";
 describe("JSON API routes", () => {
     let data;
     let student;
+    let sessionStudent;
 
     beforeAll(async () => {
         process.env.NODE_ENV = "test";
         await resetDb();
         data = await seedMinimal();
-        // Create a student for bookings
         student = await UserModel.create({
             name: "API Student",
             email: "api@student.local",
             role: "student",
         });
+        sessionStudent = await UserModel.create({
+            name: "Session Student",
+            email: "session@student.local",
+            role: "student",
+        });
     });
 
-    // CRITICAL: Stop NeDB timers so Jest can exit
     afterAll(async () => {
         await closeDb();
     });
@@ -30,7 +34,7 @@ describe("JSON API routes", () => {
     test("GET /courses returns array of courses", async () => {
         const res = await request(app)
             .get("/courses")
-            .set("Accept", "application/json"); // Fixes HTML collision
+            .set("Accept", "application/json");
 
         expect(res.status).toBe(200);
         expect(res.headers["content-type"]).toMatch(/json/);
@@ -75,7 +79,6 @@ describe("JSON API routes", () => {
     test("POST /sessions creates a session", async () => {
         const payload = {
             courseId: data.course._id,
-            // Ensure these field names match your SessionModel schema
             start: new Date("2026-02-16T18:30:00").toISOString(),
             end: new Date("2026-02-16T19:45:00").toISOString(),
             capacity: 16,
@@ -123,7 +126,7 @@ describe("JSON API routes", () => {
             .post("/bookings/session")
             .set("Accept", "application/json")
             .send({
-                userId: student._id,
+                userId: sessionStudent._id,
                 sessionId: data.sessions[0]._id,
             });
 
@@ -134,19 +137,17 @@ describe("JSON API routes", () => {
     });
 
     test("DELETE /bookings/:id cancels a booking", async () => {
-        // Create first
         const create = await request(app)
             .post("/bookings/session")
             .set("Accept", "application/json")
             .send({
-                userId: student._id,
+                userId: sessionStudent._id,
                 sessionId: data.sessions[1]._id,
             });
 
         expect(create.status).toBe(201);
         const bookingId = create.body.booking._id;
 
-        // Then Delete
         const del = await request(app)
             .delete(`/bookings/${bookingId}`)
             .set("Accept", "application/json");

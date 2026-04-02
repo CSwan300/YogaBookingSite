@@ -3,14 +3,34 @@
 
 <main>
     <article class="wrap">
-        <div class="page-hero">
+        <header class="page-hero">
             <h1>Manage Classes</h1>
+        </header>
+
+        <div class="schedule-controls">
+            <form id="filter-form" class="filter-group" method="GET" action="/dashboard/classes">
+                <div class="select-wrap course-filter">
+                    <select name="course" id="course-filter" class="filter-select" aria-label="Filter by course">
+                        <option value="">All Courses</option>
+                        {{#uniqueCourses}}
+                            <option value="{{.}}">{{.}}</option>
+                        {{/uniqueCourses}}
+                    </select>
+                </div>
+                <a href="/dashboard/classes" class="btn" id="filter-reset">Clear</a>
+            </form>
         </div>
 
         <div class="table-wrap">
             <table class="table">
                 <thead>
-                <tr><th>Course</th><th>Date/Time</th><th>Capacity</th><th>Booked</th><th>Actions</th></tr>
+                <tr>
+                    <th>Course</th>
+                    <th>Date/Time</th>
+                    <th>Capacity</th>
+                    <th>Booked</th>
+                    <th>Actions</th>
+                </tr>
                 </thead>
                 <tbody>
                 {{#sessions}}
@@ -24,12 +44,47 @@
                         </td>
                     </tr>
                 {{/sessions}}
+
+                {{^sessions}}
+                    <tr>
+                        <td colspan="5" class="table-no-results">
+                            No classes found matching your criteria.
+                        </td>
+                    </tr>
+                {{/sessions}}
                 </tbody>
             </table>
         </div>
 
-        <a href="/dashboard" class="btn">← Back to Dashboard</a>
+        <div class="page-footer-actions">
+            <a href="/dashboard" class="btn">← Back to Dashboard</a>
+        </div>
     </article>
 </main>
 
 {{> footer}}
+
+<script>
+    (function () {
+        'use strict';
+
+        const filterForm = document.getElementById('filter-form');
+        const courseSelect = document.getElementById('course-filter');
+
+        // 1. Get the current course from the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentCourse = urlParams.get('course');
+
+        // 2. If a course is in the URL, set the dropdown to match
+        if (currentCourse && courseSelect) {
+            courseSelect.value = currentCourse;
+        }
+
+        // 3. Auto-submit form when selection changes
+        if (courseSelect) {
+            courseSelect.addEventListener('change', function () {
+                filterForm.submit();
+            });
+        }
+    }());
+</script>

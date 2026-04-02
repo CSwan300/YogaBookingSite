@@ -1,51 +1,62 @@
 // controllers/coursesListController.js
-import { CourseModel } from "../models/courseModel.js";
+// Handles the /courses listing page with filtering and pagination.
+// Heavy query logic stays here (it is tightly coupled to URL params);
+// formatting helpers are imported from services/formatService.js.
+
+import { CourseModel }  from "../models/courseModel.js";
 import { SessionModel } from "../models/sessionModel.js";
+import { fmtDateOnly, fmtDate } from "../services/formatService.js";
 
-const fmtDateOnly = (iso) =>
-    iso
-        ? new Date(iso).toLocaleDateString("en-GB", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-        })
-        : "";
+// ---------------------------------------------------------------------------
+// Private helpers
+// ---------------------------------------------------------------------------
 
-const fmtDateTime = (iso) =>
-    iso
-        ? new Date(iso).toLocaleString("en-GB", {
-            weekday: "short",
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        })
-        : "TBA";
+/**
+ * Builds a paginated URL preserving all existing query params except `page`.
+ *
+ * @param {import("express").Request} req
+ * @param {number} page
+ * @param {number} pageSize
+ * @returns {string}
+ */
+function buildLink(req, page, pageSize) {
+    const url    = new URL(`${req.protocol}://${req.get("host")}${req.originalUrl.split("?")[0]}`);
+    const params = new URLSearchParams(req.query);
+    params.set("page",     String(page));
+    params.set("pageSize", String(pageSize));
+    return `${url.pathname}?${params.toString()}`;
+}
 
+// ---------------------------------------------------------------------------
+// Route handler
+// ---------------------------------------------------------------------------
+
+/**
+ * GET /courses
+ * Renders the courses listing page with optional filtering by level, type,
+ * drop-in availability, free-text search, and pagination.
+ */
 export const coursesListPage = async (req, res, next) => {
     try {
-        // Query params for filters/pagination
         const {
-            level,          // beginner | intermediate | advanced
-            type,           // WEEKLY_BLOCK | WEEKEND_WORKSHOP
-            dropin,         // yes | no
-            q,              // text search in title/description (basic contains)
-            page = "1",     // 1-based
-            pageSize = "10" // default page size
+            level,
+            type,
+            dropin,
+            q,
+            page     = "1",
+            pageSize = "10",
         } = req.query;
 
-        // Base filter for DB lookup
+        // Build the DB filter from query params
         const filter = {};
-        if (level) filter.level = level;
-        if (type) filter.type = type;
+        if (level)          filter.level        = level;
+        if (type)           filter.type         = type;
         if (dropin === "yes") filter.allowDropIn = true;
-        if (dropin === "no") filter.allowDropIn = false;
+        if (dropin === "no")  filter.allowDropIn = false;
 
-        // Fetch all courses matching basic filters
         let courses = await CourseModel.list(filter);
 
-        // Client-side text search (NeDB has basic querying; for simplicity, do it here)
+        // Client-side text search (NeDB has limited querying)
         const needle = (q || "").trim().toLowerCase();
         if (needle) {
             courses = courses.filter(
@@ -55,14 +66,10 @@ export const coursesListPage = async (req, res, next) => {
             );
         }
 
-        // Sort by startDate ascending (fallback to title)
+        // Sort ascending by startDate, then by title
         courses.sort((a, b) => {
-            const ad = a.startDate
-                ? new Date(a.startDate).getTime()
-                : Number.MAX_SAFE_INTEGER;
-            const bd = b.startDate
-                ? new Date(b.startDate).getTime()
-                : Number.MAX_SAFE_INTEGER;
+            const ad = a.startDate ? new Date(a.startDate).getTime() : Number.MAX_SAFE_INTEGER;
+            const bd = b.startDate ? new Date(b.startDate).getTime() : Number.MAX_SAFE_INTEGER;
             if (ad !== bd) return ad - bd;
             return (a.title || "").localeCompare(b.title || "");
         });
@@ -85,14 +92,14 @@ export const coursesListPage = async (req, res, next) => {
         };
 
         // Pagination
-        const p          = Math.max(1, parseInt(page, 10) || 1);
+        const p          = Math.max(1, parseInt(page, 10)     || 1);
         const ps         = Math.max(1, parseInt(pageSize, 10) || 10);
         const total      = courses.length;
         const totalPages = Math.max(1, Math.ceil(total / ps));
         const start      = (p - 1) * ps;
         const pageItems  = courses.slice(start, start + ps);
 
-        // Enrich each course card with first session date and session count
+        // Enrich each page item with first-session date and session count
         const cards = await Promise.all(
             pageItems.map(async (c) => {
                 const sessions = await SessionModel.listByCourse(c._id);
@@ -105,23 +112,22 @@ export const coursesListPage = async (req, res, next) => {
                     allowDropIn:   c.allowDropIn,
                     startDate:     fmtDateOnly(c.startDate),
                     endDate:       fmtDateOnly(c.endDate),
-                    nextSession:   first ? fmtDateTime(first.startDateTime) : "TBA",
+                    nextSession:   first ? fmtDate(first.startDateTime) : "TBA",
                     sessionsCount: sessions.length,
                     description:   c.description,
                 };
             })
         );
 
-        // Build pagination view model
         const pagination = {
             page:       p,
             pageSize:   ps,
             total,
             totalPages,
-            hasPrev:    p > 1,
-            hasNext:    p < totalPages,
-            prevLink:   p > 1            ? buildLink(req, p - 1, ps) : null,
-            nextLink:   p < totalPages   ? buildLink(req, p + 1, ps) : null,
+            hasPrev:  p > 1,
+            hasNext:  p < totalPages,
+            prevLink: p > 1           ? buildLink(req, p - 1, ps) : null,
+            nextLink: p < totalPages  ? buildLink(req, p + 1, ps) : null,
         };
 
         const filters = {
@@ -148,15 +154,3 @@ export const coursesListPage = async (req, res, next) => {
         next(err);
     }
 };
-
-// ---------------------------------------------------------------------------
-// Helper — preserves all current query params while changing page
-// ---------------------------------------------------------------------------
-
-function buildLink(req, page, pageSize) {
-    const url    = new URL(`${req.protocol}://${req.get("host")}${req.originalUrl.split("?")[0]}`);
-    const params = new URLSearchParams(req.query);
-    params.set("page", String(page));
-    params.set("pageSize", String(pageSize));
-    return `${url.pathname}?${params.toString()}`;
-}

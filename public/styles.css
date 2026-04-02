@@ -1067,7 +1067,121 @@ legend {
 .select-wrap:focus-within::after {
     border-top-color: var(--brand);
 }
+/* ==========================================================================
+   SCHEDULE CONTROLS & FILTERS
+   ========================================================================== */
 
+.schedule-controls {
+    margin-bottom: var(--space-xl);
+    padding: var(--space-md);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+}
+
+.filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    align-items: center;
+}
+
+/* Text Search Input Styling */
+.search-wrap {
+    flex: 1;
+    min-width: 200px;
+}
+
+.filter-input {
+    width: 100%;
+    padding: 0.6rem 0.85rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    color: var(--ink);
+    background: var(--bg);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.filter-input:focus {
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(122, 158, 135, 0.15);
+}
+
+/* Styled Select Wrapper */
+.select-wrap {
+    position: relative;
+    flex: 0 1 auto;
+    min-width: 140px;
+}
+
+.select-wrap::after {
+    content: '';
+    position: absolute;
+    right: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid var(--muted);
+    pointer-events: none;
+}
+
+.select-wrap select {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    padding: 0.6rem 2.2rem 0.6rem 0.85rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    color: var(--ink);
+    background: var(--bg);
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.3s;
+}
+
+.select-wrap select:focus {
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(122, 158, 135, 0.15);
+}
+
+/* Reset Button Alignment */
+#filter-reset {
+    margin-left: auto;
+    color: var(--muted);
+    border-color: var(--line);
+}
+
+#filter-reset:hover {
+    color: var(--danger);
+    border-color: var(--danger);
+    background: var(--bg);
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    .filter-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .select-wrap, .search-wrap {
+        width: 100%;
+    }
+
+    #filter-reset {
+        margin-left: 0;
+        text-align: center;
+    }
+}
 .select-wrap select {
     appearance: none;
     -webkit-appearance: none;
@@ -2665,5 +2779,145 @@ article:has(.calendar-grid) p { text-align: left; }
         padding: 0.5rem 0.75rem;
         min-width: 2.5rem;
         box-sizing: border-box;
+    }
+}
+/* ==========================================================================
+   HOMEPAGE — EMPTY STATE (no courses)
+   ========================================================================== */
+
+.cards .empty-state {
+    grid-column: 1 / -1;          /* span full grid width */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--space-2xl) var(--space-lg);
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.cards .empty-state .icon {
+    font-size: 2.5rem;
+    margin-bottom: var(--space-md);
+    line-height: 1;
+}
+
+.cards .empty-state h3 {
+    font-family: var(--font-serif);
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.5rem;
+}
+
+.cards .empty-state p {
+    font-size: 0.95rem;
+    color: var(--muted);
+    line-height: 1.65;
+    max-width: 380px;
+    margin: 0 auto;
+}
+
+/* Page hero centering when used as a true hero */
+.page-header.text-center {
+    text-align: center;
+    padding: var(--space-2xl) var(--space-lg);
+    margin-bottom: var(--space-xl);
+}
+
+.page-header.text-center .badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 600;
+    background: var(--tag-bg);
+    color: var(--brand-dark);
+    padding: 0.25rem 0.75rem;
+    border-radius: 99px;
+    margin-bottom: var(--space-sm);
+}
+
+.page-header.text-center h1 {
+    margin-bottom: var(--space-sm);
+}
+
+.page-header.text-center .subtitle {
+    font-size: 1rem;
+    color: var(--muted);
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.65;
+}
+
+
+/* ==========================================================================
+   SCHEDULE — HORIZONTAL FILTER CONTROLS
+   ========================================================================== */
+
+.schedule-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-xl);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+}
+
+.schedule-controls-left,
+.schedule-controls-right {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.schedule-controls-right .filter-group {
+    display: flex;
+    flex-direction: row;   /* force horizontal — overrides any inherited column */
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: nowrap;
+}
+
+.schedule-controls-right .filter-select {
+    width: auto;           /* don't stretch to full width */
+    min-width: 110px;
+}
+
+#filter-reset {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Responsive: stack only on small phones */
+@media (max-width: 600px) {
+    .schedule-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .schedule-controls-right {
+        width: 100%;
+    }
+
+    .schedule-controls-right .filter-group {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .schedule-controls-right .filter-select {
+        flex: 1;
+        min-width: 100px;
+    }
+
+    #filter-reset {
+        width: 100%;
+        justify-content: center;
     }
 }
