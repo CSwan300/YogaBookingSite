@@ -29,24 +29,38 @@
                 </select>
             </div>
 
+            {{!
+                Type filter: values must match the DB enum exactly.
+                DB stores "WEEKLY_BLOCK" and "WEEKEND_WORKSHOP".
+            }}
             <div class="select-wrap">
                 <select name="type" class="filter-select">
                     <option value="">All Types</option>
-                    <option value="block">Block</option>
-                    <option value="workshop">Workshop</option>
+                    <option value="WEEKLY_BLOCK">Block</option>
+                    <option value="WEEKEND_WORKSHOP">Workshop</option>
                 </select>
             </div>
 
+            {{!
+                Price filter:
+                For drop-in courses the relevant price is the per-session rate.
+                For block courses it is the full block price.
+            }}
             <div class="select-wrap">
                 <select name="price" class="filter-select">
                     <option value="">Any Price</option>
-                    <option value="50">Under £50</option>
-                    <option value="100">Under £100</option>
-                    <option value="200">Under £200</option>
-                    <option value="300">Under £300</option>
+                    <option value="15">Single session ≤ £15</option>
+                    <option value="25">Single session ≤ £25</option>
+                    <option value="50">Block / session ≤ £50</option>
+                    <option value="100">Block ≤ £100</option>
+                    <option value="200">Block ≤ £200</option>
                 </select>
             </div>
 
+            {{!
+                Drop-in filter: values must be "true"/"false" strings
+                to match what the controller expects.
+            }}
             <div class="select-wrap">
                 <select name="dropin" class="filter-select">
                     <option value="">All Drop-in</option>
@@ -77,12 +91,17 @@
                 <p>{{description}}</p>
 
                 <div class="course-details">
-                    <p class="price-full"><strong>Full Block:</strong> £{{price}}</p>
-
                     {{#allowDropIn}}
                         <p class="price-dropin">
                             <strong>Drop-in:</strong> £{{displayDropInPrice}} <span class="muted">/ session</span>
                         </p>
+                        <p class="price-full muted">
+                            <strong>Remaining block:</strong> £{{price}}
+                            <span class="muted">({{sessionsCount}} sessions left)</span>
+                        </p>
+                    {{/allowDropIn}}
+                    {{^allowDropIn}}
+                        <p class="price-full"><strong>Full Block:</strong> £{{price}}</p>
                     {{/allowDropIn}}
 
                     <div class="course-meta">
@@ -109,7 +128,7 @@
     <div class="pagination-wrap">
         <nav class="pagination" aria-label="Page navigation">
             {{#pagination.hasPrev}}
-                <a href="/courses?page={{pagination.prevPage}}{{pagination.queryParams}}" class="btn">← Previous</a>
+                <a href="{{pagination.prevLink}}" class="btn">← Previous</a>
             {{/pagination.hasPrev}}
 
             <div class="page-numbers">
@@ -119,7 +138,7 @@
             </div>
 
             {{#pagination.hasNext}}
-                <a href="/courses?page={{pagination.nextPage}}{{pagination.queryParams}}" class="btn">Next →</a>
+                <a href="{{pagination.nextLink}}" class="btn">Next →</a>
             {{/pagination.hasNext}}
         </nav>
     </div>
@@ -131,24 +150,20 @@
     (function () {
         'use strict';
 
-        const filterForm = document.getElementById('filter-form');
-        const selects    = document.querySelectorAll('.filter-select');
+        const filterForm  = document.getElementById('filter-form');
+        const selects     = document.querySelectorAll('.filter-select');
         const searchInput = document.querySelector('.filter-input');
-        const urlParams  = new URLSearchParams(window.location.search);
+        const urlParams   = new URLSearchParams(window.location.search);
 
-        /**
-         * Debounce function to prevent submitting the form on every single keypress.
-         * It waits until the user stops typing for 'delay' milliseconds.
-         */
         function debounce(func, delay) {
             let timeout;
-            return function(...args) {
+            return function (...args) {
                 clearTimeout(timeout);
                 timeout = setTimeout(() => func.apply(this, args), delay);
             };
         }
 
-        // 1. Restore state from URL on page load
+        // Restore dropdown and search state from URL on page load
         selects.forEach(function (select) {
             const val = urlParams.get(select.name);
             if (val !== null) select.value = val;
@@ -156,19 +171,18 @@
 
         if (searchInput && urlParams.has('q')) {
             searchInput.value = urlParams.get('q');
-            // Put cursor at the end of the text
             searchInput.focus();
             searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
         }
 
-        // 2. Auto-submit dropdowns when they change
+        // Auto-submit when a dropdown changes
         selects.forEach(function (select) {
             select.addEventListener('change', function () {
                 filterForm.submit();
             });
         });
 
-        // 3. Search as user types (with 300ms debounce)
+        // Submit on search input with 300 ms debounce
         if (searchInput) {
             searchInput.addEventListener('input', debounce(function () {
                 filterForm.submit();

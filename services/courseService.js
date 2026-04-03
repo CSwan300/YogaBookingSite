@@ -35,26 +35,31 @@ import { fmtDateOnly, fmtDate, fmtTimeOnly, fmtType, duration } from "./formatSe
 /**
  * Returns a view-ready shape for a course document.
  * Maps DB fields (price, location) to template variables and handles fallbacks.
- * * @param {Object} c - Raw course document from the DB
+ *
+ * Exported so other controllers (e.g. coursesListController) can reuse the
+ * same field mapping rather than duplicating it.
+ *
+ * @param {Object} c - Raw course document from the DB
  * @returns {Object}
  */
 export const buildCourseShape = (c) => ({
-    id:          c._id,
-    title:       c.title,
-    level:       c.level,
-    type:        fmtType(c.type),
-    price:       c.price ?? 0,
-    allowDropIn: c.allowDropIn,
-    location:    c.location || "TBA",
+    id:                 c._id,
+    title:              c.title,
+    level:              c.level,
+    type:               fmtType(c.type),
+    price:              c.price ?? 0,
+    allowDropIn:        c.allowDropIn,
+    location:           c.location || "TBA",
     displayDropInPrice: c.dropInPrice || "15",
-    startDate:   c.startDate ? fmtDateOnly(c.startDate) : "",
-    endDate:     c.endDate   ? fmtDateOnly(c.endDate)   : "",
-    description: c.description || "",
+    startDate:          c.startDate ? fmtDateOnly(c.startDate) : "",
+    endDate:            c.endDate   ? fmtDateOnly(c.endDate)   : "",
+    description:        c.description || "",
 });
 
 /**
  * Returns a view-ready list of session rows for the booking form.
- * * @param {Array<Object>} sessions - Raw session documents
+ *
+ * @param {Array<Object>} sessions - Raw session documents
  * @param {Date} now - Current date used to determine past sessions
  * @returns {Array<Object>}
  */
@@ -120,8 +125,9 @@ export const listSessionsByCourseId = async (courseId) => {
 
 /**
  * Fetches all courses with future sessions and returns enriched card objects.
- * Fixes the 10x vs 8x pricing issue by calculating price based on future sessions.
- * * @param {{ now?: Date }} [opts]
+ * Calculates price based on the number of remaining future sessions.
+ *
+ * @param {{ now?: Date }} [opts]
  * @returns {Promise<Array<Object>>}
  */
 export const getUpcomingCourseCards = async ({ now = new Date() } = {}) => {
@@ -137,19 +143,16 @@ export const getUpcomingCourseCards = async ({ now = new Date() } = {}) => {
 
             const baseShape = buildCourseShape(c);
 
-            /**
-             * LOGIC FIX:
-             * Calculate the price based on the number of FUTURE sessions.
-             */
-            const sessionRate = c.dropInPrice || 15;
+            // Calculate the price based on the number of FUTURE sessions
+            const sessionRate  = c.dropInPrice || 15;
             const displayPrice = c.allowDropIn
-                ? (future.length * sessionRate)
+                ? future.length * sessionRate
                 : c.price;
 
             return {
                 ...baseShape,
-                price: displayPrice, // Overwrite static price with dynamic calculation
-                nextSession: fmtDate(future[0].startDateTime),
+                price:         displayPrice,
+                nextSession:   fmtDate(future[0].startDateTime),
                 sessionsCount: future.length,
             };
         })
@@ -172,15 +175,15 @@ export const getCourseDetail = async (courseId, user = null) => {
         throw err;
     }
 
-    const sessions = await SessionModel.listByCourse(course._id);
-    const now      = new Date();
+    const sessions    = await SessionModel.listByCourse(course._id);
+    const now         = new Date();
     const courseShape = buildCourseShape(course);
 
     const upcomingSessions = sessions.filter(s => new Date(s.startDateTime) >= now);
 
-    const sessionRate = course.dropInPrice || 15;
+    const sessionRate  = course.dropInPrice || 15;
     const dynamicTotal = course.allowDropIn
-        ? (upcomingSessions.length * sessionRate)
+        ? upcomingSessions.length * sessionRate
         : course.price;
 
     const rows = sessions.map((s) => ({
@@ -204,9 +207,9 @@ export const getCourseDetail = async (courseId, user = null) => {
         course: {
             ...courseShape,
             dynamicTotal,
-            upcomingCount: upcomingSessions.length
+            upcomingCount: upcomingSessions.length,
         },
-        sessions: rows
+        sessions: rows,
     };
 };
 

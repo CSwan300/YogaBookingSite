@@ -3,9 +3,10 @@
 // Heavy query logic stays here (it is tightly coupled to URL params);
 // formatting helpers are imported from services/formatService.js.
 
-import { CourseModel }  from "../models/courseModel.js";
-import { SessionModel } from "../models/sessionModel.js";
-import { fmtDateOnly, fmtDate } from "../services/formatService.js";
+import { CourseModel }       from "../models/courseModel.js";
+import { SessionModel }      from "../models/sessionModel.js";
+import { buildCourseShape }  from "../services/courseService.js";
+import { fmtDate }           from "../services/formatService.js";
 
 // ---------------------------------------------------------------------------
 // Private helpers
@@ -34,7 +35,7 @@ function buildLink(req, page, pageSize) {
 /**
  * GET /courses
  * Renders the courses listing page with optional filtering by level, type,
- * drop-in availability, free-text search, and pagination.
+ * drop-in availability, price, free-text search, and pagination.
  */
 export const coursesListPage = async (req, res, next) => {
     try {
@@ -43,16 +44,18 @@ export const coursesListPage = async (req, res, next) => {
             type,
             dropin,
             q,
+            price,
             page     = "1",
             pageSize = "10",
         } = req.query;
 
-        // Build the DB filter from query params
+        // Build the DB filter from query params.
+        // NOTE: dropin values from the form are "true"/"false" strings.
         const filter = {};
-        if (level)          filter.level        = level;
-        if (type)           filter.type         = type;
-        if (dropin === "yes") filter.allowDropIn = true;
-        if (dropin === "no")  filter.allowDropIn = false;
+        if (level)              filter.level      = level;
+        if (type)               filter.type       = type;
+        if (dropin === "true")  filter.allowDropIn = true;
+        if (dropin === "false") filter.allowDropIn = false;
 
         let courses = await CourseModel.list(filter);
 
@@ -91,33 +94,62 @@ export const coursesListPage = async (req, res, next) => {
             false: courses.filter((c) => c.allowDropIn === false).length,
         };
 
-        // Pagination
-        const p          = Math.max(1, parseInt(page, 10)     || 1);
-        const ps         = Math.max(1, parseInt(pageSize, 10) || 10);
-        const total      = courses.length;
-        const totalPages = Math.max(1, Math.ceil(total / ps));
-        const start      = (p - 1) * ps;
-        const pageItems  = courses.slice(start, start + ps);
+        // ---------------------------------------------------------------------------
+        // Enrich ALL filtered courses with session data so we can:
+        //   a) apply the price filter against the dynamic (future-session) price
+        //   b) paginate the already-enriched set
+        // ---------------------------------------------------------------------------
+        const now = new Date();
 
-        // Enrich each page item with first-session date and session count
-        const cards = await Promise.all(
-            pageItems.map(async (c) => {
+        const enriched = await Promise.all(
+            courses.map(async (c) => {
                 const sessions = await SessionModel.listByCourse(c._id);
-                const first    = sessions[0];
+                const future   = sessions.filter((s) => new Date(s.startDateTime) >= now);
+
+                // Use first future session for nextSession; fall back to first overall
+                const first = future[0] ?? sessions[0];
+
+                // Dynamic display price:
+                //   - Drop-in courses: per-session rate × number of future sessions remaining
+                //   - Block courses:   fixed block price from the DB
+                const sessionRate  = c.dropInPrice || 15;
+                const displayPrice = c.allowDropIn
+                    ? future.length * sessionRate
+                    : c.price ?? 0;
+
+                // Price used for filtering:
+                //   - Drop-in courses: filter against the per-session rate, because that
+                //     is the actual cost to the user for a single transaction.
+                //   - Block courses:   filter against the full block price.
+                const filterPrice = c.allowDropIn ? sessionRate : displayPrice;
+
                 return {
-                    id:            c._id,
-                    title:         c.title,
-                    level:         c.level,
-                    type:          c.type,
-                    allowDropIn:   c.allowDropIn,
-                    startDate:     fmtDateOnly(c.startDate),
-                    endDate:       fmtDateOnly(c.endDate),
+                    ...buildCourseShape(c),
+                    price:         displayPrice,
+                    filterPrice,                                    // internal only, stripped before render
                     nextSession:   first ? fmtDate(first.startDateTime) : "TBA",
                     sessionsCount: sessions.length,
-                    description:   c.description,
                 };
             })
         );
+
+        // Apply price filter AFTER enrichment (price is dynamic, not a raw DB field)
+        const priceMax  = price ? parseInt(price, 10) : null;
+        const filtered  = priceMax
+            ? enriched.filter((c) => c.filterPrice <= priceMax)
+            : enriched;
+
+        // Paginate the enriched + filtered set
+        const p          = Math.max(1, parseInt(page, 10)     || 1);
+        const ps         = Math.max(1, parseInt(pageSize, 10) || 10);
+        const total      = filtered.length;
+        const totalPages = Math.max(1, Math.ceil(total / ps));
+        const start      = (p - 1) * ps;
+
+        // Strip the internal filterPrice field before handing data to the template
+        const cards = filtered
+            .slice(start, start + ps)
+            .map(({ filterPrice: _fp, ...rest }) => rest);
 
         const pagination = {
             page:       p,
@@ -126,19 +158,19 @@ export const coursesListPage = async (req, res, next) => {
             totalPages,
             hasPrev:  p > 1,
             hasNext:  p < totalPages,
-            prevLink: p > 1           ? buildLink(req, p - 1, ps) : null,
-            nextLink: p < totalPages  ? buildLink(req, p + 1, ps) : null,
+            prevLink: p > 1          ? buildLink(req, p - 1, ps) : null,
+            nextLink: p < totalPages ? buildLink(req, p + 1, ps) : null,
         };
 
         const filters = {
-            level, type, dropin, q,
+            level, type, dropin, q, price,
             isBeginnerSelected:     level  === "beginner",
             isIntermediateSelected: level  === "intermediate",
             isAdvancedSelected:     level  === "advanced",
             isWeeklySelected:       type   === "WEEKLY_BLOCK",
             isWeekendSelected:      type   === "WEEKEND_WORKSHOP",
-            isDropinYes:            dropin === "yes",
-            isDropinNo:             dropin === "no",
+            isDropinTrue:           dropin === "true",
+            isDropinFalse:          dropin === "false",
         };
 
         res.render("courses", {
