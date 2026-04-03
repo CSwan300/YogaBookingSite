@@ -119,7 +119,7 @@ Role: organiser
 
 ## CI/CD Pipeline
 
-This project uses **GitHub Actions** to automate testing and deployment on every push to `main`.
+This project uses **GitHub Actions** to automate testing and deployment on every push to `master`.
 
 ### Pipeline steps
 
