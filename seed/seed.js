@@ -1,4 +1,10 @@
-// seed/seed.js
+/**
+ * @file seed/seed.js
+ * @description
+ * Seed script that wipes the database and populates it with
+ * demo users, courses, sessions, and bookings for future dates.
+ */
+
 import {
     initDb,
     usersDb,
@@ -11,7 +17,13 @@ import { SessionModel } from "../models/sessionModel.js";
 import { UserModel } from "../models/userModel.js";
 import { BookingModel } from "../models/bookingModel.js";
 
-const hashPassword = (password) => password;
+import bcrypt from "bcrypt";
+
+const BCRYPT_ROUNDS = 12;
+
+const hashPassword = async (password) => {
+    return await bcrypt.hash(password, BCRYPT_ROUNDS);
+};
 
 const iso      = (d) => new Date(d).toISOString();
 const addHours = (date, h) => new Date(date.getTime() + h * 60 * 60 * 1000);
@@ -55,28 +67,100 @@ async function buildSessions(courseId, slots) {
 
 /* ── Users ──────────────────────────────────────────────────── */
 async function createUsers() {
-    const [
-        admin,
-        fiona, marcus, priya, lena, tom,
-        ava, ben, chen, isla, raj,
-    ] = await Promise.all([
-        UserModel.create({ name: "Admin", email: "admin@yoga.local", role: "organiser", password: hashPassword("admin1234") }),
-        UserModel.create({ name: "Fiona", email: "fiona@student.local", role: "student", password: hashPassword("password123"), image: "https://i.pravatar.cc/150?u=fiona" }),
-        UserModel.create({ name: "Marcus", email: "marcus@student.local", role: "student", password: hashPassword("password123"), image: "https://i.pravatar.cc/150?u=marcus" }),
-        UserModel.create({ name: "Priya", email: "priya@student.local", role: "student", password: hashPassword("password123"), image: "https://i.pravatar.cc/150?u=priya" }),
-        UserModel.create({ name: "Lena", email: "lena@student.local", role: "student", password: hashPassword("password123"), image: "https://i.pravatar.cc/150?u=lena" }),
-        UserModel.create({ name: "Tom", email: "tom@student.local", role: "student", password: hashPassword("password123"), image: "https://i.pravatar.cc/150?u=tom" }),
-        UserModel.create({ name: "Ava", email: "ava@yoga.local", role: "instructor", bio: "Restorative specialist.", image: "https://i.pravatar.cc/150?u=ava" }),
-        UserModel.create({ name: "Ben", email: "ben@yoga.local", role: "instructor", bio: "Vinyasa energy.", image: "https://i.pravatar.cc/150?u=ben" }),
-        UserModel.create({ name: "Chen", email: "chen@yoga.local", role: "instructor", bio: "Strength & Inversions.", image: "https://i.pravatar.cc/150?u=chen" }),
-        UserModel.create({ name: "Isla", email: "isla@yoga.local", role: "instructor", bio: "Gentle Hatha.", image: "https://i.pravatar.cc/150?u=isla" }),
-        UserModel.create({ name: "Raj", email: "raj@yoga.local", role: "instructor", bio: "Power & Ashtanga.", image: "https://i.pravatar.cc/150?u=raj" }),
+    const [admin, ...otherUsers] = await Promise.all([
+        UserModel.create({
+            name: "Admin",
+            email: "admin@yoga.local",
+            role: "organiser",
+            passwordHash: await hashPassword("admin1234"),
+        }),
+        UserModel.create({
+            name: "Fiona",
+            email: "fiona@student.local",
+            role: "student",
+            passwordHash: await hashPassword("password123"),
+            image: "https://i.pravatar.cc/150?u=fiona",
+        }),
+        UserModel.create({
+            name: "Marcus",
+            email: "marcus@student.local",
+            role: "student",
+            passwordHash: await hashPassword("password123"),
+            image: "https://i.pravatar.cc/150?u=marcus",
+        }),
+        UserModel.create({
+            name: "Priya",
+            email: "priya@student.local",
+            role: "student",
+            passwordHash: await hashPassword("password123"),
+            image: "https://i.pravatar.cc/150?u=priya",
+        }),
+        UserModel.create({
+            name: "Lena",
+            email: "lena@student.local",
+            role: "student",
+            passwordHash: await hashPassword("password123"),
+            image: "https://i.pravatar.cc/150?u=lena",
+        }),
+        UserModel.create({
+            name: "Tom",
+            email: "tom@student.local",
+            role: "student",
+            passwordHash: await hashPassword("password123"),
+            image: "https://i.pravatar.cc/150?u=tom",
+        }),
+        UserModel.create({
+            name: "Ava",
+            email: "ava@yoga.local",
+            role: "instructor",
+            passwordHash: await hashPassword("instructor123"),
+            bio: "Restorative specialist.",
+            image: "https://i.pravatar.cc/150?u=ava",
+        }),
+        UserModel.create({
+            name: "Ben",
+            email: "ben@yoga.local",
+            role: "instructor",
+            passwordHash: await hashPassword("instructor123"),
+            bio: "Vinyasa energy.",
+            image: "https://i.pravatar.cc/150?u=ben",
+        }),
+        UserModel.create({
+            name: "Chen",
+            email: "chen@yoga.local",
+            role: "instructor",
+            passwordHash: await hashPassword("instructor123"),
+            bio: "Strength & Inversions.",
+            image: "https://i.pravatar.cc/150?u=chen",
+        }),
+        UserModel.create({
+            name: "Isla",
+            email: "isla@yoga.local",
+            role: "instructor",
+            passwordHash: await hashPassword("instructor123"),
+            bio: "Gentle Hatha.",
+            image: "https://i.pravatar.cc/150?u=isla",
+        }),
+        UserModel.create({
+            name: "Raj",
+            email: "raj@yoga.local",
+            role: "instructor",
+            passwordHash: await hashPassword("instructor123"),
+            bio: "Power & Ashtanga.",
+            image: "https://i.pravatar.cc/150?u=raj",
+        }),
     ]);
 
     return {
         organiser:   admin,
-        students:    [fiona, marcus, priya, lena, tom],
-        instructors: { ava, ben, chen, isla, raj },
+        students:    [otherUsers[0], otherUsers[1], otherUsers[2], otherUsers[3], otherUsers[4]],
+        instructors: {
+            ava: otherUsers[5],
+            ben: otherUsers[6],
+            chen: otherUsers[7],
+            isla: otherUsers[8],
+            raj: otherUsers[9],
+        },
     };
 }
 
@@ -163,9 +247,8 @@ async function run() {
     await createBookings(students, { c1, c2, c3 });
 
     console.log("✅ Seed complete. All courses set for May 2026 and beyond.");
-    //force it to leave
+    // force it to exit
     process.exit(0);
-
 }
 
 run().catch((err) => {

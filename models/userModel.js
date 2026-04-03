@@ -1,9 +1,26 @@
+/**
+ * @module models/userModel
+ * @description
+ * Provides persistence methods for user records, including
+ * avatar field derivation and CRUD helpers.
+ */
+
 import { usersDb } from "./_db.js";
 
+/**
+ * Candidate background colours for generated avatar URLs.
+ *
+ * @type {string[]}
+ */
 const AVATAR_COLORS = ["4F46E5", "059669", "D97706", "DB2777", "2563EB", "7C3AED"];
 
 /**
- * Generates initials and a UI-Avatar URL based on the user's name.
+ * Builds derived avatar-related fields from a user's name.
+ * If a custom image is provided, it is used instead of the generated avatar URL.
+ *
+ * @param {string} name - The user's full name.
+ * @param {string|null} [customImage=null] - An optional custom avatar URL.
+ * @returns {{ userInitials: string, image: string }} Derived avatar metadata.
  */
 function deriveAvatarFields(name, customImage = null) {
     const userInitials = name
@@ -25,9 +42,31 @@ function deriveAvatarFields(name, customImage = null) {
     };
 }
 
+/**
+ * User data access model.
+ *
+ * @type {{
+ *   create(user: Object): Promise<Object>,
+ *   findByEmail(email: string): Promise<Object|null>,
+ *   findById(id: string): Promise<Object|null>,
+ *   list(): Promise<Object[]>,
+ *   delete(id: string): Promise<number>,
+ *   update(id: string, data: Object): Promise<Object>
+ * }}
+ */
 export const userModel = {
     /**
-     * Creates a new user with generated avatar fields.
+     * Creates a new user and derives avatar-related display fields.
+     * Raw password fields are removed before persistence; callers should pass `passwordHash`.
+     *
+     * @async
+     * @param {Object} user - The user payload to persist.
+     * @param {string} user.name - The user's full name.
+     * @param {string} user.email - The user's email address.
+     * @param {string} [user.passwordHash] - The bcrypt password hash.
+     * @param {string} [user.role] - The user's application role.
+     * @param {string} [user.image] - Optional custom avatar URL.
+     * @returns {Promise<Object>} The inserted user record.
      */
     async create(user) {
         const { userInitials, image } = deriveAvatarFields(user.name, user.image);
@@ -39,18 +78,29 @@ export const userModel = {
             createdAt: new Date().toISOString(),
         };
 
+        delete newUser.password;
+        delete newUser.confirm_password;
+
         return usersDb.insert(newUser);
     },
 
     /**
      * Finds a single user by email address.
+     *
+     * @async
+     * @param {string} email - The email address to search for.
+     * @returns {Promise<Object|null>} The matching user or null.
      */
     async findByEmail(email) {
         return usersDb.findOne({ email });
     },
 
     /**
-     * Finds a single user by their unique ID.
+     * Finds a single user by their unique identifier.
+     *
+     * @async
+     * @param {string} id - The user's unique ID.
+     * @returns {Promise<Object|null>} The matching user or null.
      */
     async findById(id) {
         return usersDb.findOne({ _id: id });
@@ -58,6 +108,9 @@ export const userModel = {
 
     /**
      * Returns all users in the database.
+     *
+     * @async
+     * @returns {Promise<Object[]>} All stored users.
      */
     async list() {
         return usersDb.find({});
@@ -65,26 +118,39 @@ export const userModel = {
 
     /**
      * Deletes a user by ID.
+     *
+     * @async
+     * @param {string} id - The user's unique ID.
+     * @returns {Promise<number>} The number of removed records.
      */
     async delete(id) {
         return usersDb.remove({ _id: id });
     },
 
     /**
-     * Updates user data and regenerates avatar initials if the name changes.
+     * Updates an existing user record and regenerates avatar-derived fields
+     * if the user's name changes.
+     *
+     * @async
+     * @param {string} id - The user's unique ID.
+     * @param {Object} data - Partial user data to merge into the record.
+     * @returns {Promise<Object>} The updated user record.
+     * @throws {Error} If the user does not exist.
      */
     async update(id, data) {
         const existing = await usersDb.findOne({ _id: id });
-        if (!existing) throw new Error("User not found");
+
+        if (!existing) {
+            throw new Error("User not found");
+        }
 
         const nameChanged = data.name && data.name !== existing.name;
         const hasCustomImage =
             data.image !== undefined ? Boolean(data.image) : existing._hasCustomImage;
 
+        /** @type {Object} */
         let avatarFields = {};
 
-        // If name changes, update initials. 
-        // If they don't have a custom uploaded image, update the UI-Avatar too.
         if (nameChanged && !hasCustomImage) {
             avatarFields = deriveAvatarFields(data.name);
         } else if (nameChanged && hasCustomImage) {
@@ -102,7 +168,9 @@ export const userModel = {
             ...avatarFields,
         };
 
-        // Standard pattern for NeDB: remove then re-insert
+        delete updatedUser.password;
+        delete updatedUser.confirm_password;
+
         await usersDb.remove({ _id: id });
         await usersDb.insert(updatedUser);
 

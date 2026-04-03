@@ -1,27 +1,32 @@
 /**
  * @module controllers/authController
- * Handles all user authentication web interface logic including login,
- * registration, and session termination.
+ * @description
+ * Handles user authentication web interface logic including login,
+ * registration, and logout flows.
  */
 
 import * as authService from "../services/authService.js";
 
-/** * Standard cookie configuration for the application.
- * @type {import('express').CookieOptions}
+/**
+ * Standard cookie configuration for the application.
+ *
+ * @type {import("express").CookieOptions}
  */
 const COOKIE_OPTIONS = {
     httpOnly: true,
-    signed:   true,
-    maxAge:   1000 * 60 * 60 * 24, // 24 Hours
+    signed: true,
+    maxAge: 1000 * 60 * 60 * 24, // 24 hours
     sameSite: "lax",
-    path:     "/"
+    path: "/",
 };
 
 /**
  * Renders the login page.
- * Redirects to home if the user is already authenticated.
- * * @param {import('express').Request} req
- * @param {import('express').Response} res
+ * Redirects to the home page if the user is already authenticated.
+ *
+ * @param {import("express").Request} req - The incoming Express request.
+ * @param {import("express").Response} res - The outgoing Express response.
+ * @returns {void}
  */
 export const loginPage = (req, res) => {
     if (res.locals.user) return res.redirect("/");
@@ -30,9 +35,11 @@ export const loginPage = (req, res) => {
 
 /**
  * Renders the registration page.
- * Redirects to home if the user is already authenticated.
- * * @param {import('express').Request} req
- * @param {import('express').Response} res
+ * Redirects to the home page if the user is already authenticated.
+ *
+ * @param {import("express").Request} req - The incoming Express request.
+ * @param {import("express").Response} res - The outgoing Express response.
+ * @returns {void}
  */
 export const registerPage = (req, res) => {
     if (res.locals.user) return res.redirect("/");
@@ -41,21 +48,26 @@ export const registerPage = (req, res) => {
 
 /**
  * Handles login form submission.
- * Validates credentials via authService and sets the session cookie.
- * * @param {import('express').Request} req
- * @param {import('express').Response} res
- * @param {import('express').NextFunction} next
+ * Validates credentials via the auth service and sets the signed session cookie.
+ *
+ * @async
+ * @param {import("express").Request} req - The incoming Express request.
+ * @param {import("express").Response} res - The outgoing Express response.
+ * @param {import("express").NextFunction} next - The Express next middleware function.
+ * @returns {Promise<void>}
  */
 export const postLogin = async (req, res, next) => {
     try {
-        const { user, token } = await authService.authenticateUser(req.body.email);
+        const { email, password } = req.body;
+
+        const { user, token } = await authService.authenticateUser(email, password);
 
         res.cookie("token", token, COOKIE_OPTIONS);
 
-        // Role-based redirection
         if (user.role === "organiser") {
             return res.redirect("/dashboard");
         }
+
         res.redirect("/");
     } catch (err) {
         res.status(401).render("account/login", {
@@ -67,10 +79,13 @@ export const postLogin = async (req, res, next) => {
 
 /**
  * Handles registration form submission.
- * Creates a new student user and sets the session cookie.
- * * @param {import('express').Request} req
- * @param {import('express').Response} res
- * @param {import('express').NextFunction} next
+ * Creates a new student account and sets the signed session cookie.
+ *
+ * @async
+ * @param {import("express").Request} req - The incoming Express request.
+ * @param {import("express").Response} res - The outgoing Express response.
+ * @param {import("express").NextFunction} next - The Express next middleware function.
+ * @returns {Promise<void>}
  */
 export const postRegister = async (req, res, next) => {
     try {
@@ -90,16 +105,18 @@ export const postRegister = async (req, res, next) => {
 
 /**
  * Clears the session cookie and renders the logout confirmation page.
- * Note: maxAge is omitted to comply with Express v5 deprecation guidelines.
- * * @param {import('express').Request} req
- * @param {import('express').Response} res
+ * The cookie is cleared using the same relevant options used when setting it.
+ *
+ * @param {import("express").Request} req - The incoming Express request.
+ * @param {import("express").Response} res - The outgoing Express response.
+ * @returns {void}
  */
 export const logoutHandler = (req, res) => {
     res.clearCookie("token", {
         httpOnly: true,
-        signed:   true,
+        signed: true,
         sameSite: "lax",
-        path:     "/"
+        path: "/",
     });
 
     res.render("logout", {
@@ -107,6 +124,6 @@ export const logoutHandler = (req, res) => {
         goodbye_message: "You have been successfully signed out. See you back on the mat soon!",
         login_url: "/login",
         home_url: "/",
-        home_label: "Home"
+        home_label: "Home",
     });
 };
