@@ -5,10 +5,12 @@
     <article class="wrap">
         <div class="page-hero">
             <h1>Edit Course: {{course.title}}</h1>
-            <p class="help-text">Modify the details for this course below.</p>
+            <p class="help-text">Update course details or add new sessions below.</p>
         </div>
 
+        <!-- ── Course details ─────────────────────────────────────── -->
         <div class="card">
+            <h3>Course Details</h3>
             <form method="POST" action="/dashboard/courses/{{course._id}}/update" class="form-grid">
 
                 <div class="field">
@@ -20,37 +22,35 @@
                     <label for="edit-level">Level</label>
                     <div class="select-wrap">
                         <select id="edit-level" name="level">
-                            <option value="beginner" {{#course.isBeginnerLevel}}selected{{/course.isBeginnerLevel}}>Beginner</option>
+                            <option value="beginner"     {{#course.isBeginnerLevel}}selected{{/course.isBeginnerLevel}}>Beginner</option>
                             <option value="intermediate" {{#course.isIntermediateLevel}}selected{{/course.isIntermediateLevel}}>Intermediate</option>
-                            <option value="advanced" {{#course.isAdvancedLevel}}selected{{/course.isAdvancedLevel}}>Advanced</option>
+                            <option value="advanced"     {{#course.isAdvancedLevel}}selected{{/course.isAdvancedLevel}}>Advanced</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="field">
-                    <label for="edit-type">Type (Category)</label>
+                    <label for="edit-type">Type</label>
                     <div class="select-wrap">
                         <select id="edit-type" name="type" required>
-                            <option value="weekly_block" {{#course.isWeeklyBlock}}selected{{/course.isWeeklyBlock}}>Weekly Block</option>
-                            <option value="workshop" {{#course.isWorkshop}}selected{{/course.isWorkshop}}>Workshop</option>
-                            <option value="retreat" {{#course.isRetreat}}selected{{/course.isRetreat}}>Retreat</option>
-                            <option value="one_off" {{#course.isOneOff}}selected{{/course.isOneOff}}>One-off Session</option>
+                            <option value="WEEKLY_BLOCK"     {{#course.isWeeklyBlock}}selected{{/course.isWeeklyBlock}}>Weekly Block</option>
+                            <option value="WEEKEND_WORKSHOP" {{#course.isWeekendWorkshop}}selected{{/course.isWeekendWorkshop}}>Weekend Workshop</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="field">
-                    <label for="edit-price">Price (£)</label>
+                    <label for="edit-price">Block Price (£)</label>
                     <input id="edit-price" type="number" name="price" step="0.01" value="{{course.price}}" required>
                 </div>
 
                 <div class="field">
-                    <label for="edit-start">Course Start Date</label>
+                    <label for="edit-start">Start Date</label>
                     <input id="edit-start" type="date" name="startDate" value="{{course.startDate}}" required>
                 </div>
 
                 <div class="field">
-                    <label for="edit-end">Course End Date</label>
+                    <label for="edit-end">End Date</label>
                     <input id="edit-end" type="date" name="endDate" value="{{course.endDate}}" required>
                 </div>
 
@@ -65,18 +65,139 @@
                     </div>
                 </div>
 
+                <div class="field">
+                    <label for="edit-location">Location</label>
+                    <input id="edit-location" type="text" name="location" value="{{course.location}}" placeholder="e.g. Studio A">
+                </div>
+
+                <div class="field">
+                    <label for="edit-description">Description</label>
+                    <textarea id="edit-description" name="description" rows="3">{{course.description}}</textarea>
+                </div>
+
                 <div class="field checkbox">
                     <input type="checkbox" id="edit-dropin" name="allowDropIn" {{#course.allowDropIn}}checked{{/course.allowDropIn}}>
                     <label for="edit-dropin">Allow Drop-in Bookings</label>
                 </div>
 
+                <div class="field" id="edit-dropin-price-field" style="display:{{#course.allowDropIn}}block{{/course.allowDropIn}}{{^course.allowDropIn}}none{{/course.allowDropIn}};">
+                    <label for="edit-dropin-price">Drop-in Price per Session (£)</label>
+                    <input id="edit-dropin-price" type="number" name="dropInPrice" step="0.01" value="{{course.dropInPrice}}">
+                </div>
+
                 <div class="actions">
-                    <button type="submit" class="btn primary">Update Course</button>
+                    <button type="submit" class="btn primary">Save Changes</button>
                     <a href="/dashboard/courses" class="btn">Cancel</a>
                 </div>
             </form>
         </div>
+
+        <!-- ── Existing sessions ───────────────────────────────────── -->
+        <div class="card">
+            <h3>Sessions</h3>
+            {{#sessions}}
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Start</th>
+                            <th>End</th>
+                            <th>Duration</th>
+                            <th>Capacity</th>
+                            <th>Booked</th>
+                            <th>Spots Left</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {{#sessions}}
+                            <tr>
+                                <td>{{start}}</td>
+                                <td>{{end}}</td>
+                                <td>{{duration}}</td>
+                                <td>{{capacity}}</td>
+                                <td>{{booked}}</td>
+                                <td>
+                                    {{#isFull}}<span class="badge danger">Full</span>{{/isFull}}
+                                    {{^isFull}}{{spotsLeft}}{{/isFull}}
+                                </td>
+                            </tr>
+                        {{/sessions}}
+                        </tbody>
+                    </table>
+                </div>
+            {{/sessions}}
+            {{^sessions}}
+                <p class="muted">No sessions added yet.</p>
+            {{/sessions}}
+        </div>
+
+        <!-- ── Add session ─────────────────────────────────────────── -->
+        <div class="card">
+            <h3>Add Session</h3>
+
+            {{#course.isWeeklyBlock}}
+                <p class="help-text">
+                    This is a weekly block course. Entering a start time below will automatically
+                    create one session per week from that date until the course end date
+                    ({{course.endDate}}).
+                </p>
+            {{/course.isWeeklyBlock}}
+            {{#course.isWeekendWorkshop}}
+                <p class="help-text">
+                    This is a weekend workshop. Each submission adds a single session.
+                    Add each session slot individually.
+                </p>
+            {{/course.isWeekendWorkshop}}
+
+            <form method="POST" action="/sessions" class="form-grid">
+                <input type="hidden" name="courseId"     value="{{course._id}}">
+                <input type="hidden" name="durationMins" value="">
+
+                <div class="field">
+                    <label for="session-start">Start Date &amp; Time</label>
+                    <input id="session-start" type="datetime-local" name="startDateTime" required>
+                </div>
+
+                <div class="field">
+                    <label for="session-duration">Duration (minutes)</label>
+                    <input id="session-duration" type="number" value="60" min="15" step="15" required>
+                </div>
+
+                <div class="field">
+                    <label for="session-capacity">Capacity</label>
+                    <input id="session-capacity" type="number" name="capacity" value="15" min="1" required>
+                </div>
+
+                <div class="actions">
+                    <button type="submit" class="btn primary">
+                        {{#course.isWeeklyBlock}}Generate Weekly Sessions{{/course.isWeeklyBlock}}
+                        {{#course.isWeekendWorkshop}}Add Session{{/course.isWeekendWorkshop}}
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="actions">
+            <a href="/dashboard/courses" class="btn">← Back to Courses</a>
+        </div>
     </article>
 </main>
+
+<script>
+    const dropinCheckbox   = document.getElementById("edit-dropin");
+    const dropinPriceField = document.getElementById("edit-dropin-price-field");
+
+    dropinCheckbox.addEventListener("change", function () {
+        dropinPriceField.style.display = this.checked ? "block" : "none";
+    });
+
+    // Keep the hidden durationMins input in sync with the visible number input
+    const durationInput  = document.getElementById("session-duration");
+    const durationHidden = document.querySelector('input[name="durationMins"]');
+    durationHidden.value = durationInput.value;
+    durationInput.addEventListener("input", function () {
+        durationHidden.value = this.value;
+    });
+</script>
 
 {{> footer}}

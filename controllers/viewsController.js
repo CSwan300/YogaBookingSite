@@ -29,7 +29,6 @@ import {
     deleteCourse,
     updateCourse,
     getClassesDashboardPageData,
-    getClassesDashboardData,
     getClassListData,
     getOrganisersData,
     createOrganiser,
@@ -48,9 +47,16 @@ import {
     getBookSessionData,
     getSingleSessionBookData,
     getScheduleWeeks,
+    createNewSession,
 } from "../services/courseService.js";
 
-import { fmtDate, fmtDateOnly, fmtTimeOnly, fmtType } from "../services/formatService.js";
+import {
+    fmtDate,
+    fmtDateOnly,
+    fmtTimeOnly,
+    fmtType,
+    duration,
+} from "../services/formatService.js";
 
 // Re-export profile handlers so routes only need one import target.
 export { profilePage, getEditProfilePage, postEditProfile } from "./profileController.js";
@@ -64,11 +70,9 @@ export { listCourses };
 
 /**
  * Resolves a course ID from an array of session IDs submitted in a form body.
- * Used when a POST route does not include a course ID in its URL params.
  *
- * @param {string|string[]} rawSessionIds - Raw value from req.body.sessionIds
- * @returns {Promise<string>} The courseId string
- * @throws If no session IDs are provided or the session cannot be found
+ * @param {string|string[]} rawSessionIds
+ * @returns {Promise<string>}
  */
 const resolveCourseIdFromSessions = async (rawSessionIds) => {
     const sessionIds = Array.isArray(rawSessionIds) ? rawSessionIds : [rawSessionIds];
@@ -86,7 +90,6 @@ const resolveCourseIdFromSessions = async (rawSessionIds) => {
 
 /**
  * GET /
- * Renders the home page with upcoming course cards.
  */
 export const homePage = async (req, res, next) => {
     try {
@@ -99,7 +102,6 @@ export const homePage = async (req, res, next) => {
 
 /**
  * GET /about
- * Renders the static about page.
  */
 export const aboutPage = (req, res) => {
     res.render("about", {
@@ -128,7 +130,6 @@ export const aboutPage = (req, res) => {
 
 /**
  * GET /instructors
- * Renders the instructors listing page.
  */
 export const instructorsPage = async (req, res, next) => {
     try {
@@ -155,7 +156,6 @@ export const instructorsPage = async (req, res, next) => {
 
 /**
  * GET /courses/:id
- * Renders the course detail page with session rows.
  */
 export const courseDetailPage = async (req, res, next) => {
     try {
@@ -181,7 +181,6 @@ export const courseDetailPage = async (req, res, next) => {
 
 /**
  * GET /courses/:id/book
- * Renders the full-course booking form.
  */
 export const getBookCoursePage = async (req, res, next) => {
     try {
@@ -202,10 +201,6 @@ export const getBookCoursePage = async (req, res, next) => {
 
 /**
  * POST /courses/:id/book
- * Processes a full-course booking for the logged-in user.
- * Re-renders the form with a validation error if:
- *   - consent checkbox is missing (CONSENT_MISSING)
- *   - the user already has an active booking for this course (ALREADY_BOOKED)
  */
 export const postBookCourse = async (req, res, next) => {
     try {
@@ -224,14 +219,12 @@ export const postBookCourse = async (req, res, next) => {
                 notes:  req.body.notes,
             });
         }
-
         res.status(400).render("error", { title: "Booking failed", message: err.message });
     }
 };
 
 /**
  * GET /courses/:id/book/sessions
- * Renders the drop-in session selector for a course.
  */
 export const getBookSessionPage = async (req, res, next) => {
     try {
@@ -252,16 +245,7 @@ export const getBookSessionPage = async (req, res, next) => {
 };
 
 /**
- * POST /bookings/sessions  (or whichever route handles drop-in submission)
- * Processes a drop-in session booking for the logged-in user.
- *
- * NOTE: This route does NOT have a course ID in its URL params. When re-rendering
- * is required (e.g. ALREADY_BOOKED), the course ID is derived from the submitted
- * session IDs via resolveCourseIdFromSessions().
- *
- * Re-renders the form with a validation error if:
- *   - no sessions were selected (NO_SESSIONS)
- *   - the user already holds one of the requested sessions (ALREADY_BOOKED)
+ * POST /bookings/sessions
  */
 export const postBookSession = async (req, res, next) => {
     try {
@@ -272,10 +256,8 @@ export const postBookSession = async (req, res, next) => {
             return res.status(400).render("error", { title: "Booking failed", message: err.message });
 
         if (err.code === "ALREADY_BOOKED") {
-            // req.params.id is not available on this route — look up the courseId
-            // from the first submitted sessionId instead.
             try {
-                const courseId         = await resolveCourseIdFromSessions(req.body.sessionIds);
+                const courseId             = await resolveCourseIdFromSessions(req.body.sessionIds);
                 const { course, sessions } = await getBookSessionData(courseId);
                 return res.status(409).render("session_book", {
                     title:   `Drop-in: ${course.title}`,
@@ -285,7 +267,6 @@ export const postBookSession = async (req, res, next) => {
                     errors: { list: [err.message] },
                 });
             } catch {
-                // If we can't re-render the form, fall through to the generic error page.
                 return res.status(409).render("error", { title: "Already booked", message: err.message });
             }
         }
@@ -299,7 +280,6 @@ export const postBookSession = async (req, res, next) => {
 
 /**
  * GET /sessions/:id/book
- * Renders the booking form for a single drop-in session.
  */
 export const getSingleSessionBookPage = async (req, res, next) => {
     try {
@@ -327,7 +307,6 @@ export const getSingleSessionBookPage = async (req, res, next) => {
 
 /**
  * GET /bookings
- * Renders the logged-in user's active bookings list.
  */
 export const myBookingsPage = async (req, res, next) => {
     try {
@@ -385,7 +364,6 @@ export const myBookingsPage = async (req, res, next) => {
 
 /**
  * GET /bookings/:bookingId
- * Renders the booking confirmation / status page.
  */
 export const bookingConfirmationPage = async (req, res, next) => {
     try {
@@ -431,8 +409,6 @@ export const bookingConfirmationPage = async (req, res, next) => {
 
 /**
  * GET /bookings/:bookingId/cancel
- * Renders the booking (or single-session) cancellation confirmation page.
- * Accepts an optional `?session=<sessionId>` query param to target one session.
  */
 export const getCancelBookingPage = async (req, res, next) => {
     try {
@@ -479,7 +455,6 @@ export const getCancelBookingPage = async (req, res, next) => {
 
 /**
  * POST /bookings/:bookingId/cancel
- * Cancels an entire booking and redirects to the confirmation page.
  */
 export const postCancelBooking = async (req, res, next) => {
     try {
@@ -496,7 +471,6 @@ export const postCancelBooking = async (req, res, next) => {
 
 /**
  * POST /bookings/:bookingId/sessions/:sessionId/cancel
- * Removes a single session from a booking and redirects to the confirmation page.
  */
 export const postCancelSession = async (req, res, next) => {
     try {
@@ -518,8 +492,6 @@ export const postCancelSession = async (req, res, next) => {
 
 /**
  * GET /schedule
- * Renders the weekly session schedule.
- * Supports `?my=1` to filter to the logged-in user's own booked sessions.
  */
 export const schedulePage = async (req, res, next) => {
     try {
@@ -561,7 +533,6 @@ export const schedulePage = async (req, res, next) => {
 
 /**
  * GET /dashboard
- * Renders the admin overview page with headline stats.
  */
 export const adminDashboardPage = async (req, res, next) => {
     try {
@@ -572,7 +543,6 @@ export const adminDashboardPage = async (req, res, next) => {
 
 /**
  * GET /dashboard/courses
- * Renders the courses management dashboard.
  */
 export const coursesDashboardPage = async (req, res, next) => {
     try {
@@ -583,7 +553,6 @@ export const coursesDashboardPage = async (req, res, next) => {
 
 /**
  * POST /dashboard/courses
- * Creates a new course and redirects back to the dashboard.
  */
 export const postCreateCoursePage = async (req, res, next) => {
     try {
@@ -594,7 +563,6 @@ export const postCreateCoursePage = async (req, res, next) => {
 
 /**
  * POST /dashboard/courses/:id/delete
- * Deletes a course and redirects back to the dashboard.
  */
 export const postDeleteCoursePage = async (req, res, next) => {
     try {
@@ -605,7 +573,6 @@ export const postDeleteCoursePage = async (req, res, next) => {
 
 /**
  * POST /dashboard/courses/:id/update
- * Updates a course and redirects back to the dashboard.
  */
 export const postUpdateCoursePage = async (req, res, next) => {
     try {
@@ -616,46 +583,68 @@ export const postUpdateCoursePage = async (req, res, next) => {
 
 /**
  * GET /dashboard/courses/:id/edit
- * Renders the course edit form pre-populated with the existing course data.
+ * Renders the course edit form pre-populated with existing data and sessions.
  */
 export const getUpdateCoursePage = async (req, res, next) => {
     try {
         const course = await CourseModel.findById(req.params.id);
         if (!course) return res.status(404).send("Course not found");
 
+        const sessions = await SessionModel.listByCourse(req.params.id);
+        const { instructors } = await getCoursesDashboardData();
+        const now = new Date();
+
         const formattedCourse = {
             ...course,
-            startDate: course.startDate ? new Date(course.startDate).toISOString().split("T")[0] : "",
-            endDate:   course.endDate   ? new Date(course.endDate).toISOString().split("T")[0]   : "",
+            startDate:           course.startDate ? new Date(course.startDate).toISOString().split("T")[0] : "",
+            endDate:             course.endDate   ? new Date(course.endDate).toISOString().split("T")[0]   : "",
+            isBeginnerLevel:     course.level === "beginner",
+            isIntermediateLevel: course.level === "intermediate",
+            isAdvancedLevel:     course.level === "advanced",
+            isWeeklyBlock:       course.type  === "WEEKLY_BLOCK",
+            isWeekendWorkshop:   course.type  === "WEEKEND_WORKSHOP",
         };
 
-        const { instructors } = await getCoursesDashboardData();
-        res.render("updateCourse", { title: "Edit Course", course: formattedCourse, instructors });
+        const formattedSessions = sessions.map((s) => ({
+            id:        String(s._id),
+            start:     fmtDate(s.startDateTime),
+            end:       fmtDate(s.endDateTime),
+            duration:  duration(s.startDateTime, s.endDateTime),
+            capacity:  s.capacity,
+            booked:    s.bookedCount ?? 0,
+            spotsLeft: Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0)),
+            isFull:    (s.bookedCount ?? 0) >= (s.capacity ?? 0),
+            isPast:    new Date(s.startDateTime) < now,
+        }));
+
+        const formattedInstructors = instructors.map((i) => ({
+            id:         String(i._id),
+            name:       i.name,
+            isSelected: String(i._id) === String(course.instructorId),
+        }));
+
+        res.render("updateCourse", {
+            title:       "Edit Course",
+            course:      formattedCourse,
+            sessions:    formattedSessions,
+            instructors: formattedInstructors,
+        });
     } catch (err) { next(err); }
 };
+
 /**
  * GET /dashboard/classes
- * Renders the classes management dashboard with filtering.
  */
 export const classesDashboardPage = async (req, res, next) => {
     try {
         const filterCourse = req.query.course || null;
-
-        // Use the new service helper to get all data at once
-        const viewModel = await getClassesDashboardPageData(filterCourse);
-
-        res.render("classesDashboard", {
-            title: "Manage Classes",
-            ...viewModel
-        });
-    } catch (err) {
-        next(err);
-    }
+        const viewModel    = await getClassesDashboardPageData(filterCourse);
+        res.render("classesDashboard", { title: "Manage Classes", ...viewModel });
+    } catch (err) { next(err); }
 };
 
 /**
  * GET /dashboard/classes/:id
- * Renders the class participant list for a given course or session ID.
  */
 export const classListDashboardPage = async (req, res, next) => {
     try {
@@ -666,7 +655,6 @@ export const classListDashboardPage = async (req, res, next) => {
 
 /**
  * GET /dashboard/instructors
- * Renders the instructors management dashboard.
  */
 export const instructorsDashboardPage = async (req, res, next) => {
     try {
@@ -678,7 +666,6 @@ export const instructorsDashboardPage = async (req, res, next) => {
 
 /**
  * POST /dashboard/instructors
- * Creates a new instructor and redirects back to the dashboard.
  */
 export const postCreateInstructorPage = async (req, res, next) => {
     try {
@@ -689,7 +676,6 @@ export const postCreateInstructorPage = async (req, res, next) => {
 
 /**
  * POST /dashboard/instructors/:id/delete
- * Deletes an instructor and redirects back to the dashboard.
  */
 export const postDeleteInstructorPage = async (req, res, next) => {
     try {
@@ -700,7 +686,6 @@ export const postDeleteInstructorPage = async (req, res, next) => {
 
 /**
  * GET /dashboard/organisers
- * Renders the organisers management dashboard.
  */
 export const organisersDashboardPage = async (req, res, next) => {
     try {
@@ -711,7 +696,6 @@ export const organisersDashboardPage = async (req, res, next) => {
 
 /**
  * POST /dashboard/organisers
- * Creates a new organiser and redirects back to the dashboard.
  */
 export const postCreateOrganiserPage = async (req, res, next) => {
     try {
@@ -722,7 +706,6 @@ export const postCreateOrganiserPage = async (req, res, next) => {
 
 /**
  * POST /dashboard/organisers/:id/delete
- * Deletes an organiser and redirects back to the dashboard.
  */
 export const postDeleteOrganiserPage = async (req, res, next) => {
     try {
@@ -733,7 +716,6 @@ export const postDeleteOrganiserPage = async (req, res, next) => {
 
 /**
  * GET /dashboard/users
- * Renders the students/users management dashboard.
  */
 export const usersDashboardPage = async (req, res, next) => {
     try {
@@ -744,7 +726,6 @@ export const usersDashboardPage = async (req, res, next) => {
 
 /**
  * POST /dashboard/users/:id/delete
- * Deletes a student user and redirects back to the dashboard.
  */
 export const postDeleteUserPage = async (req, res, next) => {
     try {
@@ -754,17 +735,59 @@ export const postDeleteUserPage = async (req, res, next) => {
 };
 
 // ---------------------------------------------------------------------------
-// Session creation (proxied from routes)
+// Session creation
 // ---------------------------------------------------------------------------
 
 /**
  * POST /sessions
- * Delegates to courseController.createSession.
- * Applies requireAuth middleware for non-API callers.
+ * - WEEKLY_BLOCK: auto-generates one session per week from startDateTime
+ *   until course.endDate (inclusive).
+ * - WEEKEND_WORKSHOP: creates a single session.
+ * Redirects back to the edit page on success.
  */
-export const postCreateSession = (req, res, next) => {
-    if (req.headers.accept?.includes("application/json")) {
-        return createSession(req, res, next);
-    }
-    return requireAuth(req, res, () => createSession(req, res, next));
+export const postCreateSession = async (req, res, next) => {
+    try {
+        const { courseId, startDateTime, durationMins, capacity } = req.body;
+
+        const course = await CourseModel.findById(courseId);
+        if (!course) return res.status(404).send("Course not found");
+
+        const durationMs = Number(durationMins) * 60_000;
+        const endDate    = new Date(course.endDate);
+        // Normalise endDate to end-of-day so a session starting on endDate is included
+        endDate.setHours(23, 59, 59, 999);
+
+        const slots = [];
+        let current  = new Date(startDateTime);
+
+        if (course.type === "WEEKLY_BLOCK") {
+            while (current <= endDate) {
+                slots.push({
+                    courseId,
+                    startDateTime: current.toISOString(),
+                    endDateTime:   new Date(current.getTime() + durationMs).toISOString(),
+                    capacity:      Number(capacity),
+                    bookedCount:   0,
+                });
+                // Advance exactly one week
+                current = new Date(current.getTime() + 7 * 24 * 60 * 60 * 1000);
+            }
+        } else {
+            // WEEKEND_WORKSHOP or any other type — single session
+            slots.push({
+                courseId,
+                startDateTime: current.toISOString(),
+                endDateTime:   new Date(current.getTime() + durationMs).toISOString(),
+                capacity:      Number(capacity),
+                bookedCount:   0,
+            });
+        }
+
+        // Create all slots sequentially to preserve order
+        for (const slot of slots) {
+            await createNewSession(slot);
+        }
+
+        res.redirect(`/dashboard/courses/${courseId}/edit`);
+    } catch (err) { next(err); }
 };

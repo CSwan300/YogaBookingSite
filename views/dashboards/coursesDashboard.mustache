@@ -10,11 +10,11 @@
 
         <div class="card">
             <h3>Add New Course</h3>
-
             <form method="POST" action="/dashboard/courses" class="form-grid">
+
                 <div class="field">
                     <label for="course-title">Title</label>
-                    <input id="course-title" type="text" name="title" placeholder="e.g. 8-Week Hatha" required>
+                    <input id="course-title" type="text" name="title" placeholder="e.g. Summer Vinyasa Flow" required>
                 </div>
 
                 <div class="field">
@@ -29,30 +29,28 @@
                 </div>
 
                 <div class="field">
-                    <label for="course-type">Type (Category)</label>
+                    <label for="course-type">Type</label>
                     <div class="select-wrap">
                         <select id="course-type" name="type" required>
                             <option value="" disabled selected>Select type…</option>
-                            <option value="weekly_block">Weekly Block</option>
-                            <option value="workshop">Workshop</option>
-                            <option value="retreat">Retreat</option>
-                            <option value="one_off">One-off Session</option>
+                            <option value="WEEKLY_BLOCK">Weekly Block</option>
+                            <option value="WEEKEND_WORKSHOP">Weekend Workshop</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="field">
-                    <label for="course-price">Price (£)</label>
+                    <label for="course-price">Block Price (£)</label>
                     <input id="course-price" type="number" name="price" step="0.01" placeholder="0.00" required>
                 </div>
 
                 <div class="field">
-                    <label for="course-start">Course Start Date</label>
+                    <label for="course-start">Start Date</label>
                     <input id="course-start" type="date" name="startDate" required>
                 </div>
 
                 <div class="field">
-                    <label for="course-end">Course End Date</label>
+                    <label for="course-end">End Date</label>
                     <input id="course-end" type="date" name="endDate" required>
                 </div>
 
@@ -62,15 +60,30 @@
                         <select id="course-instructor" name="instructorId" required>
                             <option value="" disabled selected>Select an instructor</option>
                             {{#instructors}}
-                                <option value="{{id}}">{{name}}</option>
+                                <option value="{{_id}}">{{name}}</option>
                             {{/instructors}}
                         </select>
                     </div>
                 </div>
 
+                <div class="field">
+                    <label for="course-location">Location</label>
+                    <input id="course-location" type="text" name="location" placeholder="e.g. Studio A">
+                </div>
+
+                <div class="field">
+                    <label for="course-description">Description</label>
+                    <textarea id="course-description" name="description" rows="3" placeholder="Short description of the course…"></textarea>
+                </div>
+
                 <div class="field checkbox">
                     <input type="checkbox" id="dropin" name="allowDropIn">
                     <label for="dropin">Allow Drop-in Bookings</label>
+                </div>
+
+                <div class="field" id="dropin-price-field" style="display:none;">
+                    <label for="course-dropin-price">Drop-in Price per Session (£)</label>
+                    <input id="course-dropin-price" type="number" name="dropInPrice" step="0.01" placeholder="0.00">
                 </div>
 
                 <div class="actions">
@@ -85,9 +98,10 @@
                 <tr>
                     <th>Title</th>
                     <th>Level</th>
+                    <th>Type</th>
                     <th>Price</th>
                     <th>Schedule</th>
-                    <th>Sessions</th>
+                    <th>Drop-in</th>
                     <th>Actions</th>
                 </tr>
                 </thead>
@@ -96,23 +110,29 @@
                     <tr>
                         <td>
                             <strong>{{title}}</strong>
-                            <br>
-                            <small class="muted">{{type}}</small>
+                            {{#description}}<br><small class="muted">{{description}}</small>{{/description}}
                         </td>
                         <td><span class="badge">{{level}}</span></td>
-                        <td>£{{price}}</td>
+                        <td><small class="muted">{{type}}</small></td>
+                        <td>
+                            £{{price}}
+                            {{#dropInPrice}}<br><small class="muted">Drop-in: £{{dropInPrice}}</small>{{/dropInPrice}}
+                        </td>
                         <td>
                             <div class="kv-inline">
                                 <span class="muted">Start:</span> {{startDate}}<br>
                                 <span class="muted">End:</span> {{endDate}}
                             </div>
                         </td>
-                        <td class="text-center">{{sessionsCount}}</td>
+                        <td class="text-center">
+                            {{#allowDropIn}}<span class="badge success">Yes</span>{{/allowDropIn}}
+                            {{^allowDropIn}}<span class="badge">No</span>{{/allowDropIn}}
+                        </td>
                         <td>
                             <div class="btn-group">
-                                <a href="/dashboard/courses/{{_id}}/update" class="btn small">Edit</a>
+                                <a href="/dashboard/courses/{{_id}}/edit" class="btn small">Edit</a>
                                 <form method="POST" action="/dashboard/courses/{{_id}}/delete">
-                                    <button type="submit" class="btn small danger" onclick="return confirm('Delete this course?')">Delete</button>
+                                    <button type="submit" class="btn small danger" onclick="return confirm('Delete {{title}}? This cannot be undone.')">Delete</button>
                                 </form>
                             </div>
                         </td>
@@ -120,7 +140,7 @@
                 {{/courses}}
                 {{^courses}}
                     <tr>
-                        <td colspan="6" class="text-center muted">No courses created yet.</td>
+                        <td colspan="7" class="text-center muted">No courses created yet.</td>
                     </tr>
                 {{/courses}}
                 </tbody>
@@ -132,5 +152,14 @@
         </div>
     </article>
 </main>
+
+<script>
+    const dropinCheckbox   = document.getElementById("dropin");
+    const dropinPriceField = document.getElementById("dropin-price-field");
+
+    dropinCheckbox.addEventListener("change", function () {
+        dropinPriceField.style.display = this.checked ? "block" : "none";
+    });
+</script>
 
 {{> footer}}
