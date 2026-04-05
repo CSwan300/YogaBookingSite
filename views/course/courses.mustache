@@ -21,12 +21,14 @@
             </div>
 
             <div class="select-wrap">
-                <select name="level" class="filter-select">
-                    <option value="">All Levels</option>
-                    <option value="beginner">Beginner</option>
-                    <option value="intermediate">Intermediate</option>
-                    <option value="advanced">Advanced</option>
-                </select>
+                <label>
+                    <select name="level" class="filter-select">
+                        <option value="">All Levels</option>
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="advanced">Advanced</option>
+                    </select>
+                </label>
             </div>
 
             {{!
@@ -34,11 +36,13 @@
                 DB stores "WEEKLY_BLOCK" and "WEEKEND_WORKSHOP".
             }}
             <div class="select-wrap">
-                <select name="type" class="filter-select">
-                    <option value="">All Types</option>
-                    <option value="WEEKLY_BLOCK">Block</option>
-                    <option value="WEEKEND_WORKSHOP">Workshop</option>
-                </select>
+                <label>
+                    <select name="type" class="filter-select">
+                        <option value="">All Types</option>
+                        <option value="WEEKLY_BLOCK">Block</option>
+                        <option value="WEEKEND_WORKSHOP">Workshop</option>
+                    </select>
+                </label>
             </div>
 
             {{!
@@ -47,26 +51,26 @@
                 For block courses it is the full block price.
             }}
             <div class="select-wrap">
-                <select name="price" class="filter-select">
-                    <option value="">Any Price</option>
-                    <option value="15">Single session ≤ £15</option>
-                    <option value="25">Single session ≤ £25</option>
-                    <option value="50">Block / session ≤ £50</option>
-                    <option value="100">Block ≤ £100</option>
-                    <option value="200">Block ≤ £200</option>
-                </select>
+                <label>
+                    <select name="price" class="filter-select">
+                        <option value="">Any Price</option>
+                        <option value="15">Single session ≤ £15</option>
+                        <option value="25">Single session ≤ £25</option>
+                        <option value="50">Block / session ≤ £50</option>
+                        <option value="100">Block ≤ £100</option>
+                        <option value="200">Block ≤ £200</option>
+                    </select>
+                </label>
             </div>
 
-            {{!
-                Drop-in filter: values must be "true"/"false" strings
-                to match what the controller expects.
-            }}
             <div class="select-wrap">
-                <select name="dropin" class="filter-select">
-                    <option value="">All Drop-in</option>
-                    <option value="true">Drop-in OK</option>
-                    <option value="false">Block Only</option>
-                </select>
+                <label>
+                    <select name="dropin" class="filter-select">
+                        <option value="">All Drop-in</option>
+                        <option value="true">Drop-in OK</option>
+                        <option value="false">Block Only</option>
+                    </select>
+                </label>
             </div>
 
             <a href="/courses" class="btn" id="filter-reset">Clear</a>
@@ -145,6 +149,9 @@
 </main>
 
 {{> footer}}
+
+
+
 
 <script>
     (function () {

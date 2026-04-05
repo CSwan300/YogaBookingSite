@@ -76,35 +76,35 @@ async function createUsers() {
         UserModel.create({
             name: "Fiona",
             email: "fiona@student.local",
-            role: "student",
+            role: "user",
             passwordHash: await hashPassword("password123"),
             image: "https://i.pravatar.cc/150?u=fiona",
         }),
         UserModel.create({
             name: "Marcus",
             email: "marcus@student.local",
-            role: "student",
+            role: "user",
             passwordHash: await hashPassword("password123"),
             image: "https://i.pravatar.cc/150?u=marcus",
         }),
         UserModel.create({
             name: "Priya",
             email: "priya@student.local",
-            role: "student",
+            role: "user",
             passwordHash: await hashPassword("password123"),
             image: "https://i.pravatar.cc/150?u=priya",
         }),
         UserModel.create({
             name: "Lena",
             email: "lena@student.local",
-            role: "student",
+            role: "user",
             passwordHash: await hashPassword("password123"),
             image: "https://i.pravatar.cc/150?u=lena",
         }),
         UserModel.create({
             name: "Tom",
             email: "tom@student.local",
-            role: "student",
+            role: "user",
             passwordHash: await hashPassword("password123"),
             image: "https://i.pravatar.cc/150?u=tom",
         }),
@@ -152,7 +152,7 @@ async function createUsers() {
 
     return {
         organiser:   admin,
-        students:    [otherUsers[0], otherUsers[1], otherUsers[2], otherUsers[3], otherUsers[4]],
+        users:    [otherUsers[0], otherUsers[1], otherUsers[2], otherUsers[3], otherUsers[4]],
         instructors: {
             ava:  otherUsers[5],
             ben:  otherUsers[6],

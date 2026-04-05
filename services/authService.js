@@ -63,7 +63,7 @@ export async function authenticateUser(email, password) {
  * @returns {Promise<AuthResult>} The created user and session token.
  * @throws {Error} If validation fails or email is taken.
  */
-export async function registerStudent(data) {
+export async function registerUser(data) {
     const { name, email, password, confirm_password } = data;
 
     if (!name || !email || !password || !confirm_password) {
@@ -101,7 +101,7 @@ export async function registerStudent(data) {
         name: name.trim(),
         email: normalisedEmail,
         passwordHash,
-        role: "student",
+        role: "user",
     });
 
     const token = jwt.sign(

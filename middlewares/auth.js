@@ -99,11 +99,13 @@ function clearAndNext(req, res, next) {
  * @returns {void}
  */
 export const requireAuth = (req, res, next) => {
-    if (isTest) return next();
-    if (!req.user) return res.redirect("/login");
+    if (typeof isTest !== 'undefined' && isTest) return next();
+
+    if (!req.user) {
+        return res.redirect("/login");
+    }
     next();
 };
-
 /**
  * Guard middleware that only allows organiser users to proceed.
  * Students and guests receive a 403 response.

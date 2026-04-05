@@ -1,4 +1,6 @@
 // routes/views.js
+// noinspection JSCheckFunctionSignatures
+
 import { Router } from "express";
 import {
     homePage,
@@ -40,7 +42,7 @@ router.get("/instructors", instructorsPage);
 router.get("/about",       aboutPage);
 
 /* ── Authentication ─────────────────────────────────────────── */
-router.get("/login",     loginPage);
+router.get("/login",    loginPage);
 router.post("/login",    postLogin);
 router.get("/register",  registerPage);
 router.post("/register", postRegister);

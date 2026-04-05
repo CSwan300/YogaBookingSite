@@ -79,7 +79,7 @@ export const postLogin = async (req, res, next) => {
 
 /**
  * Handles registration form submission.
- * Creates a new student account and sets the signed session cookie.
+ * Creates a new user account and sets the signed session cookie.
  *
  * @async
  * @param {import("express").Request} req - The incoming Express request.
@@ -89,7 +89,7 @@ export const postLogin = async (req, res, next) => {
  */
 export const postRegister = async (req, res, next) => {
     try {
-        const { user, token } = await authService.registerStudent(req.body);
+        const { user, token } = await authService.registerUser(req.body);
 
         res.cookie("token", token, COOKIE_OPTIONS);
         res.redirect("/");
