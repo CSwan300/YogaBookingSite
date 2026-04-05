@@ -1,5 +1,5 @@
+//models/sessionModel.js
 import { sessionsDb } from "./_db.js";
-import { BookingModel } from "./bookingModel.js";
 
 /**
  * @typedef {Object} Session

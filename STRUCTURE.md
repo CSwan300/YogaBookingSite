@@ -100,14 +100,15 @@ root/
 │       ├── footer.mustache
 │       ├── head.mustache
 │       └── header.mustache
+├── utils/
+│       └── env.mustache
 │
-├── .env
 ├── .env.example
 ├── .gitignore
 ├── index.js
 ├── jest.config.mjs
-├── LICENSE
+├── STRUCTURE
 ├── package.json
 ├── package-lock.json
-└── README.md
+└── README
 ```

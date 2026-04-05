@@ -10,4 +10,5 @@ export const env = {
 };
 
 export const isTest = env.NODE_ENV === "test";
-
+//for debug on first set-up prints a table in console
+// console.table(env);

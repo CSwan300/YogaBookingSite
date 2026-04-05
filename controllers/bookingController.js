@@ -1,3 +1,8 @@
+// controllers/bookingController.js
+// Manages course and session bookings via both JSON API endpoints and UI form handlers.
+// Coordinates transactional logic through services/bookingService.js;
+// direct model interactions are reserved for specific cancellation and state checks.
+
 import * as bookingService from "../services/bookingService.js";
 import { BookingModel } from "../models/bookingModel.js";
 

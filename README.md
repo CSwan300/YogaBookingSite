@@ -101,7 +101,7 @@ Email: fiona@student.local
 
 Password: password123
 
-Role: student
+Role: user
 ```
 ### Admin
 ```

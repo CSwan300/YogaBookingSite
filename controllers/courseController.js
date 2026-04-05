@@ -1,3 +1,8 @@
+// controllers/sessionsController.js
+// Orchestrates session scheduling and capacity management for individual courses.
+// Interfaces with models/sessionModel.js for direct increments and availability checks;
+// leverages services/timeService.js for timezone conversions and conflict detection.
+
 import * as courseService from "../services/courseService.js";
 
 /**

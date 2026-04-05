@@ -1,10 +1,4 @@
-/**
- * @module models/userModel
- * @description
- * Provides persistence methods for user records, including
- * avatar field derivation and CRUD helpers.
- */
-
+//models/userModel.js
 import { usersDb } from "./_db.js";
 
 /**

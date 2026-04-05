@@ -1,9 +1,7 @@
-/**
- * @module controllers/authController
- * @description
- * Handles user authentication web interface logic including login,
- * registration, and logout flows.
- */
+// controllers/authController.js
+// Manages the user authentication web interface, including login, registration, and logout.
+// Core validation and database operations are delegated to services/authService.js;
+// session persistence is handled via signed HTTP-only cookies.
 
 import * as authService from "../services/authService.js";
 

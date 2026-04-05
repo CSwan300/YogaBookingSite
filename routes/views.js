@@ -1,5 +1,4 @@
 // routes/views.js
-// noinspection JSCheckFunctionSignatures
 
 import { Router } from "express";
 import {
