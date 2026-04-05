@@ -1681,16 +1681,17 @@ article.wrap .muted {
 /* Booking info kv */
 .booking-info .kv { margin-bottom: var(--space-md); }
 
-/* Empty state */
 .empty-state {
+    grid-column: 1 / -1;
+    margin-inline: auto;
     text-align: center;
     padding: var(--space-2xl) var(--space-lg);
     color: var(--muted);
 }
 
-.empty-state p { margin-bottom: var(--space-lg); }
-
-
+.empty-state p {
+    margin-bottom: var(--space-lg);
+}
 /* ==========================================================================
    STATUS PILLS
    ========================================================================== */
