@@ -1,9 +1,11 @@
+//index.js
 import express from "express";
 import cookieParser from "cookie-parser";
-import dotenv from "dotenv";
 import mustacheExpress from "mustache-express";
 import path from "path";
 import { fileURLToPath } from "url";
+
+import { env, isTest } from "./utils/env.js";
 
 import courseRoutes from "./routes/courses.js";
 import sessionRoutes from "./routes/sessions.js";
@@ -12,8 +14,6 @@ import viewRoutes from "./routes/views.js";
 import profileRoutes from "./routes/profile.js";
 import { attachSessionUser } from "./middlewares/auth.js";
 import { initDb } from "./models/_db.js";
-
-dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,20 +38,19 @@ app.set("views", [
 // ── Middleware ──
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
-app.use(cookieParser(process.env.COOKIE_SECRET || "dev-cookie-secret"));
+app.use(cookieParser(env.COOKIE_SECRET));
 app.use("/static", express.static(path.join(__dirname, "public")));
 app.use(attachSessionUser);
 
-
-//for the dashboard
+// ── Locals for dashboard/role checks ──
 app.use((req, res, next) => {
     if (req.user) {
         res.locals.user = req.user;
-        // Check if the role string is exactly "organiser"
         res.locals.isOrganiser = req.user.role === "organiser";
     }
     next();
 });
+
 // ── Health ──
 app.get("/health", (req, res) => res.json({ ok: true }));
 
@@ -65,12 +64,13 @@ app.use("/", viewRoutes);
 // ── Error handlers ──
 app.use((req, res) => {
     res.status(404);
-    const accept = req.headers.accept || '';
-    if (accept.includes('text/html') && accept.includes('q=')) {
+    const accept = req.headers.accept || "";
+    if (accept.includes("text/html") && accept.includes("q=")) {
         return res.render("error", { title: "Not Found", message: "Page not found." });
     }
-    return res.type('txt').send('404 Not found');
+    return res.type("txt").send("404 Not found");
 });
+
 app.use((err, req, res, next) => {
     console.error(err);
     if (req.headers.accept && req.headers.accept.includes("application/json")) {
@@ -79,8 +79,9 @@ app.use((err, req, res, next) => {
     res.status(500).render("error", { title: "Server Error", message: "Something went wrong." });
 });
 
-if (process.env.NODE_ENV !== "test") {
+if (!isTest) {
     await initDb();
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => console.log(`Yoga booking running on http://localhost:${PORT}`));
+    app.listen(env.PORT, () =>
+        console.log(`Yoga booking running on http://localhost:${env.PORT}`)
+    );
 }

@@ -9,10 +9,7 @@ import { userModel }    from "../models/userModel.js";
 import {
     fmtDate,
     fmtDateTime,
-    fmtDateOnly,
-    fmtTimeOnly,
-    fmtType
-} from "./formatService.js";
+    } from "./formatService.js";
 // ---------------------------------------------------------------------------
 // Dashboard data
 // ---------------------------------------------------------------------------

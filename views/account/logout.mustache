@@ -1,12 +1,16 @@
 {{> head}}
 {{> header}}
-<h1>Signed Out</h1>
-<p>{{goodbye_message}}</p>
 
-<div class="actions">
-    <a class="btn primary" href="{{login_url}}">Sign In Again</a>
-    {{#home_url}}
-        <a href="{{home_url}}">Back to {{home_label}}</a>
-    {{/home_url}}
-</div>
+<main class="wrap v-stack">
+    <h1>Signed Out</h1>
+    <p>{{goodbye_message}}</p>
+
+    <div class="actions">
+        <a class="btn primary" href="{{login_url}}">Sign In Again</a>
+        {{#home_url}}
+            <a href="{{home_url}}">Back to {{home_label}}</a>
+        {{/home_url}}
+    </div>
+</main>
+
 {{> footer}}

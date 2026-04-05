@@ -11,8 +11,6 @@ import { BookingModel }  from "../models/bookingModel.js";
 import { SessionModel }  from "../models/sessionModel.js";
 import { CourseModel }   from "../models/courseModel.js";
 import { userModel as UserModel } from "../models/userModel.js";
-import { requireAuth }   from "../middlewares/auth.js";
-import { createSession } from "./courseController.js";
 import { coursesListPage as listCourses } from "./coursesListController.js";
 
 import {

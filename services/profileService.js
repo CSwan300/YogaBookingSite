@@ -1,19 +1,16 @@
-// services/profileService.js
-// Business logic for user profile viewing and editing.
-// Keeps validation and formatting out of the controller.
+/**
+ * @module services/profileService
+ * @description
+ * Business logic for profile management, including data formatting
+ * and validation for profile updates.
+ */
 
 import { userModel as UserModel } from "../models/userModel.js";
 
-// ---------------------------------------------------------------------------
-// Formatters
-// ---------------------------------------------------------------------------
-
 /**
- * Formats a raw DB user document into a view-ready shape.
- * Ensures dates are human-readable and all expected keys are present.
- *
- * @param {object|null} user - Raw user document from the DB
- * @returns {object}
+ * Formats a database user object for display in Handlebars views.
+ * * @param {Object|null} user - The raw user document from MongoDB.
+ * @returns {Object} Formatted user object with readable dates and helper properties.
  */
 export function formatUser(user) {
     if (!user) return {};
@@ -34,40 +31,41 @@ export function formatUser(user) {
     };
 }
 
-// ---------------------------------------------------------------------------
-// Validation
-// ---------------------------------------------------------------------------
-
 /**
- * Validates the name and email fields submitted via the profile-edit form.
- * Returns an array of error objects; an empty array means the input is valid.
- *
- * @param {{ name: string, email: string }} fields
- * @returns {{ msg: string }[]}
+ * Validates name and email fields for profile updates.
+ * Enforces email format containing '@' and a dot.
+ * * @param {Object} fields - The fields to validate.
+ * @param {string} fields.name - The user's name.
+ * @param {string} fields.email - The user's email.
+ * @returns {Array<{msg: string}>} Array of error objects; empty if valid.
  */
 export function validateProfileFields({ name, email }) {
     const errors = [];
+
     if (!name || name.trim().length < 2)
         errors.push({ msg: "Name must be at least 2 characters." });
+
     if (name && name.trim().length > 80)
         errors.push({ msg: "Name must be 80 characters or fewer." });
-    if (!email || !email.includes("@"))
-        errors.push({ msg: "Please enter a valid email address." });
+
+    // Stronger Email Validation (must have @ and .)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+        errors.push({ msg: "Please enter a valid email address with '@' and a dot." });
+    }
+
     return errors;
 }
 
-// ---------------------------------------------------------------------------
-// Mutations
-// ---------------------------------------------------------------------------
-
 /**
- * Persists a profile update for the given user.
- * Checks email uniqueness before writing (skips the check if the email is unchanged).
- * Throws a descriptive error if the new email is already taken by another account.
- *
- * @param {object} user               - The currently authenticated user document
- * @param {{ name: string, email: string }} fields
+ * Updates user profile data in the database.
+ * * @async
+ * @param {Object} user - The currently logged-in user document.
+ * @param {Object} fields - The new data to save.
+ * @param {string} fields.name - Updated name.
+ * @param {string} fields.email - Updated email.
  * @returns {Promise<void>}
+ * @throws {Error} If the new email is already claimed by another user.
  */
 export async function updateProfile(user, { name, email }) {
     const normalisedEmail = email.trim().toLowerCase();

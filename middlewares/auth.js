@@ -6,6 +6,7 @@
  */
 
 import * as authService from "../services/authService.js";
+import { isTest } from "../utils/env.js";
 
 /**
  * Attaches the authenticated user to the request and response locals.
@@ -19,7 +20,7 @@ import * as authService from "../services/authService.js";
  * @returns {Promise<void>}
  */
 export const attachSessionUser = async (req, res, next) => {
-    if (process.env.NODE_ENV === "test") {
+    if (isTest) {
         const mockUser = {
             _id: "test-id",
             name: "Test User",
@@ -98,7 +99,7 @@ function clearAndNext(req, res, next) {
  * @returns {void}
  */
 export const requireAuth = (req, res, next) => {
-    if (process.env.NODE_ENV === "test") return next();
+    if (isTest) return next();
     if (!req.user) return res.redirect("/login");
     next();
 };
@@ -113,7 +114,7 @@ export const requireAuth = (req, res, next) => {
  * @returns {void}
  */
 export const requireOrganiser = (req, res, next) => {
-    if (process.env.NODE_ENV === "test") return next();
+    if (isTest) return next();
 
     if (!req.user || req.user.role !== "organiser") {
         return res.status(403).render("error", {
