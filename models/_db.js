@@ -1,13 +1,16 @@
-// models/_db.js
 import Datastore from "nedb-promises";
 import path from "path";
 import { fileURLToPath } from "url";
 import { promises as fs } from "fs";
+import { mkdirSync } from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const dbDir = path.join(__dirname, "../db");
+
+// Create db directory synchronously before Datastores autoload
+mkdirSync(dbDir, { recursive: true });
 
 /** @type {Datastore} Collection for user accounts and authentication. */
 export const usersDb = Datastore.create({
@@ -33,13 +36,6 @@ export const bookingsDb = Datastore.create({
     autoload: true,
 });
 
-/**
- * Initializes the database environment.
- * Creates the storage directory, sets up autocompaction to keep file sizes small,
- * and ensures necessary unique and performance indexes are created.
- * @async
- * @returns {Promise<void>}
- */
 export async function initDb() {
     await fs.mkdir(dbDir, { recursive: true });
 
@@ -50,18 +46,10 @@ export async function initDb() {
     sessionsDb.setAutocompactionInterval(TEN_MINUTES);
     bookingsDb.setAutocompactionInterval(TEN_MINUTES);
 
-    // Indexes for performance and data integrity
     await usersDb.ensureIndex({ fieldName: "email", unique: true });
     await sessionsDb.ensureIndex({ fieldName: "courseId" });
 }
 
-/**
- * Gracefully shuts down database operations.
- * Specifically stops autocompaction intervals to prevent memory leaks
- * or hung processes during testing (e.g., with Jest).
- * @async
- * @returns {Promise<void>}
- */
 export async function closeDb() {
     const dbs = [usersDb, coursesDb, sessionsDb, bookingsDb];
     for (const db of dbs) {
@@ -69,7 +57,6 @@ export async function closeDb() {
             try {
                 db.stopAutocompaction();
             } catch (e) {
-                // Fallback: manually clear the interval if the proxy fails
                 if (db._autocompactionIntervalId) {
                     clearInterval(db._autocompactionIntervalId);
                     db._autocompactionIntervalId = null;
