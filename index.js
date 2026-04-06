@@ -60,7 +60,6 @@ app.use("/sessions", sessionRoutes);
 app.use("/bookings", bookingRoutes);
 app.use("/", profileRoutes);
 app.use("/", viewRoutes);
-
 // ── Error handlers ──
 app.use((req, res) => {
     res.status(404);

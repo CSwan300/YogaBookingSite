@@ -5,7 +5,7 @@
  * @property {string} courseId - ID of the parent course
  * @property {string} type - 'COURSE' (full block) or 'SESSION' (drop-in)
  * @property {string[]} sessionIds - Array of session IDs included in this booking
- * @property {string} status - Current state: 'CONFIRMED', 'WAITLISTED', or 'CANCELLED'
+ * @property {'CONFIRMED'|'WAITLISTED'|'CANCELLED'} status - Current state of the booking
  */
 
 import { CourseModel }  from "../models/courseModel.js";
@@ -13,20 +13,24 @@ import { SessionModel } from "../models/sessionModel.js";
 import { BookingModel } from "../models/bookingModel.js";
 
 /**
- * Validates if all provided sessions have available capacity.
- * @param {Array<Object>} sessions - Array of raw session documents
- * @returns {boolean} True if all sessions can be reserved
+ * Checks if all provided sessions have available capacity.
+ * @param {Array<Object>} sessions - Array of session objects to check.
+ * @returns {boolean} True if every session has at least one spot left.
+ * @private
  */
 const canReserveAll = (sessions) =>
     sessions.every((s) => (s.bookedCount ?? 0) < (s.capacity ?? 0));
 
 /**
- * Books every upcoming session of a course for a user.
- * Performs validation for existing bookings and session availability.
- * @param {string} userId - The authenticated user's ID
- * @param {string} courseId - The ID of the course to book
- * @throws {Error} If course not found, already booked, or no upcoming sessions
- * @returns {Promise<Booking>} The created booking document
+ * Books a user onto all upcoming sessions of a specific course.
+ * Logic: Filters out past sessions, checks for existing active bookings,
+ * and sets status to 'WAITLISTED' if any session is full.
+ * * @param {string} userId - ID of the user.
+ * @param {string} courseId - ID of the course to book.
+ * @throws {Error} "Course not found"
+ * @throws {Error} "You are already booked onto this course." (Code: ALREADY_BOOKED)
+ * @throws {Error} "Course has no upcoming sessions"
+ * @returns {Promise<Booking>} The created booking record.
  */
 export async function bookCourseForUser(userId, courseId) {
     const course = await CourseModel.findById(courseId);
@@ -66,14 +70,19 @@ export async function bookCourseForUser(userId, courseId) {
 }
 
 /**
- * Books one or more drop-in sessions for a user.
- * Validates course drop-in permissions and checks for session overlaps.
- * @param {string} userId - The authenticated user's ID
- * @param {string[]} sessionIds - Array of session IDs to book
- * @throws {Error} If sessions missing, drop-ins disabled, or already booked
- * @returns {Promise<Booking>} The created booking document
+ * Books a user for specific individual sessions (drop-ins).
+ * * @param {string} userId - ID of the user.
+ * @param {string[]} sessionIds - Array of specific session IDs to book.
+ * @param {Object} [options] - Booking configurations.
+ * @param {boolean} [options.enforceDropIn=true] - If true, checks if the course allows drop-ins.
+ * @param {boolean} [options.enforceDuplicates=true] - If true, prevents re-booking the same sessions.
+ * @throws {Error} "No sessions selected"
+ * @throws {Error} "Session not found" or "Course not found" (Code: NOT_FOUND)
+ * @throws {Error} "Drop-in not allowed for this course" (Code: DROPIN_NOT_ALLOWED)
+ * @throws {Error} "You have already booked one or more of these sessions." (Code: ALREADY_BOOKED)
+ * @returns {Promise<Booking>} The created session booking record.
  */
-export async function bookSessionsForUser(userId, sessionIds) {
+export async function bookSessionsForUser(userId, sessionIds, { enforceDropIn = true, enforceDuplicates = true } = {}) {
     if (!sessionIds?.length) throw new Error("No sessions selected");
 
     const firstSession = await SessionModel.findById(sessionIds[0]);
@@ -86,23 +95,25 @@ export async function bookSessionsForUser(userId, sessionIds) {
         throw err;
     }
 
-    if (!course.allowDropIn) {
+    if (enforceDropIn && !course.allowDropIn) {
         const err = new Error("Drop-in not allowed for this course");
         err.code = "DROPIN_NOT_ALLOWED";
         throw err;
     }
 
-    const existingBookings = await BookingModel.listByUser(userId);
-    const bookedSessionIds = new Set(
-        existingBookings
-            .filter((b) => b.status !== "CANCELLED")
-            .flatMap((b) => (b.sessionIds ?? []).map(String))
-    );
+    if (enforceDuplicates) {
+        const existingBookings = await BookingModel.listByUser(userId);
+        const bookedSessionIds = new Set(
+            existingBookings
+                .filter((b) => b.status !== "CANCELLED" && b.type === "SESSION")
+                .flatMap((b) => (b.sessionIds ?? []).map(String))
+        );
 
-    if (sessionIds.some((id) => bookedSessionIds.has(String(id)))) {
-        const err = new Error("You have already booked one or more of these sessions.");
-        err.code = "ALREADY_BOOKED";
-        throw err;
+        if (sessionIds.some((id) => bookedSessionIds.has(String(id)))) {
+            const err = new Error("You have already booked one or more of these sessions.");
+            err.code = "ALREADY_BOOKED";
+            throw err;
+        }
     }
 
     const sessions = await Promise.all(sessionIds.map((id) => SessionModel.findById(id)));
@@ -124,18 +135,19 @@ export async function bookSessionsForUser(userId, sessionIds) {
         status,
     });
 }
+
 /**
- * Cancels an entire booking and restores capacity to all included sessions.
- * @param {string} bookingId - ID of the booking to cancel
- * @param {string} userId - ID of the user requesting cancellation (for ownership check)
- * @throws {Error} If booking not found or user does not own the booking
- * @returns {Promise<Booking>} The updated booking document
+ * Cancels an entire booking and releases the capacity for all associated sessions.
+ * * @param {string} bookingId - ID of the booking to cancel.
+ * @param {string} [userId] - Optional ID of the user (for authorization check).
+ * @throws {Error} "Booking not found" (Code: NOT_FOUND)
+ * @throws {Error} "Unauthorised" (Code: FORBIDDEN)
+ * @returns {Promise<Booking>} The updated (cancelled) booking record.
  */
 export async function cancelFullBooking(bookingId, userId) {
     const booking = await BookingModel.findById(bookingId);
     if (!booking) throw Object.assign(new Error("Booking not found"), { code: "NOT_FOUND" });
 
-    // Only enforce ownership when a userId is explicitly provided
     if (userId && String(booking.userId) !== String(userId)) {
         throw Object.assign(new Error("Unauthorised"), { code: "FORBIDDEN" });
     }
@@ -149,13 +161,15 @@ export async function cancelFullBooking(bookingId, userId) {
 
     return await BookingModel.findById(bookingId);
 }
+
 /**
- * Removes a specific session from an existing booking and restores its capacity.
- * @param {string} bookingId - ID of the parent booking
- * @param {string} sessionId - ID of the session to remove
- * @param {string} userId - ID of the user requesting removal
- * @throws {Error} If booking not found or unauthorized
- * @returns {Promise<string>} The bookingId for redirection purposes
+ * Removes a single session from a booking and decreases the session's booked count.
+ * * @param {string} bookingId - ID of the booking.
+ * @param {string} sessionId - ID of the session to remove.
+ * @param {string} userId - ID of the user requesting cancellation.
+ * @throws {Error} "Booking not found" (Code: NOT_FOUND)
+ * @throws {Error} "Unauthorised" (Code: FORBIDDEN)
+ * @returns {Promise<string>} The ID of the modified booking.
  */
 export async function cancelSingleSession(bookingId, sessionId, userId) {
     const booking = await BookingModel.findById(bookingId);

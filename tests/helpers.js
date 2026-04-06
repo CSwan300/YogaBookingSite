@@ -1,6 +1,6 @@
-// tests/helpers.js
 import {
     initDb,
+    closeDb,
     usersDb,
     coursesDb,
     sessionsDb,
@@ -10,13 +10,25 @@ import { UserModel } from "../models/userModel.js";
 import { CourseModel } from "../models/courseModel.js";
 import { SessionModel } from "../models/sessionModel.js";
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export async function resetDb() {
     await initDb();
+    await sleep(200);
 
     await usersDb.remove({}, { multi: true });
     await coursesDb.remove({}, { multi: true });
     await sessionsDb.remove({}, { multi: true });
     await bookingsDb.remove({}, { multi: true });
+
+    await Promise.all([
+        usersDb.compactDatafileAsync?.() ?? Promise.resolve(),
+        coursesDb.compactDatafileAsync?.() ?? Promise.resolve(),
+        sessionsDb.compactDatafileAsync?.() ?? Promise.resolve(),
+        bookingsDb.compactDatafileAsync?.() ?? Promise.resolve(),
+    ]);
+
+    await sleep(100);
 }
 
 export async function seedMinimal() {

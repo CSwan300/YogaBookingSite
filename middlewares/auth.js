@@ -20,26 +20,7 @@ import { isTest } from "../utils/env.js";
  * @returns {Promise<void>}
  */
 export const attachSessionUser = async (req, res, next) => {
-    if (isTest) {
-        const mockUser = {
-            _id: "test-id",
-            name: "Test User",
-            role: "student",
-            userInitials: "TU",
-        };
-
-        req.user = mockUser;
-        res.locals.user = {
-            id: mockUser._id,
-            name: mockUser.name,
-            role: mockUser.role,
-            userInitials: mockUser.userInitials,
-            isStudent: true,
-            isOrganiser: false,
-        };
-
-        return next();
-    }
+    if (isTest) return next();
 
     const token = req.signedCookies?.token;
 
@@ -73,7 +54,6 @@ export const attachSessionUser = async (req, res, next) => {
 
     next();
 };
-
 /**
  * Clears any attached user state from the request and response locals.
  *
@@ -98,12 +78,16 @@ function clearAndNext(req, res, next) {
  * @param {import("express").NextFunction} next - The Express next middleware function.
  * @returns {void}
  */
-export const requireAuth = (req, res, next) => {
-    if (typeof isTest !== 'undefined' && isTest) return next();
-
-    if (!req.user) {
-        return res.redirect("/login");
+export const requireAuth = async (req, res, next) => {
+    if (isTest) {
+        if (!req.user) {
+            req.user = { _id: "test-user-id", name: "Test User", role: "student", userInitials: "TU" };
+            res.locals.user = req.user;
+        }
+        return next();
     }
+
+    if (!req.user) return res.redirect("/login");
     next();
 };
 /**

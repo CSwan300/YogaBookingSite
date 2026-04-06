@@ -52,7 +52,6 @@ router.get("/courses/:id/book",                                    requireAuth, 
 router.post("/courses/:id/book",                                   requireAuth, postBookCourse);
 router.get("/courses/:id/book/session",                            requireAuth, getBookSessionPage);
 router.post("/sessions/book",                                      requireAuth, postBookSession);
-router.get("/bookings",                                            requireAuth, myBookingsPage);
 router.get("/bookings/:bookingId",                                 requireAuth, bookingConfirmationPage);
 router.get("/bookings/:bookingId/cancel-confirm",                  requireAuth, getCancelBookingPage);
 router.post("/bookings/:bookingId/cancel",                         requireAuth, postCancelBooking);

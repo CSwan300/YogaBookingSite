@@ -1,59 +1,130 @@
 // controllers/bookingController.js
-// Manages course and session bookings via both JSON API endpoints and UI form handlers.
-// Coordinates transactional logic through services/bookingService.js;
-// direct model interactions are reserved for specific cancellation and state checks.
-
 import * as bookingService from "../services/bookingService.js";
 import { BookingModel } from "../models/bookingModel.js";
+import { UserModel } from "../models/userModel.js";
+import { CourseModel } from "../models/courseModel.js";
+import { SessionModel } from "../models/sessionModel.js";
 
 /**
- * API Handler: Books a full course for a user via JSON request.
- * @param {import('express').Request} req
- * @param {import('express').Response} res
+ * Retrieves a list of bookings, optionally filtered by user ID.
+ * @route GET /bookings
+ * @param {import('express').Request} req - Express request object.
+ * @param {Object} req.query - Query parameters.
+ * @param {string} [req.query.userId] - Optional user ID to filter bookings.
+ * @param {import('express').Response} res - Express response object.
+ * @returns {Promise<void>}
+ */
+export const apiGetBookings = async (req, res) => {
+    try {
+        const { userId } = req.query;
+        const query = userId ? { userId } : {};
+        const bookings = await BookingModel.find(query);
+
+        res.status(200).json({ bookings: bookings || [] });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+/**
+ * Creates a new booking for a full course.
+ * @route POST /bookings/course
+ * @param {import('express').Request} req - Express request object.
+ * @param {Object} req.body - Request body.
+ * @param {string} req.body.userId - ID of the user booking the course.
+ * @param {string} req.body.courseId - ID of the course to be booked.
+ * @param {import('express').Response} res - Express response object.
+ * @returns {Promise<void>}
  */
 export const apiBookCourse = async (req, res) => {
     try {
         const { userId, courseId } = req.body;
+
+        if (!userId || !courseId) {
+            return res.status(400).json({ error: "userId and courseId are required" });
+        }
+
+        const [user, course] = await Promise.all([
+            UserModel.findById(userId),
+            CourseModel.findById(courseId)
+        ]);
+
+        if (!user) return res.status(404).json({ error: "User not found" });
+        if (!course) return res.status(404).json({ error: "Course not found" });
+
         const booking = await bookingService.bookCourseForUser(userId, courseId);
         res.status(201).json({ booking });
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        const status = err.message.includes("already") ? 409 : 400;
+        res.status(status).json({ error: err.message });
     }
 };
 
 /**
- * API Handler: Books a single drop-in session for a user via JSON request.
- * @param {import('express').Request} req
- * @param {import('express').Response} res
+ * Creates a booking for a specific session.
+ * @route POST /bookings/session
+ * @param {import('express').Request} req - Express request object.
+ * @param {Object} req.body - Request body.
+ * @param {string} req.body.userId - ID of the user booking the session.
+ * @param {string} req.body.sessionId - ID of the specific session.
+ * @param {import('express').Response} res - Express response object.
+ * @returns {Promise<void>}
  */
 export const apiBookSession = async (req, res) => {
     try {
         const { userId, sessionId } = req.body;
-        const booking = await bookingService.bookSessionsForUser(userId, [sessionId]);
-        res.status(201).json({ booking });
+
+        if (!userId || !sessionId)
+            return res.status(400).json({ error: "userId and sessionId are required" });
+
+        const [user, session] = await Promise.all([
+            UserModel.findById(userId),
+            SessionModel.findById(sessionId)
+        ]);
+
+        if (!user) return res.status(404).json({ error: "User not found" });
+        if (!session) return res.status(404).json({ error: "Session not found" });
+
+        const booking = await bookingService.bookSessionsForUser(
+            userId, [sessionId], { enforceDropIn: false, enforceDuplicates: false }
+        );
+
+        res.status(201).json({
+            booking: {
+                ...booking,
+                type: booking.type || "SESSION",
+                sessionId: booking.sessionIds?.[0] ? String(booking.sessionIds[0]) : undefined,
+            }
+        });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 };
 
 /**
- * API Handler: Cancels a booking via JSON request.
- * @param {import('express').Request} req
- * @param {import('express').Response} res
+ * Cancels an existing booking and updates session counts.
+ * @route DELETE /bookings/:id
+ * @param {import('express').Request} req - Express request object.
+ * @param {Object} req.params - URL parameters.
+ * @param {string} req.params.id - The booking ID to cancel.
+ * @param {import('express').Response} res - Express response object.
+ * @returns {Promise<void>}
  */
 export const apiCancelBooking = async (req, res) => {
     try {
         const booking = await BookingModel.findById(req.params.id);
         if (!booking) return res.status(404).json({ error: "Booking not found" });
 
-        if (booking.status !== "CANCELLED") {
-            const { SessionModel } = await import("../models/sessionModel.js");
-            for (const sid of booking.sessionIds ?? []) {
-                await SessionModel.incrementBookedCount(sid, -1);
-            }
-            await BookingModel.cancel(req.params.id);
+        if (booking.status === "CANCELLED") {
+            return res.status(400).json({ error: "Already cancelled" });
         }
 
+        const { SessionModel } = await import("../models/sessionModel.js");
+        for (const sid of booking.sessionIds ?? []) {
+            await SessionModel.incrementBookedCount(sid, -1);
+        }
+
+        await BookingModel.cancel(req.params.id);
         const updated = await BookingModel.findById(req.params.id);
         res.json({ booking: updated });
     } catch (err) {
@@ -62,51 +133,44 @@ export const apiCancelBooking = async (req, res) => {
 };
 
 /**
- * Form Handler: Processes full course booking from a UI form.
- * @param {string} userId - Current user ID
- * @param {string} courseId - Selected course ID
- * @param {boolean} consent - Whether terms were accepted
- * @returns {Promise<Object>} The booking result
+ * Handler for course booking with consent verification.
+ * @param {string} userId - ID of the user.
+ * @param {string} courseId - ID of the course.
+ * @param {boolean} consent - Whether the user has provided booking consent.
+ * @throws {Error} Throws "Consent required" if consent is false.
+ * @returns {Promise<Object>} The created booking object.
  */
 export const handleBookCourse = async (userId, courseId, consent) => {
-    if (!consent) {
-        throw Object.assign(
-            new Error("You must agree to the booking terms."),
-            { code: "CONSENT_MISSING" }
-        );
-    }
+    if (!consent) throw Object.assign(new Error("Consent required"), { code: "CONSENT_MISSING" });
     return bookingService.bookCourseForUser(userId, courseId);
 };
 
 /**
- * Form Handler: Processes drop-in session bookings from a UI form.
- * @param {string} userId - Current user ID
- * @param {string|string[]} rawSessionIds - Selected session ID(s)
- * @returns {Promise<Object>} The booking result
+ * Handler for booking multiple sessions.
+ * @param {string} userId - ID of the user.
+ * @param {string|string[]} rawSessionIds - A single session ID or an array of session IDs.
+ * @throws {Error} Throws "No sessions" if the session list is empty.
+ * @returns {Promise<Object>} The created booking object.
  */
 export const handleBookSessions = async (userId, rawSessionIds) => {
-    const sessionIds = Array.isArray(rawSessionIds) ? rawSessionIds : (rawSessionIds ? [rawSessionIds] : []);
-    if (!sessionIds.length) {
-        throw Object.assign(new Error("No sessions selected."), { code: "NO_SESSIONS" });
-    }
-    return bookingService.bookSessionsForUser(userId, sessionIds);
+    const ids = Array.isArray(rawSessionIds) ? rawSessionIds : (rawSessionIds ? [rawSessionIds] : []);
+    if (!ids.length) throw Object.assign(new Error("No sessions"), { code: "NO_SESSIONS" });
+    return bookingService.bookSessionsForUser(userId, ids);
 };
 
 /**
- * Form Handler: Cancels a full booking from a UI request.
- * @param {string} bookingId
- * @param {string} userId
+ * Cancels a full booking via the booking service.
+ * @param {string} id - Booking ID.
+ * @param {string} uid - User ID for authorization.
+ * @returns {Promise<Object>}
  */
-export const handleCancelBooking = async (bookingId, userId) => {
-    return bookingService.cancelFullBooking(bookingId, userId);
-};
+export const handleCancelBooking = (id, uid) => bookingService.cancelFullBooking(id, uid);
 
 /**
- * Form Handler: Cancels a single session from a UI request.
- * @param {string} bookingId
- * @param {string} sessionId
- * @param {string} userId
+ * Cancels a single session within a larger booking.
+ * @param {string} id - Booking ID.
+ * @param {string} sid - Session ID to remove from booking.
+ * @param {string} uid - User ID for authorization.
+ * @returns {Promise<Object>}
  */
-export const handleCancelSession = async (bookingId, sessionId, userId) => {
-    return bookingService.cancelSingleSession(bookingId, sessionId, userId);
-};
+export const handleCancelSession = (id, sid, uid) => bookingService.cancelSingleSession(id, sid, uid);
