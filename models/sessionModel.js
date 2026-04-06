@@ -57,4 +57,12 @@ export const SessionModel = {
         await sessionsDb.update({ _id: id }, { $set: { bookedCount: next } });
         return this.findById(id);
     },
+    /**
+     * Deletes a session by its unique ID.
+     * @param {string} id - The session ID.
+     * @returns {Promise<number>} The number of documents removed.
+     */
+    async delete(id) {
+        return sessionsDb.remove({ _id: id }, {});
+    },
 };

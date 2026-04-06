@@ -18,6 +18,7 @@ import {
     postDeleteInstructorPage,
     usersDashboardPage,
     postDeleteUserPage,
+    postDeleteSession,
 } from "../controllers/viewsController.js";
 import { requireAuth, requireOrganiser } from "../middlewares/auth.js";
 
@@ -41,7 +42,7 @@ router.post("/dashboard/courses/:id/update",     requireAuth, requireOrganiser, 
 // ── Course Create / Delete ─────────────────────────────────────────────────
 router.post("/dashboard/courses",                requireAuth, requireOrganiser, postCreateCoursePage);
 router.post("/dashboard/courses/:id/delete",     requireAuth, requireOrganiser, postDeleteCoursePage);
-
+router.post("/sessions/:id/delete", requireAuth, requireOrganiser, postDeleteSession);
 // ── Session Create (from edit page form POST) ──────────────────────────────
 router.post("/sessions",                         requireAuth, requireOrganiser, postCreateSession);
 

@@ -758,7 +758,7 @@ export const postCreateSession = async (req, res, next) => {
         const slots = [];
         let current  = new Date(startDateTime);
 
-        if (course.type === "WEEKLY_BLOCK") {
+        if (course.type === "WEEKLY_BLOCK" && req.body.isDropIn !== "true") {
             while (current <= endDate) {
                 slots.push({
                     courseId,
@@ -785,6 +785,30 @@ export const postCreateSession = async (req, res, next) => {
         for (const slot of slots) {
             await createNewSession(slot);
         }
+
+        res.redirect(`/dashboard/courses/${courseId}/edit`);
+    } catch (err) { next(err); }
+};
+/**
+ * POST /sessions/:id/delete
+ */
+export const postDeleteSession = async (req, res, next) => {
+    try {
+        const session = await SessionModel.findById(req.params.id);
+        if (!session) return res.status(404).send("Session not found");
+
+        const courseId = String(session.courseId);
+
+        // Remove this session from any bookings that include it
+        const { BookingModel } = await import("../models/bookingModel.js");
+        const bookings = await BookingModel.listByCourse?.(courseId) ?? [];
+        for (const booking of bookings) {
+            if ((booking.sessionIds ?? []).map(String).includes(req.params.id)) {
+                await BookingModel.removeSession(booking._id, req.params.id);
+            }
+        }
+
+        await SessionModel.delete(req.params.id);
 
         res.redirect(`/dashboard/courses/${courseId}/edit`);
     } catch (err) { next(err); }
