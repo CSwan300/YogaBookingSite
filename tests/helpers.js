@@ -9,10 +9,29 @@ import {
 import { UserModel } from "../models/userModel.js";
 import { CourseModel } from "../models/courseModel.js";
 import { SessionModel } from "../models/sessionModel.js";
+import { existsSync, unlinkSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const dbDir = join(__dirname, "../db");
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+function cleanTempFiles() {
+    for (const name of ["users", "courses", "sessions", "bookings"]) {
+        const tmp = join(dbDir, `${name}.db~`);
+        if (existsSync(tmp)) {
+            try { unlinkSync(tmp); } catch (_) {}
+        }
+    }
+}
+
 export async function resetDb() {
+    await closeDb();
+    await sleep(300);
+    cleanTempFiles();
+
     await initDb();
     await sleep(200);
 
@@ -28,7 +47,7 @@ export async function resetDb() {
         bookingsDb.compactDatafileAsync?.() ?? Promise.resolve(),
     ]);
 
-    await sleep(100);
+    await sleep(200);
 }
 
 export async function seedMinimal() {
