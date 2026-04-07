@@ -1,24 +1,37 @@
 // controllers/viewsController.js
-// Pure page-rendering layer. No business logic or formatting lives here.
-// All data fetching and mutations are delegated to:
-//   - services/courseService.js         (course / session data shapes)
-//   - services/organiserService.js      (admin dashboard data)
-//   - controllers/bookingController.js  (booking / cancellation logic)
-//   - controllers/profileController.js  (profile view & edit)
-//   - controllers/courseController.js   (session API creation)
-
-import { BookingModel }  from "../models/bookingModel.js";
-import { SessionModel }  from "../models/sessionModel.js";
-import { CourseModel }   from "../models/courseModel.js";
-import { userModel as UserModel } from "../models/userModel.js";
-import { coursesListPage as listCourses } from "./coursesListController.js";
+// Pure page-rendering layer. Every handler follows the same pattern:
+//   1. Call a service function to get a fully-shaped view-model.
+//   2. Call res.render() with that view-model.
+//   3. Forward unexpected errors to next().
+//
+// No data formatting, no business logic, and no auth checks live here.
+// Responsibilities are delegated to:
+//   services/bookingViewService.js   — booking page view-models
+//   services/courseViewService.js    — course edit page view-model
+//   services/courseService.js        — course / session data shapes
+//   services/organiserService.js     — admin dashboard data
+//   controllers/bookingController.js — booking / cancellation mutations
+//   controllers/sessionController.js — session creation / deletion
+//   controllers/profileController.js — profile view & edit
 
 import {
-    handleBookCourse,
-    handleBookSessions,
-    handleCancelBooking,
-    handleCancelSession,
-} from "./bookingController.js";
+    getMyBookingsData,
+    getBookingConfirmationData,
+    getCancelBookingData,
+    getUserScheduleBookings,
+    resolveCourseIdFromSessions,
+} from "../services/bookingViewService.js";
+
+import { getEditCoursePageData } from "../services/courseViewService.js";
+
+import {
+    getUpcomingCourseCards,
+    getCourseDetail,
+    getBookCourseData,
+    getBookSessionData,
+    getSingleSessionBookData,
+    getScheduleWeeks,
+} from "../services/courseService.js";
 
 import {
     getAdminDashboardData,
@@ -39,55 +52,38 @@ import {
 } from "../services/organiserService.js";
 
 import {
-    getUpcomingCourseCards,
-    getCourseDetail,
-    getBookCourseData,
-    getBookSessionData,
-    getSingleSessionBookData,
-    getScheduleWeeks,
-    createNewSession,
-} from "../services/courseService.js";
+    handleBookCourse,
+    handleBookSessions,
+    handleCancelBooking,
+    handleCancelSession,
+} from "./bookingController.js"
 
-import {
-    fmtDate,
-    fmtDateOnly,
-    fmtTimeOnly,
-    fmtType,
-    duration,
-} from "../services/formatService.js";
+export {
+  postCreateSession,
+  postDeleteSession,
+} from "./sessionController.js"
+
+import { userModel as UserModel } from "../models/userModel.js";
+import {postCreateSession} from "./sessionController.js";
 
 // Re-export profile handlers so routes only need one import target.
 export { profilePage, getEditProfilePage, postEditProfile } from "./profileController.js";
 
 // Re-export the courses list page handler.
-export { listCourses };
+export { coursesListPage as listCourses } from "./coursesListController.js";
 
-// ---------------------------------------------------------------------------
-// Private helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Resolves a course ID from an array of session IDs submitted in a form body.
- *
- * @param {string|string[]} rawSessionIds
- * @returns {Promise<string>}
- */
-const resolveCourseIdFromSessions = async (rawSessionIds) => {
-    const sessionIds = Array.isArray(rawSessionIds) ? rawSessionIds : [rawSessionIds];
-    if (!sessionIds.length) throw new Error("No session IDs provided");
-
-    const session = await SessionModel.findById(sessionIds[0]);
-    if (!session) throw new Error("Session not found");
-
-    return String(session.courseId);
-};
-
-// ---------------------------------------------------------------------------
+// ===========================================================================
 // Public pages
-// ---------------------------------------------------------------------------
+// ===========================================================================
 
 /**
- * GET /
+ * Renders the home page with upcoming course cards.
+ *
+ * @route GET /
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const homePage = async (req, res, next) => {
     try {
@@ -99,7 +95,12 @@ export const homePage = async (req, res, next) => {
 };
 
 /**
- * GET /about
+ * Renders the static about page.
+ *
+ * @route GET /about
+ * @param {import("express").Request}  req
+ * @param {import("express").Response} res
+ * @returns {void}
  */
 export const aboutPage = (req, res) => {
     res.render("about", {
@@ -127,7 +128,14 @@ export const aboutPage = (req, res) => {
 };
 
 /**
- * GET /instructors
+ * Renders the public instructors listing page.
+ * Filters the full user list to role === "instructor".
+ *
+ * @route GET /instructors
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const instructorsPage = async (req, res, next) => {
     try {
@@ -139,7 +147,8 @@ export const instructorsPage = async (req, res, next) => {
                 name:  u.name,
                 email: u.email,
                 bio:   u.bio,
-                image: u.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=random&size=128`,
+                image: u.image
+                    || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=random&size=128`,
             }));
 
         res.render("instructors", { title: "Our Instructors", instructors });
@@ -148,12 +157,18 @@ export const instructorsPage = async (req, res, next) => {
     }
 };
 
-// ---------------------------------------------------------------------------
+// ===========================================================================
 // Course pages
-// ---------------------------------------------------------------------------
+// ===========================================================================
 
 /**
- * GET /courses/:id
+ * Renders the public course detail page.
+ *
+ * @route GET /courses/:id
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const courseDetailPage = async (req, res, next) => {
     try {
@@ -167,18 +182,25 @@ export const courseDetailPage = async (req, res, next) => {
                 : null,
         });
     } catch (err) {
-        if (err.code === "NOT_FOUND")
+        if (err.code === "NOT_FOUND") {
             return res.status(404).render("error", { title: "Not found", message: err.message });
+        }
         next(err);
     }
 };
 
-// ---------------------------------------------------------------------------
+// ===========================================================================
 // Booking pages
-// ---------------------------------------------------------------------------
+// ===========================================================================
 
 /**
- * GET /courses/:id/book
+ * Renders the full-course booking form.
+ *
+ * @route GET /courses/:id/book
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const getBookCoursePage = async (req, res, next) => {
     try {
@@ -191,14 +213,23 @@ export const getBookCoursePage = async (req, res, next) => {
             user: { id: req.user._id, name: req.user.name, email: req.user.email },
         });
     } catch (err) {
-        if (err.code === "NOT_FOUND")
+        if (err.code === "NOT_FOUND") {
             return res.status(404).render("error", { title: "Not found", message: err.message });
+        }
         next(err);
     }
 };
 
 /**
- * POST /courses/:id/book
+ * Processes a full-course booking form submission.
+ * On validation / duplicate errors, re-renders the form with error messages.
+ * On success, redirects to the booking confirmation page.
+ *
+ * @route POST /courses/:id/book
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const postBookCourse = async (req, res, next) => {
     try {
@@ -222,36 +253,53 @@ export const postBookCourse = async (req, res, next) => {
 };
 
 /**
- * GET /courses/:id/book/sessions
+ * Renders the drop-in session selection page for a course.
+ *
+ * @route GET /courses/:id/book/sessions
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const getBookSessionPage = async (req, res, next) => {
     try {
         const { course, sessions } = await getBookSessionData(req.params.id);
         res.render("session_book", {
-            title:   `Drop-in: ${course.title}`,
+            title:    `Drop-in: ${course.title}`,
             course,
             sessions,
             user: { id: req.user._id, name: req.user.name, email: req.user.email },
         });
     } catch (err) {
-        if (err.code === "NOT_FOUND")
+        if (err.code === "NOT_FOUND") {
             return res.status(404).render("error", { title: "Not found", message: err.message });
-        if (err.code === "DROPIN_NOT_ALLOWED")
+        }
+        if (err.code === "DROPIN_NOT_ALLOWED") {
             return res.status(400).render("error", { title: "Not allowed", message: err.message });
+        }
         next(err);
     }
 };
 
 /**
- * POST /bookings/sessions
+ * Processes a drop-in session booking submission.
+ * On conflict, re-renders the session selection form with error messages.
+ * On success, redirects to the booking confirmation page.
+ *
+ * @route POST /bookings/sessions
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const postBookSession = async (req, res, next) => {
     try {
         const booking = await handleBookSessions(req.user._id, req.body.sessionIds);
         res.redirect(`/bookings/${booking._id}?status=${booking.status}`);
     } catch (err) {
-        if (err.code === "NO_SESSIONS")
+        if (err.code === "NO_SESSIONS") {
             return res.status(400).render("error", { title: "Booking failed", message: err.message });
+        }
 
         if (err.code === "ALREADY_BOOKED") {
             try {
@@ -261,8 +309,8 @@ export const postBookSession = async (req, res, next) => {
                     title:   `Drop-in: ${course.title}`,
                     course,
                     sessions,
-                    user:   { id: req.user._id, name: req.user.name, email: req.user.email },
-                    errors: { list: [err.message] },
+                    user:    { id: req.user._id, name: req.user.name, email: req.user.email },
+                    errors:  { list: [err.message] },
                 });
             } catch {
                 return res.status(409).render("error", { title: "Already booked", message: err.message });
@@ -277,7 +325,13 @@ export const postBookSession = async (req, res, next) => {
 };
 
 /**
- * GET /sessions/:id/book
+ * Renders the single-session booking page (linked from the schedule).
+ *
+ * @route GET /sessions/:id/book
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const getSingleSessionBookPage = async (req, res, next) => {
     try {
@@ -291,63 +345,36 @@ export const getSingleSessionBookPage = async (req, res, next) => {
                 : null,
         });
     } catch (err) {
-        if (err.code === "NOT_FOUND")
+        if (err.code === "NOT_FOUND") {
             return res.status(404).render("error", { title: "Not Found", message: err.message });
-        if (err.code === "DROPIN_NOT_ALLOWED")
+        }
+        if (err.code === "DROPIN_NOT_ALLOWED") {
             return res.status(400).render("error", { title: "Not Allowed", message: err.message });
+        }
         next(err);
     }
 };
 
-// ---------------------------------------------------------------------------
+// ===========================================================================
 // My Bookings & confirmation pages
-// ---------------------------------------------------------------------------
+// ===========================================================================
 
 /**
- * GET /bookings
+ * Renders the authenticated user's active bookings list.
+ *
+ * @route GET /bookings
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const myBookingsPage = async (req, res, next) => {
     try {
-        const raw    = await BookingModel.listByUser(req.user._id);
-        const active = raw.filter((b) => b.status !== "CANCELLED");
-
-        const bookings = await Promise.all(
-            active.map(async (b) => {
-                const sessionData   = await Promise.all((b.sessionIds || []).map((sid) => SessionModel.findById(sid)));
-                const validSessions = sessionData.filter(Boolean);
-                const now           = new Date();
-
-                const upcoming = validSessions
-                    .filter((s) => new Date(s.startDateTime) >= now)
-                    .sort((a, b) => new Date(a.startDateTime) - new Date(b.startDateTime));
-
-                const nextSession = upcoming[0] ? fmtDate(upcoming[0].startDateTime) : "No upcoming sessions";
-
-                let courseTitle = "Unknown Course";
-                let location    = "TBA";
-                const first     = validSessions[0];
-                if (first?.courseId) {
-                    const course = await CourseModel.findById(first.courseId);
-                    if (course) { courseTitle = course.title; location = course.location; }
-                }
-
-                return {
-                    id:           String(b._id),
-                    type:         fmtType(b.type),
-                    status:       b.status,
-                    createdAt:    b.createdAt ? fmtDateOnly(b.createdAt) : "",
-                    sessionCount: validSessions.length,
-                    nextSession,
-                    courseTitle,
-                    location,
-                };
-            })
-        );
-
+        const { bookings, hasBookings } = await getMyBookingsData(req.user._id);
         res.render("my_bookings", {
-            title:       "My Bookings",
+            title: "My Bookings",
             bookings,
-            hasBookings: bookings.length > 0,
+            hasBookings,
             user: {
                 id:           String(req.user._id),
                 name:         req.user.name,
@@ -361,98 +388,92 @@ export const myBookingsPage = async (req, res, next) => {
 };
 
 /**
- * GET /bookings/:bookingId
+ * Renders the booking confirmation / status page.
+ *
+ * @route GET /bookings/:bookingId
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const bookingConfirmationPage = async (req, res, next) => {
     try {
-        const booking = await BookingModel.findById(req.params.bookingId);
-        if (!booking)
-            return res.status(404).render("error", { title: "Not found", message: "Booking not found" });
+        const returnTo = req.query.returnTo
+            ? decodeURIComponent(req.query.returnTo)
+            : "/profile";
 
-        const sessionData = await Promise.all(
-            (booking.sessionIds || []).map((sid) => SessionModel.findById(sid))
+        const viewModel = await getBookingConfirmationData(
+            req.params.bookingId,
+            req.query.status,
+            returnTo,
         );
 
-        const sessions = sessionData.filter(Boolean).map((s) => ({
-            id:        String(s._id),
-            bookingId: String(booking._id),
-            start:     fmtDate(s.startDateTime),
-            end:       fmtTimeOnly(s.endDateTime),
-        }));
-
-        const status   = req.query.status || booking.status;
-        const returnTo = req.query.returnTo ? decodeURIComponent(req.query.returnTo) : "/profile";
-
-        res.render("booking_confirmation", {
-            title: "Booking confirmation",
-            booking: {
-                id:        String(booking._id),
-                type:      booking.type,
-                status,
-                createdAt: booking.createdAt ? fmtDate(booking.createdAt) : "",
-            },
-            sessions,
-            isCancelled: status === "CANCELLED",
-            isUpdated:   status === "UPDATED",
-            returnTo,
-        });
+        res.render("booking_confirmation", { title: "Booking confirmation", ...viewModel });
     } catch (err) {
+        if (err.code === "NOT_FOUND") {
+            return res.status(404).render("error", { title: "Not found", message: err.message });
+        }
         next(err);
     }
 };
 
-// ---------------------------------------------------------------------------
+// ===========================================================================
 // Cancellation pages
-// ---------------------------------------------------------------------------
+// ===========================================================================
 
 /**
- * GET /bookings/:bookingId/cancel
+ * Renders the cancellation confirmation form.
+ * Authorisation (ownership check) is performed inside the service.
+ * Already-cancelled bookings redirect straight to the confirmation page.
+ *
+ * @route GET /bookings/:bookingId/cancel
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const getCancelBookingPage = async (req, res, next) => {
     try {
-        const { bookingId }   = req.params;
-        const targetSessionId = req.query.session || null;
+        const { bookingId }     = req.params;
+        const targetSessionId   = req.query.session || null;
 
-        const booking = await BookingModel.findById(bookingId);
-        if (!booking)
-            return res.status(404).render("error", { title: "Not found", message: "Booking not found" });
-
-        if (booking.userId.toString() !== req.user._id.toString())
-            return res.status(403).render("error", { title: "Access denied", message: "You can only manage your own bookings." });
-
-        if (booking.status === "CANCELLED")
-            return res.redirect(`/bookings/${bookingId}`);
-
-        const sessionData = await Promise.all(
-            (booking.sessionIds || []).map((sid) => SessionModel.findById(sid))
+        // Short-circuit if already cancelled — service would also catch this but
+        // the redirect is a view concern so it stays here.
+        const { booking, sessions, isSingleSession } = await getCancelBookingData(
+            bookingId,
+            req.user._id,
+            targetSessionId,
         );
 
-        const sessions = sessionData.filter(Boolean).map((s) => ({
-            id:       String(s._id),
-            start:    fmtDate(s.startDateTime),
-            end:      fmtTimeOnly(s.endDateTime),
-            isTarget: targetSessionId ? String(s._id) === targetSessionId : true,
-        }));
+        if (booking.status === "CANCELLED") return res.redirect(`/bookings/${bookingId}`);
 
         res.render("cancel_booking", {
             title: targetSessionId ? "Cancel Session" : "Cancel Booking",
-            booking: {
-                id:        booking._id,
-                type:      booking.type,
-                status:    booking.status,
-                createdAt: booking.createdAt ? fmtDate(booking.createdAt) : "",
-            },
+            booking,
             sessions,
-            isSingleSession: !!targetSessionId,
+            isSingleSession,
             targetSessionId,
         });
     } catch (err) {
+        if (err.code === "NOT_FOUND") {
+            return res.status(404).render("error", { title: "Not found", message: err.message });
+        }
+        if (err.code === "FORBIDDEN") {
+            return res.status(403).render("error", { title: "Access denied", message: err.message });
+        }
         next(err);
     }
 };
 
 /**
- * POST /bookings/:bookingId/cancel
+ * Processes a full booking cancellation.
+ * Redirects to the confirmation page with status=CANCELLED on success.
+ *
+ * @route POST /bookings/:bookingId/cancel
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const postCancelBooking = async (req, res, next) => {
     try {
@@ -468,14 +489,21 @@ export const postCancelBooking = async (req, res, next) => {
 };
 
 /**
- * POST /bookings/:bookingId/sessions/:sessionId/cancel
+ * Processes the cancellation of a single session within a booking.
+ * Redirects to the confirmation page with status=UPDATED on success.
+ *
+ * @route POST /bookings/:bookingId/sessions/:sessionId/cancel
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const postCancelSession = async (req, res, next) => {
     try {
         const bookingId = await handleCancelSession(
             req.params.bookingId,
             req.params.sessionId,
-            req.user._id
+            req.user._id,
         );
         res.redirect(`/bookings/${bookingId}?status=UPDATED`);
     } catch (err) {
@@ -484,31 +512,29 @@ export const postCancelSession = async (req, res, next) => {
     }
 };
 
-// ---------------------------------------------------------------------------
+// ===========================================================================
 // Schedule page
-// ---------------------------------------------------------------------------
+// ===========================================================================
 
 /**
- * GET /schedule
+ * Renders the public schedule page.
+ * When the user is authenticated, their booked sessions are marked on the schedule.
+ * The `?my=1` query param filters the schedule down to the user's own bookings only.
+ *
+ * @route GET /schedule
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const schedulePage = async (req, res, next) => {
     try {
         const showMyBookings = req.query.my === "1";
 
-        let bookedSessionIds   = new Set();
-        let bookingBySessionId = {};
-
-        if (req.user) {
-            const bookings = await BookingModel.listByUser(req.user._id);
-            for (const b of bookings) {
-                if (b.status === "CANCELLED") continue;
-                for (const sid of b.sessionIds ?? []) {
-                    const key = String(sid);
-                    bookedSessionIds.add(key);
-                    bookingBySessionId[key] = String(b._id);
-                }
-            }
-        }
+        // Resolve booked session IDs for authenticated users.
+        const { bookedSessionIds, bookingBySessionId } = req.user
+            ? await getUserScheduleBookings(req.user._id)
+            : { bookedSessionIds: new Set(), bookingBySessionId: {} };
 
         const weeks = await getScheduleWeeks(bookedSessionIds, bookingBySessionId, showMyBookings);
 
@@ -517,7 +543,12 @@ export const schedulePage = async (req, res, next) => {
             weeks,
             showMyBookings,
             user: req.user
-                ? { id: String(req.user._id), name: req.user.name, userInitials: req.user.userInitials, image: req.user.image }
+                ? {
+                    id:           String(req.user._id),
+                    name:         req.user.name,
+                    userInitials: req.user.userInitials,
+                    image:        req.user.image,
+                }
                 : null,
         });
     } catch (err) {
@@ -525,12 +556,18 @@ export const schedulePage = async (req, res, next) => {
     }
 };
 
-// ---------------------------------------------------------------------------
+// ===========================================================================
 // Admin / organiser dashboard pages
-// ---------------------------------------------------------------------------
+// ===========================================================================
 
 /**
- * GET /dashboard
+ * Renders the main admin dashboard.
+ *
+ * @route GET /dashboard
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const adminDashboardPage = async (req, res, next) => {
     try {
@@ -540,17 +577,33 @@ export const adminDashboardPage = async (req, res, next) => {
 };
 
 /**
- * GET /dashboard/courses
+ * Renders the courses management dashboard.
+ *
+ * @route GET /dashboard/courses
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const coursesDashboardPage = async (req, res, next) => {
     try {
         const data = await getCoursesDashboardData();
-        res.render("coursesDashboard", { title: "Manage Courses", success: req.query.success, ...data });
+        res.render("coursesDashboard", {
+            title:   "Manage Courses",
+            success: req.query.success,
+            ...data,
+        });
     } catch (err) { next(err); }
 };
 
 /**
- * POST /dashboard/courses
+ * Processes a new course creation form submission.
+ *
+ * @route POST /dashboard/courses
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const postCreateCoursePage = async (req, res, next) => {
     try {
@@ -560,7 +613,13 @@ export const postCreateCoursePage = async (req, res, next) => {
 };
 
 /**
- * POST /dashboard/courses/:id/delete
+ * Processes a course deletion request.
+ *
+ * @route POST /dashboard/courses/:id/delete
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const postDeleteCoursePage = async (req, res, next) => {
     try {
@@ -570,7 +629,13 @@ export const postDeleteCoursePage = async (req, res, next) => {
 };
 
 /**
- * POST /dashboard/courses/:id/update
+ * Processes a course update form submission.
+ *
+ * @route POST /dashboard/courses/:id/update
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const postUpdateCoursePage = async (req, res, next) => {
     try {
@@ -580,79 +645,69 @@ export const postUpdateCoursePage = async (req, res, next) => {
 };
 
 /**
- * GET /dashboard/courses/:id/edit
- * Renders the course edit form pre-populated with existing data and sessions.
+ * Renders the course edit form pre-populated with existing data.
+ * View-model assembly (course flags, session rows, instructor list) is
+ * handled by courseViewService.getEditCoursePageData.
+ *
+ * @route GET /dashboard/courses/:id/edit
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const getUpdateCoursePage = async (req, res, next) => {
     try {
-        const course = await CourseModel.findById(req.params.id);
-        if (!course) return res.status(404).send("Course not found");
-
-        const sessions = await SessionModel.listByCourse(req.params.id);
-        const { instructors } = await getCoursesDashboardData();
-        const now = new Date();
-
-        const formattedCourse = {
-            ...course,
-            startDate:           course.startDate ? new Date(course.startDate).toISOString().split("T")[0] : "",
-            endDate:             course.endDate   ? new Date(course.endDate).toISOString().split("T")[0]   : "",
-            isBeginnerLevel:     course.level === "beginner",
-            isIntermediateLevel: course.level === "intermediate",
-            isAdvancedLevel:     course.level === "advanced",
-            isWeeklyBlock:       course.type  === "WEEKLY_BLOCK",
-            isWeekendWorkshop:   course.type  === "WEEKEND_WORKSHOP",
-        };
-
-        const formattedSessions = sessions.map((s) => ({
-            id:        String(s._id),
-            start:     fmtDate(s.startDateTime),
-            end:       fmtDate(s.endDateTime),
-            duration:  duration(s.startDateTime, s.endDateTime),
-            capacity:  s.capacity,
-            booked:    s.bookedCount ?? 0,
-            spotsLeft: Math.max(0, (s.capacity ?? 0) - (s.bookedCount ?? 0)),
-            isFull:    (s.bookedCount ?? 0) >= (s.capacity ?? 0),
-            isPast:    new Date(s.startDateTime) < now,
-        }));
-
-        const formattedInstructors = instructors.map((i) => ({
-            id:         String(i._id),
-            name:       i.name,
-            isSelected: String(i._id) === String(course.instructorId),
-        }));
-
-        res.render("updateCourse", {
-            title:       "Edit Course",
-            course:      formattedCourse,
-            sessions:    formattedSessions,
-            instructors: formattedInstructors,
-        });
-    } catch (err) { next(err); }
+        const viewModel = await getEditCoursePageData(req.params.id);
+        res.render("updateCourse", { title: "Edit Course", ...viewModel });
+    } catch (err) {
+        if (err.code === "NOT_FOUND") return res.status(404).send(err.message);
+        next(err);
+    }
 };
 
 /**
- * GET /dashboard/classes
+ * Renders the classes (sessions) management dashboard.
+ *
+ * @route GET /dashboard/classes
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const classesDashboardPage = async (req, res, next) => {
     try {
-        const filterCourse = req.query.course || null;
-        const viewModel    = await getClassesDashboardPageData(filterCourse);
+        const viewModel = await getClassesDashboardPageData(req.query.course || null);
         res.render("classesDashboard", { title: "Manage Classes", ...viewModel });
     } catch (err) { next(err); }
 };
 
 /**
- * GET /dashboard/classes/:id
+ * Renders the class-list detail page for a specific course.
+ *
+ * @route GET /dashboard/classes/:id
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const classListDashboardPage = async (req, res, next) => {
     try {
         const data = await getClassListData(req.params.id);
-        res.render("classListDashboard", { title: `Class List: ${data.course?.title || "Details"}`, ...data });
+        res.render("classListDashboard", {
+            title: `Class List: ${data.course?.title || "Details"}`,
+            ...data,
+        });
     } catch (err) { next(err); }
 };
 
 /**
- * GET /dashboard/instructors
+ * Renders the instructors management dashboard.
+ *
+ * @route GET /dashboard/instructors
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const instructorsDashboardPage = async (req, res, next) => {
     try {
@@ -663,7 +718,13 @@ export const instructorsDashboardPage = async (req, res, next) => {
 };
 
 /**
- * POST /dashboard/instructors
+ * Processes a new instructor creation form submission.
+ *
+ * @route POST /dashboard/instructors
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const postCreateInstructorPage = async (req, res, next) => {
     try {
@@ -673,7 +734,13 @@ export const postCreateInstructorPage = async (req, res, next) => {
 };
 
 /**
- * POST /dashboard/instructors/:id/delete
+ * Processes an instructor deletion request.
+ *
+ * @route POST /dashboard/instructors/:id/delete
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const postDeleteInstructorPage = async (req, res, next) => {
     try {
@@ -683,17 +750,33 @@ export const postDeleteInstructorPage = async (req, res, next) => {
 };
 
 /**
- * GET /dashboard/organisers
+ * Renders the organisers management dashboard.
+ *
+ * @route GET /dashboard/organisers
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const organisersDashboardPage = async (req, res, next) => {
     try {
         const data = await getOrganisersData();
-        res.render("organisersDashboard", { title: "Manage Organisers", success: req.query.success, ...data });
+        res.render("organisersDashboard", {
+            title:   "Manage Organisers",
+            success: req.query.success,
+            ...data,
+        });
     } catch (err) { next(err); }
 };
 
 /**
- * POST /dashboard/organisers
+ * Processes a new organiser creation form submission.
+ *
+ * @route POST /dashboard/organisers
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const postCreateOrganiserPage = async (req, res, next) => {
     try {
@@ -703,7 +786,13 @@ export const postCreateOrganiserPage = async (req, res, next) => {
 };
 
 /**
- * POST /dashboard/organisers/:id/delete
+ * Processes an organiser deletion request.
+ *
+ * @route POST /dashboard/organisers/:id/delete
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const postDeleteOrganiserPage = async (req, res, next) => {
     try {
@@ -713,103 +802,37 @@ export const postDeleteOrganiserPage = async (req, res, next) => {
 };
 
 /**
- * GET /dashboard/users
+ * Renders the users management dashboard.
+ *
+ * @route GET /dashboard/users
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const usersDashboardPage = async (req, res, next) => {
     try {
         const data = await getUsersData();
-        res.render("usersDashboard", { title: "Manage Users", success: req.query.success, ...data });
+        res.render("usersDashboard", {
+            title:   "Manage Users",
+            success: req.query.success,
+            ...data,
+        });
     } catch (err) { next(err); }
 };
 
 /**
- * POST /dashboard/users/:id/delete
+ * Processes a user deletion request.
+ *
+ * @route POST /dashboard/users/:id/delete
+ * @param {import("express").Request}      req
+ * @param {import("express").Response}     res
+ * @param {import("express").NextFunction} next
+ * @returns {Promise<void>}
  */
 export const postDeleteUserPage = async (req, res, next) => {
     try {
         await deleteUser(req.params.id);
         res.redirect("/dashboard/users?success=User removed");
-    } catch (err) { next(err); }
-};
-
-// ---------------------------------------------------------------------------
-// Session creation
-// ---------------------------------------------------------------------------
-
-/**
- * POST /sessions
- * - WEEKLY_BLOCK: auto-generates one session per week from startDateTime
- *   until course.endDate (inclusive).
- * - WEEKEND_WORKSHOP: creates a single session.
- * Redirects back to the edit page on success.
- */
-export const postCreateSession = async (req, res, next) => {
-    try {
-        const { courseId, startDateTime, durationMins, capacity } = req.body;
-
-        const course = await CourseModel.findById(courseId);
-        if (!course) return res.status(404).send("Course not found");
-
-        const durationMs = Number(durationMins) * 60_000;
-        const endDate    = new Date(course.endDate);
-        // Normalise endDate to end-of-day so a session starting on endDate is included
-        endDate.setHours(23, 59, 59, 999);
-
-        const slots = [];
-        let current  = new Date(startDateTime);
-
-        if (course.type === "WEEKLY_BLOCK" && req.body.isDropIn !== "true") {
-            while (current <= endDate) {
-                slots.push({
-                    courseId,
-                    startDateTime: current.toISOString(),
-                    endDateTime:   new Date(current.getTime() + durationMs).toISOString(),
-                    capacity:      Number(capacity),
-                    bookedCount:   0,
-                });
-                // Advance exactly one week
-                current = new Date(current.getTime() + 7 * 24 * 60 * 60 * 1000);
-            }
-        } else {
-            // WEEKEND_WORKSHOP or any other type — single session
-            slots.push({
-                courseId,
-                startDateTime: current.toISOString(),
-                endDateTime:   new Date(current.getTime() + durationMs).toISOString(),
-                capacity:      Number(capacity),
-                bookedCount:   0,
-            });
-        }
-
-        // Create all slots sequentially to preserve order
-        for (const slot of slots) {
-            await createNewSession(slot);
-        }
-
-        res.redirect(`/dashboard/courses/${courseId}/edit`);
-    } catch (err) { next(err); }
-};
-/**
- * POST /sessions/:id/delete
- */
-export const postDeleteSession = async (req, res, next) => {
-    try {
-        const session = await SessionModel.findById(req.params.id);
-        if (!session) return res.status(404).send("Session not found");
-
-        const courseId = String(session.courseId);
-
-        // Remove this session from any bookings that include it
-        const { BookingModel } = await import("../models/bookingModel.js");
-        const bookings = await BookingModel.listByCourse?.(courseId) ?? [];
-        for (const booking of bookings) {
-            if ((booking.sessionIds ?? []).map(String).includes(req.params.id)) {
-                await BookingModel.removeSession(booking._id, req.params.id);
-            }
-        }
-
-        await SessionModel.delete(req.params.id);
-
-        res.redirect(`/dashboard/courses/${courseId}/edit`);
     } catch (err) { next(err); }
 };
