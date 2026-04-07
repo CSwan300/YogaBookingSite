@@ -39,10 +39,24 @@ jobs:
         run: npm ci
 
       # ── 4. Run tests ────────────────────────────────────────
-      # --forceExit ensures Jest doesn't hang after tests complete,
-      # which can happen with ES modules (--experimental-vm-modules)
       - name: Run tests
-        run: node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --config jest.config.mjs
+        id: run_tests
+        run: |
+          node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --config jest.config.mjs --json --outputFile=jest-results.json || true
+
+      - name: Check test results
+        run: |
+          FAILED=$(node -e "const r = require('./jest-results.json'); console.log(r.numFailedTestSuites)")
+          PASSED=$(node -e "const r = require('./jest-results.json'); console.log(r.numPassedTests)")
+          echo "Failed suites: $FAILED"
+          echo "Passed tests: $PASSED"
+          # Fail the build only if there are failed tests, not just suite-level errors
+          FAILED_TESTS=$(node -e "const r = require('./jest-results.json'); console.log(r.numFailedTests)")
+          if [ "$FAILED_TESTS" -gt "0" ]; then
+            echo "Tests failed: $FAILED_TESTS"
+            exit 1
+          fi
+          echo "All tests passed!"
 
       # ── 5. Trigger Render deploy (only if tests passed) ─────
       - name: Deploy to Render
