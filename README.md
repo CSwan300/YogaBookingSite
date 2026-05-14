@@ -1,8 +1,7 @@
 # Yoga Booking — WAD2 Coursework
 
 *A full-stack yoga class booking web application built with Node.js, Express, and NeDB.*
-
----
+> Note: The live preview may appear empty because the system automatically filters out past events. To view the project with active data, please clone the repository and update the seed file with current or future dates before running.
 
 ## Live Demo
 
